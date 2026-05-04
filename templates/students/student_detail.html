@@ -1,0 +1,161 @@
+{% extends 'base/layout.html' %}
+{% block title %}{{ student.get_full_name }}{% endblock %}
+{% block page_title %}Perfil del Estudiante{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>{{ student.get_full_name }}</h1>
+    <p>{% if student.classroom %}{{ student.classroom.name }}{% endif %}{% if student.classroom.grade_level %} · {{ student.classroom.grade_level }}{% endif %}</p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <a href="{% url 'students:list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+    <a href="{% url 'grades:create' %}?student={{ student.pk }}" class="btn btn-secondary"><i class="bi bi-plus"></i> Nota</a>
+    <a href="{% url 'students:message_create' %}?student={{ student.pk }}" class="btn btn-secondary"><i class="bi bi-envelope"></i> Mensaje</a>
+    <a href="{% url 'students:edit' student.pk %}" class="btn btn-primary"><i class="bi bi-pencil"></i> Editar</a>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:start;">
+
+  <!-- LATERAL -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+
+    <!-- AVATAR CARD -->
+    <div class="card" style="text-align:center;padding:24px 20px;">
+      {% if student.photo %}
+      <img src="{{ student.photo.url }}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin:0 auto 12px;">
+      {% else %}
+      <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;color:#fff;margin:0 auto 12px;font-family:'Sora',sans-serif;">{{ student.initials }}</div>
+      {% endif %}
+      <div style="font-weight:800;font-size:16px;color:var(--gray-900);">{{ student.get_full_name }}</div>
+      {% if student.classroom %}<span class="badge badge-info" style="margin-top:6px;">{{ student.classroom.name }}</span>{% endif %}
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--gray-100);">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-400);margin-bottom:8px;">Promedio general</div>
+        {% with avg=student.average_grade %}
+        <div style="font-family:'Sora',sans-serif;font-size:32px;font-weight:800;color:{% if avg and avg >= 4 %}#10B981{% elif avg and avg >= 3 %}var(--primary){% elif avg and avg >= 2.5 %}#F59E0B{% elif avg %}#EF4444{% else %}var(--gray-300){% endif %};">{{ avg|default:"—" }}</div>
+        {% endwith %}
+      </div>
+    </div>
+
+    <!-- DATOS PERSONALES -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">📋 Datos personales</span></div>
+      <div style="padding:16px;">
+        {% for label, value in student_data %}
+        <div style="padding:9px 0;border-bottom:1px solid var(--gray-100);">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:3px;">{{ label }}</div>
+          <div style="font-size:14px;font-weight:600;color:var(--gray-900);">{{ value|default:"—" }}</div>
+        </div>
+        {% endfor %}
+        <div style="padding:9px 0;border-bottom:1px solid var(--gray-100);">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:3px;">Documento</div>
+          <div style="font-size:14px;font-weight:600;color:var(--gray-900);">{{ student.document_id|default:"—" }}</div>
+        </div>
+        <div style="padding:9px 0;border-bottom:1px solid var(--gray-100);">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:3px;">Correo</div>
+          <div style="font-size:14px;font-weight:600;color:var(--gray-900);">{{ student.email|default:"—" }}</div>
+        </div>
+        <div style="padding:9px 0;border-bottom:1px solid var(--gray-100);">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:3px;">Género</div>
+          <div style="font-size:14px;font-weight:600;color:var(--gray-900);">{{ student.get_gender_display|default:"—" }}</div>
+        </div>
+        <div style="padding:9px 0;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:3px;">Registrado</div>
+          <div style="font-size:14px;font-weight:600;color:var(--gray-900);">{{ student.created_at|date:"d/m/Y" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACUDIENTE -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">👨‍👩‍👧 Acudiente</span></div>
+      <div style="padding:16px;">
+        <div style="padding:9px 0;border-bottom:1px solid var(--gray-100);">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:3px;">Nombre</div>
+          <div style="font-size:14px;font-weight:600;color:var(--gray-900);">{{ student.parent_name|default:"No registrado" }}</div>
+        </div>
+        <div style="padding:9px 0;border-bottom:1px solid var(--gray-100);">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:3px;">Teléfono</div>
+          <div style="font-size:14px;font-weight:600;color:var(--gray-900);">{{ student.parent_phone|default:"—" }}</div>
+        </div>
+        <div style="padding:9px 0;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--gray-400);margin-bottom:3px;">Correo</div>
+          <div style="font-size:14px;font-weight:600;color:var(--gray-900);">{{ student.parent_email|default:"—" }}</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <!-- NOTAS -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📊 Historial de notas</span>
+        <a href="{% url 'grades:create' %}?student={{ student.pk }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Agregar nota</a>
+      </div>
+      {% if grades %}
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr><th>Actividad</th><th>Tipo</th><th>Nota</th><th>Fecha</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for grade in grades %}
+            <tr>
+              <td style="font-weight:700;color:var(--gray-900);">{{ grade.activity_name }}</td>
+              <td><span class="badge badge-blue">{{ grade.get_grade_type_display }}</span></td>
+              <td>
+                <span class="grade-pill {% if grade.score >= 4 %}grade-a{% elif grade.score >= 3 %}grade-b{% elif grade.score >= 2.5 %}grade-c{% else %}grade-d{% endif %}">
+                  {{ grade.score }}
+                </span>
+              </td>
+              <td style="font-size:13px;color:var(--gray-500);">{{ grade.date|date:"d/m/Y" }}</td>
+              <td>
+                <div style="display:flex;gap:5px;justify-content:flex-end;">
+                  <a href="{% url 'grades:edit' grade.pk %}" class="btn btn-secondary btn-sm"><i class="bi bi-pencil"></i></a>
+                  <form method="post" action="{% url 'grades:delete' grade.pk %}" style="display:inline;" onsubmit="return confirm('¿Eliminar?')">
+                    {% csrf_token %}<button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:32px;">
+        <span class="empty-icon" style="font-size:32px;">📊</span>
+        <h3>Sin notas aún</h3>
+        <a href="{% url 'grades:create' %}?student={{ student.pk }}" class="btn btn-primary btn-sm" style="margin-top:10px;"><i class="bi bi-plus-lg"></i> Agregar nota</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- MENSAJES -->
+    {% if messages_sent %}
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">✉️ Mensajes enviados</span>
+        <a href="{% url 'students:message_create' %}?student={{ student.pk }}" class="btn btn-secondary btn-sm"><i class="bi bi-plus-lg"></i> Nuevo</a>
+      </div>
+      {% for msg in messages_sent %}
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:14px 20px;border-bottom:1px solid var(--gray-100);">
+        <div style="width:38px;height:38px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">✉️</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;font-size:14px;color:var(--gray-900);">{{ msg.subject }}</div>
+          <div style="font-size:12px;color:var(--gray-400);margin-top:2px;"><i class="bi bi-clock"></i> {{ msg.sent_at|date:"d/m/Y H:i" }}</div>
+          <div style="font-size:13px;color:var(--gray-600);margin-top:5px;line-height:1.6;">{{ msg.body|truncatewords:20 }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

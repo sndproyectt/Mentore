@@ -1,0 +1,141 @@
+{% extends 'base/layout.html' %}
+{% load dict_filters %}
+{% block title %}Horario{% endblock %}
+{% block page_title %}Mi Horario{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left"><h1>🗓️ Mi Horario Semanal</h1><p>Organiza tu semana de clases</p></div>
+  <button class="btn-primary" onclick="document.getElementById('addModal').style.display='flex'"><i class="bi bi-plus-lg"></i> Agregar clase</button>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;min-width:700px;">
+      <thead>
+        <tr>
+          <th style="background:var(--gray-50);padding:.75rem 1rem;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-500);border-bottom:1.5px solid var(--gray-100);width:80px;">Hora</th>
+          {% for day in "Lunes,Martes,Miércoles,Jueves,Viernes"|split:"," %}
+          <th style="background:var(--gray-50);padding:.75rem 1rem;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-500);border-bottom:1.5px solid var(--gray-100);text-align:center;">{{ day }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody id="scheduleBody">
+        {% for hour in "6:00,7:00,8:00,9:00,10:00,11:00,12:00,1:00,2:00,3:00,4:00,5:00"|split:"," %}
+        <tr>
+          <td style="padding:.6rem 1rem;border-bottom:1px solid var(--gray-100);font-size:.78rem;font-weight:700;color:var(--gray-400);white-space:nowrap;">{{ hour }}</td>
+          {% for d in "1,2,3,4,5"|split:"," %}
+          <td style="padding:.4rem;border-bottom:1px solid var(--gray-100);border-left:1px solid var(--gray-100);min-width:120px;" class="schedule-cell" data-day="{{ d }}" data-hour="{{ forloop.parentloop.counter0 }}">
+            <div class="schedule-slot" onclick="addToSlot(this)"></div>
+          </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ADD MODAL -->
+<div id="addModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:var(--radius-xl);padding:1.75rem;width:100%;max-width:420px;box-shadow:var(--shadow-lg);">
+    <h3 style="margin-bottom:1.25rem;">➕ Agregar al horario</h3>
+    <div class="form-group">
+      <label class="form-label">Materia / Actividad</label>
+      <input type="text" id="newSubject" class="form-control" placeholder="Ej: Matemáticas, Recreo, Inglés...">
+    </div>
+    <div class="form-grid">
+      <div class="col-6 form-group">
+        <label class="form-label">Día</label>
+        <select id="newDay" class="form-control">
+          <option value="0">Lunes</option><option value="1">Martes</option>
+          <option value="2">Miércoles</option><option value="3">Jueves</option><option value="4">Viernes</option>
+        </select>
+      </div>
+      <div class="col-6 form-group">
+        <label class="form-label">Hora</label>
+        <select id="newHour" class="form-control">
+          {% for hour in "6:00,7:00,8:00,9:00,10:00,11:00,12:00,1:00,2:00,3:00,4:00,5:00"|split:"," %}
+          <option value="{{ forloop.counter0 }}">{{ hour }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Color</label>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;" id="colorPicker">
+        {% for color in "#E8EAF6,#E8F5E9,#FFF8E1,#FCE4EC,#E0F2F1,#F3E5F5,#FFF3F0"|split:"," %}
+        <div onclick="selectColor('{{ color }}')" style="width:28px;height:28px;border-radius:8px;background:{{ color }};cursor:pointer;border:2px solid transparent;transition:all .15s;" class="color-opt"></div>
+        {% endfor %}
+      </div>
+    </div>
+    <div style="display:flex;gap:.75rem;margin-top:1rem;">
+      <button class="btn-primary" onclick="saveSlot()"><i class="bi bi-check2"></i> Agregar</button>
+      <button class="btn-outline" onclick="document.getElementById('addModal').style.display='none'">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+let selectedColor = '#E8EAF6';
+let targetCell = null;
+const colors = {
+  '#E8EAF6':'var(--primary-dark)','#E8F5E9':'#1B5E20','#FFF8E1':'#7B3F00',
+  '#FCE4EC':'#880E4F','#E0F2F1':'#004D40','#F3E5F5':'#4A148C','#FFF3F0':'#BF360C'
+};
+
+// Load from localStorage
+function loadSchedule() {
+  const saved = JSON.parse(localStorage.getItem('mentore_schedule') || '{}');
+  Object.entries(saved).forEach(([key, data]) => {
+    const cell = document.querySelector(`[data-day="${data.day}"][data-hour="${data.hour}"] .schedule-slot`);
+    if (cell) renderSlot(cell, data);
+  });
+}
+
+function selectColor(c) {
+  selectedColor = c;
+  document.querySelectorAll('.color-opt').forEach(el => el.style.borderColor = 'transparent');
+  event.target.style.borderColor = 'var(--primary)';
+}
+
+function addToSlot(el) {
+  targetCell = el;
+  document.getElementById('addModal').style.display = 'flex';
+}
+
+function renderSlot(el, data) {
+  el.innerHTML = `
+    <div style="background:${data.color};border-radius:8px;padding:.35rem .6rem;font-size:.78rem;font-weight:700;color:${colors[data.color]||'#333'};cursor:default;position:relative;">
+      ${data.subject}
+      <span onclick="removeSlot(this.parentElement.parentElement,${JSON.stringify(data).replace(/'/g,'\\'')})" style="position:absolute;top:2px;right:4px;cursor:pointer;font-size:.7rem;opacity:.6;">✕</span>
+    </div>`;
+}
+
+function saveSlot() {
+  const subject = document.getElementById('newSubject').value.trim();
+  if (!subject) return;
+  const day = document.getElementById('newDay').value;
+  const hour = document.getElementById('newHour').value;
+  const data = {subject, color: selectedColor, day, hour};
+  const key = `${day}_${hour}`;
+  const saved = JSON.parse(localStorage.getItem('mentore_schedule') || '{}');
+  saved[key] = data;
+  localStorage.setItem('mentore_schedule', JSON.stringify(saved));
+  const cell = document.querySelector(`[data-day="${day}"][data-hour="${hour}"] .schedule-slot`);
+  if (cell) renderSlot(cell, data);
+  document.getElementById('addModal').style.display = 'none';
+  document.getElementById('newSubject').value = '';
+}
+
+function removeSlot(el, data) {
+  const saved = JSON.parse(localStorage.getItem('mentore_schedule') || '{}');
+  delete saved[`${data.day}_${data.hour}`];
+  localStorage.setItem('mentore_schedule', JSON.stringify(saved));
+  el.innerHTML = '';
+}
+
+loadSchedule();
+</script>
+{% endblock %}
+{% endblock %}

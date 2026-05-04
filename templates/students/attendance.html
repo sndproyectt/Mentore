@@ -1,0 +1,199 @@
+{% extends 'base/layout.html' %}
+{% load dict_filters %}
+{% block title %}Asistencia{% endblock %}
+{% block page_title %}Control de Asistencia{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>✅ Asistencia</h1>
+    <p>Registra la asistencia diaria de tus estudiantes</p>
+  </div>
+</div>
+
+<!-- FILTROS -->
+<div class="filter-bar" style="margin-bottom:20px;">
+  <form method="get" id="filterForm">
+    <div class="filter-bar-inner">
+      <div class="filter-item" style="flex:2;">
+        <span class="filter-label">Grupo</span>
+        <select name="classroom" class="form-control" onchange="document.getElementById('filterForm').submit()">
+          <option value="">Seleccionar grupo...</option>
+          {% for c in classrooms %}
+          <option value="{{ c.pk }}" {% if selected_classroom == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-item">
+        <span class="filter-label">Fecha</span>
+        <input type="date" name="date" value="{{ selected_date }}"
+          onchange="document.getElementById('filterForm').submit()"
+          style="border:none;padding:0;font-size:14px;font-weight:600;background:transparent;outline:none;color:var(--gray-900);">
+      </div>
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Ver</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if not selected_classroom %}
+<!-- ESTADO VACÍO: selecciona grupo -->
+<div class="card">
+  <div class="empty-state">
+    <span class="empty-icon">✅</span>
+    <h3>Selecciona un grupo para empezar</h3>
+    <p>Elige el grupo y la fecha en el filtro de arriba</p>
+  </div>
+</div>
+
+{% elif not students %}
+<div class="card">
+  <div class="empty-state">
+    <span class="empty-icon">👥</span>
+    <h3>Este grupo no tiene estudiantes</h3>
+    <p>Agrega estudiantes al grupo para registrar asistencia</p>
+  </div>
+</div>
+
+{% else %}
+
+<!-- RESUMEN -->
+<div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;" id="summaryBar">
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:#D1FAE5;border-radius:20px;font-size:13px;font-weight:700;color:#065F46;">
+    <i class="bi bi-check-circle-fill"></i> <span id="numPresent">0</span> Presentes
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:#FEE2E2;border-radius:20px;font-size:13px;font-weight:700;color:#991B1B;">
+    <i class="bi bi-x-circle-fill"></i> <span id="numAbsent">0</span> Ausentes
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:#FEF3C7;border-radius:20px;font-size:13px;font-weight:700;color:#92400E;">
+    <i class="bi bi-clock-fill"></i> <span id="numLate">0</span> Tarde
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;background:#DBEAFE;border-radius:20px;font-size:13px;font-weight:700;color:#1E40AF;">
+    <i class="bi bi-file-earmark-text-fill"></i> <span id="numExcused">0</span> Excusas
+  </div>
+  <div style="display:flex;gap:8px;margin-left:auto;align-items:center;">
+    <button type="button" class="btn btn-secondary btn-sm" onclick="markAll('present')"><i class="bi bi-check-all"></i> Todos presentes</button>
+    <button type="button" class="btn btn-secondary btn-sm" onclick="markAll('absent')"><i class="bi bi-x-lg"></i> Todos ausentes</button>
+  </div>
+</div>
+
+<form method="post" action="{% url 'students:save_attendance' %}">
+  {% csrf_token %}
+  <input type="hidden" name="classroom_id" value="{{ selected_classroom }}">
+  <input type="hidden" name="date" value="{{ selected_date }}">
+
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-header">
+      <span class="card-title">📋 {{ students|length }} estudiantes — {{ selected_date }}</span>
+    </div>
+    <div>
+      {% for student in students %}
+      {% with rec=attendance_map|get_item:student.pk %}
+      <div class="att-row" style="display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--gray-100);">
+
+        <!-- Avatar + nombre -->
+        <div style="display:flex;align-items:center;gap:10px;min-width:200px;">
+          <div class="avatar avatar-sm">{{ student.initials }}</div>
+          <div>
+            <div style="font-weight:700;font-size:14px;color:var(--gray-900);">{{ student.get_full_name }}</div>
+            {% if student.classroom %}<div style="font-size:11px;color:var(--gray-400);">{{ student.classroom.name }}</div>{% endif %}
+          </div>
+        </div>
+
+        <!-- Botones de estado -->
+        <div style="display:flex;gap:6px;flex:1;flex-wrap:wrap;">
+          {% for status_val, status_label in status_choices %}
+          <label style="cursor:pointer;">
+            <input type="radio" name="status_{{ student.pk }}" value="{{ status_val }}"
+              class="att-radio" data-status="{{ status_val }}"
+              style="display:none;"
+              {% if rec and rec.status == status_val %}checked
+              {% elif not rec and status_val == 'present' %}checked{% endif %}
+              onchange="updateSummary()">
+            <span class="att-btn att-btn-{{ status_val }}" data-for="{{ student.pk }}" data-val="{{ status_val }}"
+              onclick="selectStatus(this)"
+              style="display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;border:2px solid;
+              {% if status_val == 'present' %}background:{% if rec and rec.status == 'present' or not rec %}#D1FAE5{% else %}transparent{% endif %};color:{% if rec and rec.status == 'present' or not rec %}#065F46{% else %}var(--gray-300){% endif %};border-color:{% if rec and rec.status == 'present' or not rec %}#10B981{% else %}var(--gray-200){% endif %};
+              {% elif status_val == 'absent' %}background:{% if rec and rec.status == 'absent' %}#FEE2E2{% else %}transparent{% endif %};color:{% if rec and rec.status == 'absent' %}#991B1B{% else %}var(--gray-300){% endif %};border-color:{% if rec and rec.status == 'absent' %}#EF4444{% else %}var(--gray-200){% endif %};
+              {% elif status_val == 'late' %}background:{% if rec and rec.status == 'late' %}#FEF3C7{% else %}transparent{% endif %};color:{% if rec and rec.status == 'late' %}#92400E{% else %}var(--gray-300){% endif %};border-color:{% if rec and rec.status == 'late' %}#F59E0B{% else %}var(--gray-200){% endif %};
+              {% else %}background:{% if rec and rec.status == 'excused' %}#DBEAFE{% else %}transparent{% endif %};color:{% if rec and rec.status == 'excused' %}#1E40AF{% else %}var(--gray-300){% endif %};border-color:{% if rec and rec.status == 'excused' %}#3B82F6{% else %}var(--gray-200){% endif %};
+              {% endif %}">
+              {% if status_val == 'present' %}✅{% elif status_val == 'absent' %}❌{% elif status_val == 'late' %}⏰{% else %}📄{% endif %}
+              {{ status_label }}
+            </span>
+          </label>
+          {% endfor %}
+        </div>
+
+        <!-- Nota -->
+        <input type="text" name="note_{{ student.pk }}" value="{{ rec.note|default:'' }}"
+          placeholder="Observación..." class="form-control"
+          style="max-width:180px;font-size:12px;padding:6px 10px;">
+      </div>
+      {% endwith %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> Guardar asistencia</button>
+    <a href="{% url 'students:attendance' %}" class="btn btn-secondary">Cancelar</a>
+  </div>
+</form>
+
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function selectStatus(btn) {
+  const studentPk = btn.dataset.for;
+  const val = btn.dataset.val;
+  // Update radio
+  const radio = document.querySelector(`input[name="status_${studentPk}"][value="${val}"]`);
+  if (radio) radio.checked = true;
+  // Reset all buttons for this student
+  document.querySelectorAll(`.att-btn[data-for="${studentPk}"]`).forEach(b => {
+    const v = b.dataset.val;
+    const colors = {
+      present:  {bg:'#D1FAE5', color:'#065F46', border:'#10B981'},
+      absent:   {bg:'#FEE2E2', color:'#991B1B', border:'#EF4444'},
+      late:     {bg:'#FEF3C7', color:'#92400E', border:'#F59E0B'},
+      excused:  {bg:'#DBEAFE', color:'#1E40AF', border:'#3B82F6'},
+    };
+    if (b === btn) {
+      b.style.background = colors[v]?.bg || '#F0F0F0';
+      b.style.color = colors[v]?.color || '#333';
+      b.style.borderColor = colors[v]?.border || '#ccc';
+    } else {
+      b.style.background = 'transparent';
+      b.style.color = 'var(--gray-300)';
+      b.style.borderColor = 'var(--gray-200)';
+    }
+  });
+  updateSummary();
+}
+
+function markAll(status) {
+  document.querySelectorAll('.att-row').forEach(row => {
+    const btn = row.querySelector(`.att-btn[data-val="${status}"]`);
+    if (btn) selectStatus(btn);
+  });
+}
+
+function updateSummary() {
+  const counts = {present:0, absent:0, late:0, excused:0};
+  document.querySelectorAll('.att-radio:checked').forEach(r => {
+    if (counts[r.dataset.status] !== undefined) counts[r.dataset.status]++;
+  });
+  document.getElementById('numPresent').textContent = counts.present;
+  document.getElementById('numAbsent').textContent = counts.absent;
+  document.getElementById('numLate').textContent = counts.late;
+  document.getElementById('numExcused').textContent = counts.excused;
+}
+document.addEventListener('DOMContentLoaded', updateSummary);
+</script>
+{% endblock %}

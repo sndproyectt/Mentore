@@ -1,0 +1,519 @@
+{% extends 'base/layout.html' %}
+{% block title %}Calendario{% endblock %}
+{% block page_title %}Calendario{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ── TOOLBAR ── */
+.cal-toolbar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1.25rem;}
+.cal-nav{display:flex;align-items:center;gap:.5rem;}
+.cal-nav-btn{background:white;border:1.5px solid var(--gray-100);border-radius:var(--radius-sm);width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:var(--transition);}
+.cal-nav-btn:hover{background:var(--primary-50);border-color:var(--primary-200);}
+.cal-month-label{font-size:1.1rem;font-weight:800;color:var(--gray-900);min-width:180px;text-align:center;}
+
+/* ── CONNECT BANNER ── */
+.connect-banner{background:linear-gradient(135deg,var(--primary-50),var(--accent-50));border:1.5px solid var(--primary-200);border-radius:var(--radius-lg);padding:1.25rem 1.5rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.25rem;}
+.connect-banner-text{display:flex;align-items:center;gap:.75rem;}
+.connect-banner-icon{font-size:1.75rem;}
+
+/* ── CALENDAR GRID ── */
+.cal-grid{background:white;border-radius:var(--radius-lg);box-shadow:var(--shadow-card);overflow:hidden;}
+.cal-header-row{display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1.5px solid var(--gray-100);}
+.cal-header-cell{padding:.6rem;text-align:center;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);}
+.cal-header-cell.weekend{color:var(--primary);}
+.cal-body{display:grid;grid-template-columns:repeat(7,1fr);}
+.cal-day{border-right:1px solid var(--gray-100);border-bottom:1px solid var(--gray-100);min-height:110px;padding:.4rem;cursor:pointer;transition:background .15s;position:relative;}
+.cal-day:nth-child(7n){border-right:none;}
+.cal-day:hover{background:var(--primary-50);}
+.cal-day.other-month{background:var(--gray-50);}
+.cal-day.other-month .cal-day-num{color:var(--gray-300);}
+.cal-day.today .cal-day-num{background:var(--primary);color:white;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;}
+.cal-day-num{font-size:.8rem;font-weight:700;color:var(--gray-600);margin-bottom:.3rem;width:26px;height:26px;display:flex;align-items:center;justify-content:center;}
+.cal-event{font-size:.68rem;font-weight:600;padding:.15rem .4rem;border-radius:4px;margin-bottom:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:opacity .15s;}
+.cal-event:hover{opacity:.8;}
+.cal-more{font-size:.65rem;color:var(--primary);font-weight:700;cursor:pointer;padding:.1rem .3rem;}
+
+/* ── EVENT MODAL ── */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
+.modal-box{background:white;border-radius:var(--radius-xl);padding:1.75rem;width:100%;max-width:460px;box-shadow:var(--shadow-lg);max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:1.1rem;font-weight:800;margin-bottom:1.25rem;display:flex;align-items:center;gap:.5rem;}
+
+/* ── EVENT DETAIL POPUP ── */
+.event-popup{display:none;position:fixed;z-index:1001;background:white;border-radius:var(--radius-lg);box-shadow:0 8px 32px rgba(0,0,0,.18);padding:1.1rem 1.25rem;min-width:240px;max-width:320px;}
+
+/* ── LOADING ── */
+.cal-loading{display:flex;align-items:center;justify-content:center;padding:3rem;color:var(--gray-400);gap:.5rem;font-weight:600;}
+
+/* COLOR DOTS */
+.color-row{display:flex;gap:.4rem;margin-top:.3rem;}
+.color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0;}
+.color-dot.selected{border-color:var(--gray-700);transform:scale(1.15);}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- TOOLBAR -->
+<div class="cal-toolbar">
+  <div class="cal-nav">
+    <button class="cal-nav-btn" onclick="changeMonth(-1)"><i class="bi bi-chevron-left"></i></button>
+    <div class="cal-month-label" id="monthLabel">—</div>
+    <button class="cal-nav-btn" onclick="changeMonth(1)"><i class="bi bi-chevron-right"></i></button>
+    <button class="cal-nav-btn" onclick="goToday()" title="Hoy" style="font-size:.7rem;font-weight:800;width:auto;padding:.2rem .65rem;">Hoy</button>
+  </div>
+  <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;">
+    {% if connected %}
+    <span style="font-size:.78rem;font-weight:700;color:#16a34a;display:flex;align-items:center;gap:.3rem;">
+      <i class="bi bi-circle-fill" style="font-size:.5rem;"></i> Google Calendar conectado
+    </span>
+    <a href="{% url 'calendar_app:oauth_disconnect' %}" class="btn-outline btn-sm" style="font-size:.75rem;"
+       onclick="return confirm('¿Desconectar Google Calendar?')">
+      <i class="bi bi-x-lg"></i> Desconectar
+    </a>
+    {% else %}
+    <a href="{% url 'calendar_app:oauth_start' %}" class="btn-primary btn-sm">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:16px;height:16px;"> Conectar Google Calendar
+    </a>
+    {% endif %}
+    <button class="btn-primary btn-sm" onclick="openNewEvent()">
+      <i class="bi bi-plus-lg"></i> Nuevo evento
+    </button>
+  </div>
+</div>
+
+{% if not connected %}
+<!-- CONNECT BANNER -->
+<div class="connect-banner">
+  <div class="connect-banner-text">
+    <div class="connect-banner-icon">📅</div>
+    <div>
+      <div style="font-weight:800;font-size:.95rem;color:var(--gray-900);">Conecta tu Google Calendar</div>
+      <div style="font-size:.82rem;color:var(--gray-500);margin-top:.15rem;">Sincroniza tus eventos de Google Calendar con Mentore automáticamente</div>
+    </div>
+  </div>
+  <a href="{% url 'calendar_app:oauth_start' %}" class="btn-primary" style="white-space:nowrap;">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:18px;height:18px;"> Conectar ahora
+  </a>
+</div>
+{% endif %}
+
+<!-- CALENDAR GRID -->
+<div class="cal-grid">
+  <div class="cal-header-row">
+    <div class="cal-header-cell weekend">Dom</div>
+    <div class="cal-header-cell">Lun</div>
+    <div class="cal-header-cell">Mar</div>
+    <div class="cal-header-cell">Mié</div>
+    <div class="cal-header-cell">Jue</div>
+    <div class="cal-header-cell">Vie</div>
+    <div class="cal-header-cell weekend">Sáb</div>
+  </div>
+  <div class="cal-body" id="calBody">
+    <div class="cal-loading" style="grid-column:1/-1;"><i class="bi bi-arrow-clockwise" style="animation:spin 1s linear infinite;"></i> Cargando calendario…</div>
+  </div>
+</div>
+
+<!-- ── MODAL: NUEVO EVENTO ── -->
+<div class="modal-overlay" id="newEventModal">
+  <div class="modal-box">
+    <div class="modal-title">📅 Nuevo evento</div>
+    <div class="form-group">
+      <label class="form-label">Título *</label>
+      <input type="text" id="evTitle" class="form-control" placeholder="Ej: Reunión con padres, Examen Matemáticas…">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Descripción</label>
+      <textarea id="evDesc" class="form-control" rows="2" placeholder="Detalles opcionales…" style="resize:vertical;"></textarea>
+    </div>
+    <div class="form-grid">
+      <div class="col-6 form-group">
+        <label class="form-label">Fecha inicio *</label>
+        <input type="date" id="evDateStart" class="form-control">
+      </div>
+      <div class="col-6 form-group">
+        <label class="form-label">Fecha fin</label>
+        <input type="date" id="evDateEnd" class="form-control">
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="col-6 form-group">
+        <label class="form-label">Hora inicio</label>
+        <input type="time" id="evTimeStart" class="form-control">
+      </div>
+      <div class="col-6 form-group">
+        <label class="form-label">Hora fin</label>
+        <input type="time" id="evTimeEnd" class="form-control">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Color</label>
+      <div class="color-row" id="evColorRow">
+        <div class="color-dot selected" data-cid="1" style="background:#64B5E8;" onclick="selectEvColor(this)"></div>
+        <div class="color-dot" data-cid="2" style="background:#33B679;" onclick="selectEvColor(this)"></div>
+        <div class="color-dot" data-cid="3" style="background:#8E24AA;" onclick="selectEvColor(this)"></div>
+        <div class="color-dot" data-cid="4" style="background:#E67C73;" onclick="selectEvColor(this)"></div>
+        <div class="color-dot" data-cid="5" style="background:#F6BF26;" onclick="selectEvColor(this)"></div>
+        <div class="color-dot" data-cid="6" style="background:#F4511E;" onclick="selectEvColor(this)"></div>
+        <div class="color-dot" data-cid="7" style="background:#039BE5;" onclick="selectEvColor(this)"></div>
+        <div class="color-dot" data-cid="10" style="background:#0B8043;" onclick="selectEvColor(this)"></div>
+        <div class="color-dot" data-cid="11" style="background:#616161;" onclick="selectEvColor(this)"></div>
+      </div>
+    </div>
+    <div id="evError" style="color:var(--danger);font-size:.82rem;margin-bottom:.5rem;display:none;"></div>
+    <div style="display:flex;gap:.75rem;margin-top:1rem;">
+      <button class="btn-primary" onclick="saveNewEvent()" id="evSaveBtn"><i class="bi bi-check2"></i> Guardar</button>
+      <button class="btn-outline" onclick="closeModal('newEventModal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── EVENT DETAIL POPUP ── -->
+<div class="event-popup" id="eventPopup">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;margin-bottom:.6rem;">
+    <div id="popupTitle" style="font-weight:800;font-size:.95rem;color:var(--gray-900);flex:1;"></div>
+    <button onclick="closePopup()" style="background:none;border:none;cursor:pointer;color:var(--gray-400);font-size:1rem;padding:0;line-height:1;">✕</button>
+  </div>
+  <div id="popupTime" style="font-size:.8rem;color:var(--gray-500);margin-bottom:.5rem;"></div>
+  <div id="popupDesc" style="font-size:.82rem;color:var(--gray-600);margin-bottom:.75rem;"></div>
+  <button onclick="deleteCurrentEvent()" class="btn-danger btn-sm" style="font-size:.75rem;">
+    <i class="bi bi-trash"></i> Eliminar evento
+  </button>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const IS_CONNECTED = {{ connected|yesno:"true,false" }};
+const EVENTS_URL = "{% url 'calendar_app:api_events' %}";
+const CSRF = "{{ csrf_token }}";
+
+// Google Calendar color map (colorId → hex)
+const GC_COLORS = {
+  "1":"#64B5E8","2":"#33B679","3":"#8E24AA","4":"#E67C73",
+  "5":"#F6BF26","6":"#F4511E","7":"#039BE5","8":"#616161",
+  "9":"#3F51B5","10":"#0B8043","11":"#616161"
+};
+
+let currentDate = new Date();
+let allEvents = [];
+let selectedEvColorId = "1";
+let currentEventId = null;
+let preselectedDate = null;
+
+// ── INIT ──────────────────────────────────────
+document.addEventListener("DOMContentLoaded", () => {
+  renderCalendar();
+  if (IS_CONNECTED) fetchEvents();
+});
+
+// ── MONTH NAV ──────────────────────────────────
+function changeMonth(delta) {
+  currentDate.setMonth(currentDate.getMonth() + delta);
+  renderCalendar();
+  if (IS_CONNECTED) fetchEvents();
+}
+function goToday() {
+  currentDate = new Date();
+  renderCalendar();
+  if (IS_CONNECTED) fetchEvents();
+}
+
+// ── RENDER CALENDAR ────────────────────────────
+function renderCalendar() {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const today = new Date();
+
+  const months = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
+                  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  document.getElementById("monthLabel").textContent = `${months[month]} ${year}`;
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrev = new Date(year, month, 0).getDate();
+
+  const body = document.getElementById("calBody");
+  body.innerHTML = "";
+
+  let cells = [];
+  // Prev month
+  for (let i = firstDay - 1; i >= 0; i--) {
+    cells.push({ day: daysInPrev - i, month: month - 1, year, other: true });
+  }
+  // Current month
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push({ day: d, month, year, other: false });
+  }
+  // Next month fill
+  let remaining = 42 - cells.length;
+  for (let d = 1; d <= remaining; d++) {
+    cells.push({ day: d, month: month + 1, year, other: true });
+  }
+
+  cells.forEach(cell => {
+    const div = document.createElement("div");
+    div.className = "cal-day" + (cell.other ? " other-month" : "");
+
+    const cellDate = new Date(cell.year, cell.month, cell.day);
+    const isToday = !cell.other &&
+      cellDate.toDateString() === today.toDateString();
+    if (isToday) div.classList.add("today");
+
+    const dateStr = cellDate.toISOString().split("T")[0];
+
+    const numEl = document.createElement("div");
+    numEl.className = "cal-day-num";
+    numEl.textContent = cell.day;
+    div.appendChild(numEl);
+
+    // Events for this day
+    const dayEvents = allEvents.filter(ev => {
+      const start = (ev.start.date || ev.start.dateTime || "").substring(0, 10);
+      return start === dateStr;
+    });
+
+    const MAX_SHOW = 3;
+    dayEvents.slice(0, MAX_SHOW).forEach(ev => {
+      const evEl = document.createElement("div");
+      evEl.className = "cal-event";
+      const color = GC_COLORS[ev.colorId || "1"] || "#64B5E8";
+      evEl.style.background = color + "22";
+      evEl.style.color = color;
+      evEl.style.borderLeft = `3px solid ${color}`;
+      evEl.textContent = ev.summary || "(Sin título)";
+      evEl.onclick = (e) => { e.stopPropagation(); showEventPopup(ev, e); };
+      div.appendChild(evEl);
+    });
+    if (dayEvents.length > MAX_SHOW) {
+      const more = document.createElement("div");
+      more.className = "cal-more";
+      more.textContent = `+${dayEvents.length - MAX_SHOW} más`;
+      div.appendChild(more);
+    }
+
+    div.onclick = () => openNewEvent(dateStr);
+    body.appendChild(div);
+  });
+}
+
+// ── FETCH EVENTS FROM GOOGLE ───────────────────
+function fetchEvents() {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const timeMin = new Date(year, month, 1).toISOString();
+  const timeMax = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+
+  fetch(`${EVENTS_URL}?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`)
+    .then(r => r.json())
+    .then(data => {
+      if (data.items) {
+        allEvents = data.items;
+        renderCalendar();
+      } else if (data.error === "not_connected") {
+        // silently ignore
+      }
+    })
+    .catch(() => {});
+}
+
+// ── NEW EVENT MODAL ────────────────────────────
+function openNewEvent(dateStr) {
+  preselectedDate = dateStr || null;
+  if (dateStr) {
+    document.getElementById("evDateStart").value = dateStr;
+    document.getElementById("evDateEnd").value = dateStr;
+  } else {
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("evDateStart").value = today;
+    document.getElementById("evDateEnd").value = today;
+  }
+  document.getElementById("evTitle").value = "";
+  document.getElementById("evDesc").value = "";
+  document.getElementById("evTimeStart").value = "08:00";
+  document.getElementById("evTimeEnd").value = "09:00";
+  document.getElementById("evError").style.display = "none";
+  document.getElementById("newEventModal").style.display = "flex";
+  setTimeout(() => document.getElementById("evTitle").focus(), 100);
+}
+
+function closeModal(id) {
+  document.getElementById(id).style.display = "none";
+}
+
+function selectEvColor(el) {
+  document.querySelectorAll(".color-dot").forEach(d => d.classList.remove("selected"));
+  el.classList.add("selected");
+  selectedEvColorId = el.dataset.cid;
+}
+
+function saveNewEvent() {
+  const title = document.getElementById("evTitle").value.trim();
+  const desc = document.getElementById("evDesc").value.trim();
+  const dateStart = document.getElementById("evDateStart").value;
+  const dateEnd = document.getElementById("evDateEnd").value || dateStart;
+  const timeStart = document.getElementById("evTimeStart").value;
+  const timeEnd = document.getElementById("evTimeEnd").value;
+  const errEl = document.getElementById("evError");
+
+  if (!title || !dateStart) {
+    errEl.textContent = "El título y la fecha de inicio son obligatorios.";
+    errEl.style.display = "block";
+    return;
+  }
+
+  let startObj, endObj;
+  if (timeStart) {
+    startObj = { dateTime: `${dateStart}T${timeStart}:00`, timeZone: "America/Bogota" };
+    endObj = { dateTime: `${dateEnd}T${(timeEnd || timeStart)}:00`, timeZone: "America/Bogota" };
+  } else {
+    // All-day: end date must be day after
+    const endDate = new Date(dateEnd + "T00:00:00");
+    endDate.setDate(endDate.getDate() + 1);
+    startObj = { date: dateStart };
+    endObj = { date: endDate.toISOString().split("T")[0] };
+  }
+
+  const btn = document.getElementById("evSaveBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-arrow-clockwise" style="animation:spin 1s linear infinite;display:inline-block;"></i> Guardando…';
+
+  if (!IS_CONNECTED) {
+    // Save locally (localStorage fallback)
+    const localEv = {
+      id: "local_" + Date.now(),
+      summary: title,
+      description: desc,
+      colorId: selectedEvColorId,
+      start: startObj,
+      end: endObj,
+    };
+    allEvents.push(localEv);
+    renderCalendar();
+    closeModal("newEventModal");
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-check2"></i> Guardar';
+    return;
+  }
+
+  fetch(EVENTS_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-CSRFToken": CSRF },
+    body: JSON.stringify({
+      summary: title,
+      description: desc,
+      start: startObj,
+      end: endObj,
+      colorId: selectedEvColorId,
+    }),
+  })
+  .then(r => r.json())
+  .then(data => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-check2"></i> Guardar';
+    if (data.id) {
+      allEvents.push(data);
+      renderCalendar();
+      closeModal("newEventModal");
+    } else {
+      errEl.textContent = "Error al guardar el evento. Inténtalo de nuevo.";
+      errEl.style.display = "block";
+    }
+  })
+  .catch(() => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-check2"></i> Guardar';
+    errEl.textContent = "Error de conexión. Verifica tu internet.";
+    errEl.style.display = "block";
+  });
+}
+
+// ── EVENT POPUP ────────────────────────────────
+function showEventPopup(ev, mouseEvent) {
+  currentEventId = ev.id;
+  document.getElementById("popupTitle").textContent = ev.summary || "(Sin título)";
+
+  // Format time
+  let timeText = "";
+  if (ev.start.date) {
+    timeText = formatDate(ev.start.date);
+    if (ev.end.date && ev.end.date !== ev.start.date) {
+      const endD = new Date(ev.end.date + "T00:00:00");
+      endD.setDate(endD.getDate() - 1);
+      timeText += " → " + formatDate(endD.toISOString().split("T")[0]);
+    }
+  } else if (ev.start.dateTime) {
+    const s = new Date(ev.start.dateTime);
+    const e = new Date(ev.end.dateTime);
+    timeText = formatDate(ev.start.dateTime.substring(0,10)) +
+      " · " + s.toLocaleTimeString("es-CO", {hour:"2-digit",minute:"2-digit"}) +
+      " – " + e.toLocaleTimeString("es-CO", {hour:"2-digit",minute:"2-digit"});
+  }
+  document.getElementById("popupTime").textContent = timeText;
+  document.getElementById("popupDesc").textContent = ev.description || "";
+
+  const popup = document.getElementById("eventPopup");
+  popup.style.display = "block";
+
+  // Position near click
+  const x = mouseEvent.clientX + window.scrollX;
+  const y = mouseEvent.clientY + window.scrollY;
+  popup.style.left = Math.min(x + 10, window.innerWidth - 340) + "px";
+  popup.style.top = Math.max(y - 10, window.scrollY + 10) + "px";
+}
+
+function closePopup() {
+  document.getElementById("eventPopup").style.display = "none";
+  currentEventId = null;
+}
+
+function deleteCurrentEvent() {
+  if (!currentEventId) return;
+  if (!confirm("¿Eliminar este evento de Google Calendar?")) return;
+
+  const id = currentEventId;
+  closePopup();
+
+  if (id.startsWith("local_") || !IS_CONNECTED) {
+    allEvents = allEvents.filter(e => e.id !== id);
+    renderCalendar();
+    return;
+  }
+
+  fetch(`/dashboard/calendar/api/events/${id}/`, {
+    method: "DELETE",
+    headers: { "X-CSRFToken": CSRF },
+  })
+  .then(r => {
+    if (r.ok || r.status === 204) {
+      allEvents = allEvents.filter(e => e.id !== id);
+      renderCalendar();
+    } else {
+      alert("No se pudo eliminar el evento. Inténtalo de nuevo.");
+    }
+  })
+  .catch(() => alert("Error de conexión al eliminar."));
+}
+
+// ── HELPERS ────────────────────────────────────
+function formatDate(dateStr) {
+  const d = new Date(dateStr + "T12:00:00");
+  return d.toLocaleDateString("es-CO", { day:"numeric", month:"long", year:"numeric" });
+}
+
+// Close popup on outside click
+document.addEventListener("click", e => {
+  const popup = document.getElementById("eventPopup");
+  if (popup.style.display === "block" && !popup.contains(e.target)) closePopup();
+});
+
+// Close modal on backdrop click
+document.getElementById("newEventModal").addEventListener("click", function(e) {
+  if (e.target === this) closeModal("newEventModal");
+});
+</script>
+{% endblock %}

@@ -1,0 +1,119 @@
+{% extends 'base/layout.html' %}
+{% block title %}Notas{% endblock %}
+{% block page_title %}Gestión de Notas{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>Notas</h1>
+    <p>{{ grades.count }} nota{{ grades.count|pluralize:",s" }} registrada{{ grades.count|pluralize:",s" }} · Promedio: <strong>{{ avg }}</strong></p>
+  </div>
+  <div style="display:flex;gap:10px;">
+<a href="{% url 'grades:create' %}" class="btn btn-primary"><i class="bi bi-plus-circle-fill"></i> Registrar nota</a>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <form method="get">
+    <div class="filter-bar-inner">
+      <div class="filter-item" style="flex:2;">
+        <span class="filter-label">Buscar</span>
+        <div class="filter-search">
+          <i class="bi bi-search"></i>
+          <input type="text" name="q" value="{{ query }}" placeholder="Estudiante o actividad...">
+        </div>
+      </div>
+      {% if classrooms %}
+      <div class="filter-item">
+        <span class="filter-label">Grupo</span>
+        <select name="classroom" class="form-control">
+          <option value="">Todos</option>
+          {% for c in classrooms %}
+          <option value="{{ c.pk }}" {% if selected_classroom == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      {% if periods %}
+      <div class="filter-item">
+        <span class="filter-label">Período</span>
+        <select name="period" class="form-control">
+          <option value="">Todos</option>
+          {% for p in periods %}
+          <option value="{{ p }}" {% if selected_period == p %}selected{% endif %}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Filtrar</button>
+        {% if query or selected_classroom or selected_period %}
+        <a href="{% url 'grades:list' %}" class="btn btn-secondary btn-sm"><i class="bi bi-x"></i></a>
+        {% endif %}
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if grades %}
+<div class="card">
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Estudiante</th>
+          <th>Actividad</th>
+          <th>Tipo</th>
+          <th>Período</th>
+          <th>Nota</th>
+          <th>Fecha</th>
+          <th style="text-align:right;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for grade in grades %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:9px;">
+              <div class="avatar avatar-sm">{{ grade.student.initials }}</div>
+              <div>
+                <div style="font-weight:700;font-size:13px;">{{ grade.student.get_full_name }}</div>
+                {% if grade.student.classroom %}<div style="font-size:11px;color:var(--gray-500);">{{ grade.student.classroom.name }}</div>{% endif %}
+              </div>
+            </div>
+          </td>
+          <td style="font-weight:600;color:var(--gray-900);">{{ grade.activity_name }}</td>
+          <td><span class="badge badge-blue">{{ grade.get_grade_type_display }}</span></td>
+          <td style="font-size:13px;color:var(--gray-500);">{{ grade.period|default:"—" }}</td>
+          <td>
+            <span class="grade-pill {% if grade.score >= 4 %}grade-a{% elif grade.score >= 3 %}grade-b{% elif grade.score >= 2.5 %}grade-c{% else %}grade-d{% endif %}">
+              {{ grade.score }}
+            </span>
+            <span style="font-size:11px;color:var(--gray-400);">/{{ grade.max_score }}</span>
+          </td>
+          <td style="font-size:13px;color:var(--gray-500);">{{ grade.date|date:"d/m/Y" }}</td>
+          <td>
+            <div style="display:flex;gap:6px;justify-content:flex-end;">
+              <a href="{% url 'grades:edit' grade.pk %}" class="btn btn-secondary btn-sm"><i class="bi bi-pencil"></i></a>
+              <form method="post" action="{% url 'grades:delete' grade.pk %}" style="display:inline;" onsubmit="return confirm('¿Eliminar esta nota?')">
+                {% csrf_token %}<button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <span class="empty-icon">📊</span>
+    <h3>Sin notas registradas</h3>
+    <p>{% if query or selected_classroom or selected_period %}Intenta con otros filtros{% else %}Comienza registrando la primera nota{% endif %}</p>
+    {% if not query %}<a href="{% url 'grades:create' %}" class="btn btn-primary" style="margin-top:14px;"><i class="bi bi-plus-circle-fill"></i> Registrar nota</a>{% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

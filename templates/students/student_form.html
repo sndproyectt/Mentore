@@ -1,0 +1,132 @@
+{% extends 'base/layout.html' %}
+{% block title %}{{ action|default:"Nuevo" }} Estudiante{% endblock %}
+{% block page_title %}{{ action|default:"Nuevo" }} Estudiante{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>{% if action == "Editar" %}✏️ Editar Estudiante{% else %}👧 Nuevo Estudiante{% endif %}</h1>
+    <p>{% if action == "Editar" %}Modifica la información del estudiante{% else %}Agrega un nuevo estudiante a tu lista{% endif %}</p>
+  </div>
+  <a href="{% url 'students:list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+{% csrf_token %}
+<div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start;">
+
+  <!-- COLUMNA PRINCIPAL -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">📋 Información personal</span></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Nombre *</label>
+            <input type="text" name="first_name" class="form-control" value="{{ student.first_name }}" placeholder="Ej: Juan Esteban" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Apellido *</label>
+            <input type="text" name="last_name" class="form-control" value="{{ student.last_name }}" placeholder="Ej: Pérez García" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Documento de identidad</label>
+            <input type="text" name="document_id" class="form-control" value="{{ student.document_id }}" placeholder="Número de documento">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Género</label>
+            <select name="gender" class="form-control">
+              <option value="">Sin especificar</option>
+              <option value="M" {% if student.gender == "M" %}selected{% endif %}>Masculino</option>
+              <option value="F" {% if student.gender == "F" %}selected{% endif %}>Femenino</option>
+              <option value="O" {% if student.gender == "O" %}selected{% endif %}>Otro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Correo del estudiante</label>
+            <input type="email" name="email" class="form-control" value="{{ student.email }}" placeholder="correo@ejemplo.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha de nacimiento</label>
+            <input type="date" name="date_of_birth" class="form-control" value="{{ student.date_of_birth|date:'Y-m-d' }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Grupo / Salón</label>
+            <select name="classroom" class="form-control">
+              <option value="">Sin grupo</option>
+              {% for c in classrooms %}
+              <option value="{{ c.pk }}" {% if student.classroom_id == c.pk %}selected{% endif %}>{{ c.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Foto del estudiante</label>
+            <input type="file" name="photo" class="form-control" accept="image/*">
+            {% if student.photo %}<div style="margin-top:6px;font-size:12px;color:var(--gray-500);">Ya tiene foto cargada</div>{% endif %}
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observaciones</label>
+          <textarea name="notes" class="form-control" rows="2" placeholder="Notas especiales, condiciones médicas, etc.">{{ student.notes }}</textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">👨‍👩‍👧 Información del acudiente</span></div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Nombre del acudiente</label>
+            <input type="text" name="parent_name" class="form-control" value="{{ student.parent_name }}" placeholder="Nombre completo">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teléfono del acudiente</label>
+            <input type="text" name="parent_phone" class="form-control" value="{{ student.parent_phone }}" placeholder="Ej: 311 234 5678">
+          </div>
+          <div class="form-group" style="grid-column:1/-1;">
+            <label class="form-label">Correo del acudiente <span style="color:var(--danger);">*</span> <span style="font-size:11px;color:var(--gray-400);font-weight:400;text-transform:none;letter-spacing:0;">(los padres usan este correo para acceder al portal)</span></label>
+            <input type="email" name="parent_email" class="form-control" value="{{ student.parent_email }}" placeholder="correo.padre@ejemplo.com">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- COLUMNA LATERAL -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div class="card">
+      <div class="card-body" style="text-align:center;">
+        {% if student.photo %}
+        <img src="{{ student.photo.url }}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:10px;">
+        {% else %}
+        <div style="width:80px;height:80px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:800;color:#fff;margin:0 auto 10px;font-family:'Sora',sans-serif;">
+          {{ student.initials|default:"?" }}
+        </div>
+        {% endif %}
+        <div style="font-weight:800;font-size:15px;color:var(--gray-900);">{{ student.get_full_name|default:"Nuevo estudiante" }}</div>
+        {% if student.classroom %}<div style="font-size:12px;color:var(--gray-500);margin-top:3px;">{{ student.classroom.name }}</div>{% endif %}
+      </div>
+    </div>
+
+    <div style="background:var(--primary-light);border:1px solid var(--gray-200);border-radius:var(--radius);padding:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <i class="bi bi-info-circle" style="color:var(--primary);font-size:16px;"></i>
+        <span style="font-weight:700;font-size:13px;color:var(--primary-dark);">Portal de padres</span>
+      </div>
+      <p style="font-size:12px;color:var(--gray-600);line-height:1.6;margin:0;">El correo del acudiente es clave. Los padres lo usan para ver notas, asistencia y trabajos desde el Portal Familiar.</p>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;">
+        <i class="bi bi-check2-circle"></i> {% if action == "Editar" %}Guardar cambios{% else %}Crear estudiante{% endif %}
+      </button>
+      <a href="{% url 'students:list' %}" class="btn btn-secondary" style="width:100%;justify-content:center;">Cancelar</a>
+    </div>
+  </div>
+
+</div>
+</form>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends 'base/layout.html' %}
+{% block title %}Nuevo Comunicado{% endblock %}
+{% block page_title %}Nuevo Comunicado{% endblock %}
+{% block content %}
+
+<style>
+  .ann-wrap { max-width: 860px; margin: 0 auto; }
+
+  .ann-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+  }
+  .ann-header-left h1 { font-size: 22px; font-weight: 800; color: #0D2D42; margin: 0 0 3px; }
+  .ann-header-left p  { font-size: 13px; color: #80AACC; margin: 0; }
+
+  .ann-card {
+    background: #fff; border: 1px solid #D8EAF5;
+    border-radius: 16px; padding: 28px 32px;
+    box-shadow: 0 2px 12px rgba(21,112,166,.07);
+    margin-bottom: 20px;
+  }
+
+  .ann-field { margin-bottom: 22px; }
+  .ann-label {
+    display: block; font-size: 12px; font-weight: 700;
+    color: #3A6B8A; text-transform: uppercase; letter-spacing: .6px;
+    margin-bottom: 8px;
+  }
+  .ann-input, .ann-textarea, .ann-select {
+    width: 100%; box-sizing: border-box;
+    padding: 12px 16px; font-size: 15px;
+    border: 1.5px solid #D8EAF5; border-radius: 10px;
+    font-family: inherit; color: #0D2D42;
+    transition: border-color .2s, box-shadow .2s;
+    background: #FAFCFF;
+  }
+  .ann-input:focus, .ann-textarea:focus, .ann-select:focus {
+    outline: none; border-color: #1570A6;
+    box-shadow: 0 0 0 3px rgba(21,112,166,.12);
+    background: #fff;
+  }
+  .ann-textarea { resize: vertical; min-height: 140px; line-height: 1.65; }
+
+  .ann-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+  /* Priority visual selector */
+  .priority-group { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+  .priority-opt { position: relative; }
+  .priority-opt input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .priority-opt label {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; padding: 14px 10px; border: 2px solid #D8EAF5; border-radius: 12px;
+    cursor: pointer; font-size: 13px; font-weight: 700; color: #5588AA;
+    transition: all .2s; text-align: center; background: #FAFCFF;
+  }
+  .priority-opt label .pi { font-size: 22px; }
+  .priority-opt input:checked + label { border-width: 2px; }
+  .priority-opt.low  input:checked + label { border-color: #1570A6; color: #1570A6; background: #EEF6FD; }
+  .priority-opt.med  input:checked + label { border-color: #F59E0B; color: #B45309; background: #FFFBEB; }
+  .priority-opt.high input:checked + label { border-color: #EF4444; color: #B91C1C; background: #FFF1F1; }
+  .priority-opt label:hover { border-color: #A8CDE8; }
+
+  /* AI banner */
+  .ai-banner {
+    display: flex; align-items: center; gap: 16px;
+    background: linear-gradient(135deg, #EEF6FD, #FFF8EE);
+    border: 1.5px solid #A8D9F5; border-radius: 14px;
+    padding: 18px 22px;
+  }
+  .ai-icon {
+    width: 48px; height: 48px; flex-shrink: 0;
+    background: linear-gradient(135deg, #1570A6, #F59E0B);
+    border-radius: 12px; display: flex; align-items: center;
+    justify-content: center; font-size: 22px;
+    box-shadow: 0 4px 12px rgba(21,112,166,.25);
+  }
+  .ai-text { flex: 1; }
+  .ai-text strong { font-size: 14px; color: #0D2D42; font-weight: 800; }
+  .ai-text p { font-size: 13px; color: #5588AA; margin: 3px 0 0; line-height: 1.5; }
+
+  .btn-pub {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 24px; background: linear-gradient(135deg, #1570A6, #0D8FAB);
+    color: #fff; border: none; border-radius: 10px; font-size: 15px;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+    box-shadow: 0 4px 14px rgba(21,112,166,.3); transition: all .2s;
+  }
+  .btn-pub:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(21,112,166,.4); }
+
+  .btn-sec {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 20px; background: #F0F6FB;
+    color: #3A6B8A; border: 1.5px solid #D8EAF5; border-radius: 10px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: inherit; text-decoration: none; transition: all .2s;
+  }
+  .btn-sec:hover { background: #E4EEF6; }
+
+  @media (max-width: 600px) {
+    .ann-card { padding: 20px 18px; }
+    .ann-row { grid-template-columns: 1fr; }
+    .priority-group { grid-template-columns: repeat(3,1fr); }
+    .ai-banner { flex-direction: column; text-align: center; }
+  }
+</style>
+
+<div class="ann-wrap">
+
+  <div class="ann-header">
+    <div class="ann-header-left">
+      <h1>📢 Nuevo Comunicado</h1>
+      <p>Informa a tus estudiantes y sus familias</p>
+    </div>
+    <a href="{% url 'students:announcement_list' %}" class="btn-sec"><i class="bi bi-arrow-left"></i> Volver</a>
+  </div>
+
+  <div class="ann-card">
+    <form method="post">
+      {% csrf_token %}
+
+      <!-- TÍTULO -->
+      <div class="ann-field">
+        <label class="ann-label">📌 Título del comunicado *</label>
+        <input type="text" name="title" class="ann-input" placeholder="Ej: Reunión de padres el viernes..." required>
+      </div>
+
+      <!-- CONTENIDO -->
+      <div class="ann-field">
+        <label class="ann-label">📝 Contenido *</label>
+        <textarea name="content" class="ann-textarea" placeholder="Escribe aquí el mensaje completo para las familias..." required></textarea>
+      </div>
+
+      <!-- PRIORIDAD -->
+      <div class="ann-field">
+        <label class="ann-label">🏷️ Nivel de prioridad</label>
+        <div class="priority-group">
+          <div class="priority-opt low">
+            <input type="radio" name="priority" id="p-low" value="low" checked>
+            <label for="p-low"><span class="pi">📋</span> Informativo</label>
+          </div>
+          <div class="priority-opt med">
+            <input type="radio" name="priority" id="p-med" value="medium">
+            <label for="p-med"><span class="pi">⚠️</span> Importante</label>
+          </div>
+          <div class="priority-opt high">
+            <input type="radio" name="priority" id="p-high" value="high">
+            <label for="p-high"><span class="pi">🚨</span> Urgente</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRUPO -->
+      <div class="ann-field">
+        <label class="ann-label">🏫 Dirigido a</label>
+        <select name="classroom" class="ann-select">
+          <option value="">Todos los grupos</option>
+          {% for c in classrooms %}<option value="{{ c.pk }}">{{ c.name }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <!-- ACCIONES -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+        <button type="submit" class="btn-pub"><i class="bi bi-megaphone-fill"></i> Publicar comunicado</button>
+        <a href="{% url 'students:announcement_list' %}" class="btn-sec">Cancelar</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- AI BANNER -->
+  <div class="ai-banner">
+    <div class="ai-icon">✨</div>
+    <div class="ai-text">
+      <strong>¿Necesitas ayuda para redactar?</strong>
+      <p>El Asistente IA puede escribir comunicados claros y amables para los padres en segundos.</p>
+    </div>
+    <a href="{% url 'ai_assistant:chat' %}" class="btn-sec" style="flex-shrink:0;"><i class="bi bi-stars"></i> Usar IA</a>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'base/layout.html' %}
+{% block title %}{{ action|default:"Crear" }} Grupo{% endblock %}
+{% block page_title %}{{ action|default:"Crear" }} Grupo{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>🏫 {% if action == "Editar" %}Editar Grupo{% else %}Crear Grupo{% endif %}</h1>
+    <p>Organiza tus estudiantes en grupos o salones</p>
+  </div>
+  <a href="{% url 'students:classrooms' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+
+<div style="max-width:560px;">
+  <div class="card">
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Nombre del grupo *</label>
+          <input type="text" name="name" class="form-control" value="{{ classroom.name }}"
+            placeholder="Ej: 5° A, Grado 3, Sala Azul..." required>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Nivel / Grado</label>
+            <input type="text" name="grade_level" class="form-control" value="{{ classroom.grade_level }}"
+              placeholder="Ej: Primaria, 5°, Secundaria...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Materia</label>
+            <input type="text" name="subject" class="form-control" value="{{ classroom.subject }}"
+              placeholder="Ej: Matemáticas, Español...">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> {% if action == "Editar" %}Guardar cambios{% else %}Crear grupo{% endif %}</button>
+          <a href="{% url 'students:classrooms' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,120 @@
+{% extends 'base/layout.html' %}
+{% block title %}{{ action|default:"Registrar" }} Nota{% endblock %}
+{% block page_title %}{{ action|default:"Registrar" }} Nota{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>{% if action == "Editar" %}✏️ Editar Nota{% else %}📝 Registrar Nota{% endif %}</h1>
+    <p>Registra el desempeño académico de tus estudiantes</p>
+  </div>
+  <a href="{% url 'grades:list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:start;">
+
+  <div class="card">
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Estudiante *</label>
+          <select name="student" class="form-control" required>
+            <option value="">Seleccionar estudiante...</option>
+            {% for s in students %}
+            <option value="{{ s.pk }}" {% if grade.student_id == s.pk or preselect == s.pk|stringformat:"s" %}selected{% endif %}>
+              {{ s.get_full_name }}{% if s.classroom %} — {{ s.classroom.name }}{% endif %}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nombre de la actividad *</label>
+          <input type="text" name="activity_name" class="form-control" value="{{ grade.activity_name }}"
+            placeholder="Ej: Examen parcial 1, Tarea capítulo 3..." required>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Tipo de evaluación</label>
+            <select name="grade_type" class="form-control">
+              {% for val, lbl in grade_types %}
+              <option value="{{ val }}" {% if grade.grade_type == val %}selected{% endif %}>{{ lbl }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Período</label>
+            <input type="text" name="period" class="form-control" value="{{ grade.period }}"
+              placeholder="Ej: Periodo 1, Q1, Semestre A...">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nota obtenida * <span style="font-size:11px;color:var(--primary);font-weight:600;">(sobre {{ grade.max_score|default:"5.0" }})</span></label>
+            <input type="number" name="score" class="form-control" value="{{ grade.score }}"
+              step="0.01" min="0" max="100" placeholder="Ej: 4.5 o 45" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nota máxima</label>
+            <input type="number" name="max_score" class="form-control" value="{{ grade.max_score|default:'5.0' }}"
+              step="0.1" min="0.1" placeholder="5.0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fecha *</label>
+            <input type="date" name="date" class="form-control" value="{{ grade.date|date:'Y-m-d'|default:today }}" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Observaciones</label>
+          <textarea name="observations" class="form-control" rows="3"
+            placeholder="Comentarios sobre el desempeño...">{{ grade.observations }}</textarea>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check2-circle"></i> {% if action == "Editar" %}Guardar cambios{% else %}Registrar nota{% endif %}</button>
+          <a href="{% url 'grades:list' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Escala referencia -->
+  <div>
+    <div class="card" style="margin-bottom:14px;">
+      <div class="card-header"><span class="card-title">💡 Escala de notas</span></div>
+      <div style="padding:14px;">
+        {% for label, min, max, cls in grade_scale %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:8px;margin-bottom:6px;{% if forloop.last %}margin-bottom:0;{% endif %}background:var(--gray-50);">
+          <span style="font-size:13px;font-weight:600;color:var(--gray-700);">{{ label }}</span>
+          <span class="grade-pill {{ cls }}">{{ min }} – {{ max }}</span>
+        </div>
+        {% empty %}
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:8px;margin-bottom:6px;background:#D1FAE5;">
+          <span style="font-size:13px;font-weight:600;color:var(--gray-700);">Excelente</span>
+          <span class="grade-pill grade-a">4.5 – 5.0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:8px;margin-bottom:6px;background:#DBEAFE;">
+          <span style="font-size:13px;font-weight:600;color:var(--gray-700);">Bueno</span>
+          <span class="grade-pill grade-b">3.5 – 4.4</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:8px;margin-bottom:6px;background:#FEF3C7;">
+          <span style="font-size:13px;font-weight:600;color:var(--gray-700);">Básico</span>
+          <span class="grade-pill grade-c">3.0 – 3.4</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border-radius:8px;background:#FEE2E2;">
+          <span style="font-size:13px;font-weight:600;color:var(--gray-700);">Bajo</span>
+          <span class="grade-pill grade-d">0.0 – 2.9</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div style="background:linear-gradient(135deg,var(--primary-light),#FEF3C7);border:1px solid var(--gray-200);border-radius:var(--radius);padding:16px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:18px;">✨</span>
+        <span style="font-weight:700;font-size:13px;color:var(--primary-dark);">Ayuda IA</span>
+      </div>
+      <p style="font-size:12px;color:var(--gray-600);margin-bottom:12px;line-height:1.6;">¿Necesitas retroalimentación personalizada? El Asistente IA puede ayudarte.</p>
+      <a href="{% url 'ai_assistant:chat' %}" class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;"><i class="bi bi-stars"></i> Asistente IA</a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

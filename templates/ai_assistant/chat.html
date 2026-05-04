@@ -1,0 +1,166 @@
+{% extends 'base/layout.html' %}
+{% block title %}Asistente IA{% endblock %}
+{% block page_title %}Asistente IA para Primaria{% endblock %}
+{% block content %}
+
+<div class="ai-header-bar">
+  <div class="ai-header-icon">✨</div>
+  <div class="ai-header-text">
+    <h2>Mentore IA — Tu asistente pedagógico</h2>
+    <p>Especializado para profes de primaria · Genera actividades, ideas y recursos al instante</p>
+  </div>
+  <div style="display:flex;gap:.5rem;align-items:center;">
+    <span class="ai-header-badge">IA</span>
+    <form method="post" action="{% url 'ai_assistant:clear' %}" onsubmit="return confirm('¿Limpiar el historial?')">
+      {% csrf_token %}<button type="submit" class="btn-outline btn-sm"><i class="bi bi-trash"></i></button>
+    </form>
+  </div>
+</div>
+
+<div class="ai-category-tabs">
+  <span class="ai-cat-tab active" onclick="filterChips('all',this)">🎯 Todo</span>
+  <span class="ai-cat-tab" onclick="filterChips('actividades',this)">📚 Actividades</span>
+  <span class="ai-cat-tab" onclick="filterChips('evaluacion',this)">📝 Evaluación</span>
+  <span class="ai-cat-tab" onclick="filterChips('dinamicas',this)">🎮 Dinámicas</span>
+  <span class="ai-cat-tab" onclick="filterChips('proyectos',this)">🚀 Proyectos</span>
+  <span class="ai-cat-tab" onclick="filterChips('comunicacion',this)">💌 Comunicados</span>
+</div>
+
+<div class="ai-chips-row" id="chipsContainer">
+  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Genera una actividad lúdica de matemáticas para primero de primaria sobre sumas y restas con objetos del salón">🧮 Sumas y restas divertidas</span>
+  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea una actividad de lectoescritura creativa para segundo de primaria usando dibujos y colores">✏️ Lectoescritura creativa</span>
+  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña una actividad de ciencias naturales para tercer grado sobre los animales del entorno colombiano">🦋 Animales colombianos</span>
+  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea una actividad de educación artística para primaria usando materiales reciclados">🎨 Arte con reciclaje</span>
+  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña una actividad sobre las plantas y sus partes para cuarto de primaria con experimento sencillo">🌱 Las plantas y sus partes</span>
+  <span class="ai-chip" data-cat="evaluacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea un quiz de 5 preguntas sobre las tablas de multiplicar del 2 al 5 para tercer grado de primaria">📝 Quiz multiplicación</span>
+  <span class="ai-chip" data-cat="evaluacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña una rúbrica de evaluación para valorar la caligrafía y presentación en cuadernos de primaria">📋 Rúbrica caligrafía</span>
+  <span class="ai-chip" data-cat="evaluacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea una evaluación formativa sobre fracciones para cuarto de primaria con actividades visuales">➗ Evaluación fracciones</span>
+  <span class="ai-chip" data-cat="evaluacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña una lista de cotejo para evaluar hábitos de convivencia en el salón de clases">✅ Lista de cotejo convivencia</span>
+  <span class="ai-chip" data-cat="dinamicas" onclick="setPrompt(this.dataset.prompt)" data-prompt="Sugiere 5 juegos educativos para repasar las vocales y consonantes en primero de primaria">🎲 Juegos con letras</span>
+  <span class="ai-chip" data-cat="dinamicas" onclick="setPrompt(this.dataset.prompt)" data-prompt="Propón 3 dinámicas de integración para inicio del año escolar en primaria que fomenten el trabajo en equipo">🤝 Dinámicas de integración</span>
+  <span class="ai-chip" data-cat="dinamicas" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea una dinámica kinestésica para aprender las figuras geométricas usando el cuerpo y el movimiento">🔷 Geometría con movimiento</span>
+  <span class="ai-chip" data-cat="proyectos" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña un proyecto interdisciplinario de 2 semanas para quinto de primaria sobre el medio ambiente y el reciclaje">♻️ Proyecto medio ambiente</span>
+  <span class="ai-chip" data-cat="proyectos" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea un proyecto de aula sobre nuestra región colombiana para tercer grado que incluya arte, sociales y lenguaje">🇨🇴 Mi región colombiana</span>
+  <span class="ai-chip" data-cat="proyectos" onclick="setPrompt(this.dataset.prompt)" data-prompt="Propón un proyecto de huerta escolar para primaria con actividades semanales durante un mes">🌻 Huerta escolar</span>
+  <span class="ai-chip" data-cat="comunicacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Redacta un comunicado amable para los padres de familia sobre la importancia de los hábitos de lectura en casa">💌 Circular lectura en casa</span>
+  <span class="ai-chip" data-cat="comunicacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Escribe un mensaje positivo de bienvenida al nuevo año escolar para compartir con los padres de familia">🎉 Bienvenida año escolar</span>
+</div>
+
+<div class="ai-chat-wrapper">
+  <div class="ai-chat-messages" id="chatMessages">
+    <div class="ai-message bot">
+      <div class="ai-avatar bot">✨</div>
+      <div class="ai-message-content">
+        ¡Hola, profe! 👋 Soy <strong>Mentore IA</strong>, tu asistente pedagógico.<br><br>
+        Puedo ayudarte con:<br>
+        📚 <strong>Actividades y talleres</strong> creativos por grado<br>
+        📝 <strong>Evaluaciones y rúbricas</strong> adaptadas<br>
+        🎮 <strong>Dinámicas y juegos</strong> educativos<br>
+        🚀 <strong>Proyectos de aula</strong> interdisciplinarios<br>
+        💌 <strong>Comunicados</strong> para padres<br><br>
+        ¿Con qué empezamos hoy?
+      </div>
+    </div>
+    {% for chat in history %}
+    <div class="ai-message user">
+      <div class="ai-avatar user"><i class="bi bi-person-fill"></i></div>
+      <div class="ai-message-content">{{ chat.user_message }}</div>
+    </div>
+    <div class="ai-message bot">
+      <div class="ai-avatar bot">✨</div>
+      <div class="ai-message-content" id="md-{{ chat.pk }}">{{ chat.ai_response }}</div>
+    </div>
+    {% endfor %}
+    <div class="ai-message bot" id="loadingMsg" style="display:none;">
+      <div class="ai-avatar bot">✨</div>
+      <div class="ai-message-content"><span class="loading-dots"><span></span><span></span><span></span></span></div>
+    </div>
+  </div>
+  <div class="ai-input-bar">
+    <textarea id="userInput" class="ai-input" placeholder="Escribe tu consulta pedagógica... (Enter para enviar, Shift+Enter para nueva línea)" rows="1"></textarea>
+    <button id="sendBtn" class="btn-primary" onclick="sendMessage()"><i class="bi bi-send-fill"></i> Enviar</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const SEND_URL = "{% url 'ai_assistant:send' %}";
+const CSRF_TOKEN = "{{ csrf_token }}";
+
+function filterChips(cat, tab) {
+  document.querySelectorAll('.ai-cat-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+  document.querySelectorAll('.ai-chip').forEach(chip => {
+    chip.style.display = (cat === 'all' || chip.dataset.cat === cat) ? '' : 'none';
+  });
+}
+function setPrompt(text) {
+  const input = document.getElementById('userInput');
+  input.value = text;
+  input.style.height = 'auto';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  input.focus();
+}
+function scrollToBottom() {
+  const msgs = document.getElementById('chatMessages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+function formatMarkdown(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/`(.*?)`/g, '<code style="background:var(--primary-50);padding:.1rem .3rem;border-radius:4px;font-size:.85em;">$1</code>')
+    .replace(/\n/g, '<br>')
+    .replace(/#{3}\s(.+)/g, '<h6 style="margin-top:.75rem;margin-bottom:.25rem;font-weight:800;">$1</h6>')
+    .replace(/#{2}\s(.+)/g, '<h5 style="margin-top:.75rem;margin-bottom:.25rem;font-weight:800;">$1</h5>')
+    .replace(/#{1}\s(.+)/g, '<h4 style="margin-top:.75rem;margin-bottom:.25rem;font-weight:800;">$1</h4>');
+}
+document.querySelectorAll('[id^="md-"]').forEach(el => { el.innerHTML = formatMarkdown(el.textContent); });
+
+async function sendMessage() {
+  const input = document.getElementById('userInput');
+  const message = input.value.trim();
+  if (!message) return;
+  const chatMessages = document.getElementById('chatMessages');
+  const loadingMsg = document.getElementById('loadingMsg');
+  const sendBtn = document.getElementById('sendBtn');
+  const userDiv = document.createElement('div');
+  userDiv.className = 'ai-message user';
+  userDiv.innerHTML = `<div class="ai-avatar user"><i class="bi bi-person-fill"></i></div><div class="ai-message-content">${message.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+  chatMessages.insertBefore(userDiv, loadingMsg);
+  input.value = '';
+  input.style.height = 'auto';
+  loadingMsg.style.display = 'flex';
+  sendBtn.disabled = true;
+  sendBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Pensando...';
+  scrollToBottom();
+  try {
+    const response = await fetch(SEND_URL, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN},
+      body: JSON.stringify({message})
+    });
+    const data = await response.json();
+    loadingMsg.style.display = 'none';
+    const botDiv = document.createElement('div');
+    botDiv.className = 'ai-message bot';
+    botDiv.innerHTML = `<div class="ai-avatar bot">✨</div><div class="ai-message-content">${formatMarkdown(data.response || data.error || 'Error desconocido')}</div>`;
+    chatMessages.insertBefore(botDiv, loadingMsg);
+  } catch (err) {
+    loadingMsg.style.display = 'none';
+    const errDiv = document.createElement('div');
+    errDiv.className = 'ai-message bot';
+    errDiv.innerHTML = `<div class="ai-avatar bot">✨</div><div class="ai-message-content" style="color:var(--danger);">Error de conexión. Intenta de nuevo.</div>`;
+    chatMessages.insertBefore(errDiv, loadingMsg);
+  }
+  sendBtn.disabled = false;
+  sendBtn.innerHTML = '<i class="bi bi-send-fill"></i> Enviar';
+  scrollToBottom();
+}
+const textarea = document.getElementById('userInput');
+textarea.addEventListener('input', function() { this.style.height = 'auto'; this.style.height = Math.min(this.scrollHeight, 120) + 'px'; });
+textarea.addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } });
+scrollToBottom();
+</script>
+{% endblock %}

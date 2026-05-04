@@ -1,0 +1,226 @@
+{% extends 'base/layout.html' %}
+{% block title %}Galería{% endblock %}
+{% block page_title %}Galería de Trabajos{% endblock %}
+{% block content %}
+
+<div class="gallery-hero">
+  <h1>🖼️ Galería de Trabajos</h1>
+  <p>El espacio donde celebramos el talento de tus estudiantes</p>
+  <div class="gallery-hero-actions">
+    <a href="{% url 'gallery:upload' %}" class="gallery-hero-btn white"><i class="bi bi-upload"></i> Subir trabajo</a>
+    <a href="{% url 'gallery:parent_gallery' %}" class="gallery-hero-btn outline" target="_blank"><i class="bi bi-eye"></i> Vista para padres</a>
+  </div>
+</div>
+
+<div class="gallery-stats-strip">
+  <div class="gallery-stat-item"><span>📁</span><span class="num">{{ works.count }}</span><span>Trabajo{{ works.count|pluralize:",s" }}</span></div>
+  {% if categories %}<div class="gallery-stat-item"><span>🏷️</span><span class="num">{{ categories.count }}</span><span>Categoría{{ categories.count|pluralize:",s" }}</span></div>{% endif %}
+</div>
+
+<div class="filter-bar" style="margin-bottom:20px;">
+  <form method="get">
+    <div class="filter-bar-inner">
+      <div class="filter-item" style="flex:2;">
+        <span class="filter-label">Buscar trabajo</span>
+        <div class="filter-search">
+          <i class="bi bi-search"></i>
+          <input type="text" name="q" value="{{ query }}" placeholder="Título o nombre del estudiante...">
+        </div>
+      </div>
+      {% if categories %}
+      <div class="filter-item">
+        <span class="filter-label">Categoría</span>
+        <select name="cat" class="form-control">
+          <option value="">Todas las categorías</option>
+          {% for cat in categories %}<option value="{{ cat.pk }}" {% if request.GET.cat == cat.pk|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>{% endfor %}
+        </select>
+      </div>
+      {% endif %}
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Filtrar</button>
+        {% if query or request.GET.cat %}<a href="{% url 'gallery:list' %}" class="btn btn-secondary btn-sm"><i class="bi bi-x"></i></a>{% endif %}
+      </div>
+    </div>
+  </form>
+</div>
+
+{% if works %}
+
+<!-- CARRUSEL DATA -->
+<script>
+const galleryWorks = [
+  {% for work in works %}
+  {
+    id: {{ work.pk }},
+    title: "{{ work.title|escapejs }}",
+    student: "{{ work.student.get_full_name|escapejs }}",
+    date: "{{ work.created_at|date:'d M Y' }}",
+    category: "{% if work.category %}{{ work.category.name|escapejs }}{% endif %}",
+    is_public: {{ work.is_public|yesno:"true,false" }},
+    image: "{% if work.image %}{{ work.image.url }}{% endif %}",
+    file: "{% if work.file %}{{ work.file.url }}{% endif %}",
+    description: "{{ work.description|escapejs|truncatewords:30 }}",
+    detail_url: "{% url 'gallery:detail' work.pk %}",
+    delete_url: "{% url 'gallery:delete' work.pk %}",
+  },
+  {% endfor %}
+];
+</script>
+
+<!-- MODAL CARRUSEL -->
+<div id="carouselModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.72);align-items:center;justify-content:center;">
+  <div style="background:white;border-radius:1.25rem;width:min(720px,96vw);max-height:90vh;overflow:hidden;display:flex;flex-direction:column;position:relative;box-shadow:0 24px 64px rgba(0,0,0,.4);">
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--gray-100);">
+      <div style="display:flex;align-items:center;gap:.5rem;">
+        <span style="font-size:1.1rem;">🖼️</span>
+        <span id="carouselCounter" style="font-size:.85rem;color:var(--gray-400);font-weight:600;"></span>
+      </div>
+      <button onclick="closeCarousel()" style="background:none;border:none;font-size:1.4rem;color:var(--gray-400);cursor:pointer;line-height:1;padding:.25rem .5rem;border-radius:.5rem;" onmouseover="this.style.background='var(--gray-100)'" onmouseout="this.style.background='none'">✕</button>
+    </div>
+    <!-- Content -->
+    <div style="flex:1;overflow-y:auto;padding:1.25rem;">
+      <div id="carouselContent"></div>
+    </div>
+    <!-- Footer nav -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.25rem;border-top:1px solid var(--gray-100);gap:.75rem;flex-wrap:wrap;">
+      <button onclick="carouselPrev()" id="btnPrev" class="btn-outline btn-sm"><i class="bi bi-chevron-left"></i> Anterior</button>
+      <div id="carouselDots" style="display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center;"></div>
+      <button onclick="carouselNext()" id="btnNext" class="btn-outline btn-sm">Siguiente <i class="bi bi-chevron-right"></i></button>
+    </div>
+  </div>
+</div>
+
+<div class="gallery-grid">
+  {% for work in works %}
+  <div class="gallery-card fade-in">
+    <div class="gallery-thumb" style="cursor:pointer;" onclick="openCarousel({{ forloop.counter0 }})">
+      {% if work.image %}<img src="{{ work.image.url }}" alt="{{ work.title }}">
+      {% else %}<div class="gallery-thumb-placeholder">{% if work.file %}📄{% else %}✏️{% endif %}</div>{% endif %}
+      <div style="position:absolute;top:.5rem;left:.5rem;display:flex;gap:.3rem;flex-wrap:wrap;">
+        {% if work.category %}<span class="badge badge-blue" style="font-size:.6rem;">{{ work.category.name }}</span>{% endif %}
+        {% if not work.is_public %}<span class="badge badge-gray" style="font-size:.6rem;"><i class="bi bi-eye-slash"></i></span>{% endif %}
+      </div>
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,0);display:flex;align-items:center;justify-content:center;transition:background .2s;" class="thumb-overlay">
+        <i class="bi bi-zoom-in" style="color:white;font-size:1.5rem;opacity:0;transition:opacity .2s;"></i>
+      </div>
+    </div>
+    <div class="gallery-info">
+      <div class="gallery-title" title="{{ work.title }}">{{ work.title }}</div>
+      <div class="gallery-meta"><i class="bi bi-person"></i> {{ work.student.get_full_name }}</div>
+      <div class="gallery-meta mt-1"><i class="bi bi-calendar3"></i> {{ work.created_at|date:"d M Y" }}
+        {% if work.is_public %}<span class="badge badge-green" style="font-size:.6rem;margin-left:.3rem;"><i class="bi bi-eye"></i> Público</span>{% endif %}
+      </div>
+      <div class="gallery-actions">
+        <button onclick="openCarousel({{ forloop.counter0 }})" class="btn-outline btn-sm" style="flex:1;justify-content:center;"><i class="bi bi-eye"></i> Ver</button>
+        <form method="post" action="{% url 'gallery:delete' work.pk %}" onsubmit="return confirm('¿Eliminar este trabajo?')">
+          {% csrf_token %}<button type="submit" class="btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<style>
+.gallery-card .gallery-thumb:hover .thumb-overlay { background: rgba(0,0,0,.35) !important; }
+.gallery-card .gallery-thumb:hover .thumb-overlay i { opacity: 1 !important; }
+</style>
+
+<script>
+let carouselIdx = 0;
+
+function openCarousel(idx) {
+  carouselIdx = idx;
+  document.getElementById('carouselModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  renderCarousel();
+}
+
+function closeCarousel() {
+  document.getElementById('carouselModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function carouselPrev() {
+  if (carouselIdx > 0) { carouselIdx--; renderCarousel(); }
+}
+
+function carouselNext() {
+  if (carouselIdx < galleryWorks.length - 1) { carouselIdx++; renderCarousel(); }
+}
+
+function renderCarousel() {
+  const w = galleryWorks[carouselIdx];
+  const total = galleryWorks.length;
+  document.getElementById('carouselCounter').textContent = `${carouselIdx + 1} de ${total}`;
+  document.getElementById('btnPrev').disabled = carouselIdx === 0;
+  document.getElementById('btnNext').disabled = carouselIdx === total - 1;
+
+  // Dots
+  let dots = '';
+  for (let i = 0; i < total; i++) {
+    dots += `<span onclick="openCarousel(${i})" style="width:8px;height:8px;border-radius:50%;background:${i===carouselIdx?'var(--primary)':'var(--gray-200)'};cursor:pointer;display:inline-block;transition:background .2s;"></span>`;
+  }
+  document.getElementById('carouselDots').innerHTML = dots;
+
+  // Content
+  let mediaHtml = '';
+  if (w.image) {
+    mediaHtml = `<img src="${w.image}" alt="${w.title}" style="width:100%;max-height:360px;object-fit:contain;border-radius:.75rem;background:var(--gray-50);">`;
+  } else {
+    mediaHtml = `<div style="height:200px;display:flex;align-items:center;justify-content:center;background:var(--gray-50);border-radius:.75rem;font-size:4rem;">${w.file ? '📄' : '✏️'}</div>`;
+  }
+
+  let categoryBadge = w.category ? `<span class="badge badge-blue">${w.category}</span>` : '';
+  let publicBadge = w.is_public ? `<span class="badge badge-green"><i class="bi bi-eye"></i> Público</span>` : `<span class="badge badge-gray"><i class="bi bi-eye-slash"></i> Privado</span>`;
+  let fileBtn = w.file ? `<a href="${w.file}" class="btn-outline btn-sm" target="_blank" download><i class="bi bi-download"></i> Descargar archivo</a>` : '';
+  let descHtml = w.description ? `<p style="color:var(--gray-600);font-size:.875rem;line-height:1.7;margin:0;">${w.description}</p>` : '';
+
+  document.getElementById('carouselContent').innerHTML = `
+    <div>
+      ${mediaHtml}
+      <div style="margin-top:1.1rem;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem;">
+          <h2 style="font-size:1.15rem;font-weight:800;color:var(--gray-900);margin:0;">${w.title}</h2>
+          <div style="display:flex;gap:.35rem;">${categoryBadge}${publicBadge}</div>
+        </div>
+        <div style="display:flex;gap:1.25rem;flex-wrap:wrap;margin-bottom:.85rem;">
+          <span style="font-size:.82rem;color:var(--gray-500);"><i class="bi bi-person"></i> ${w.student}</span>
+          <span style="font-size:.82rem;color:var(--gray-500);"><i class="bi bi-calendar3"></i> ${w.date}</span>
+        </div>
+        ${descHtml ? `<div style="background:var(--gray-50);border-radius:.6rem;padding:.75rem;margin-bottom:.85rem;">${descHtml}</div>` : ''}
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;">
+          <a href="${w.detail_url}" class="btn-primary btn-sm"><i class="bi bi-box-arrow-up-right"></i> Ver página completa</a>
+          ${fileBtn}
+        </div>
+      </div>
+    </div>`;
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+  if (document.getElementById('carouselModal').style.display === 'flex') {
+    if (e.key === 'ArrowLeft') carouselPrev();
+    if (e.key === 'ArrowRight') carouselNext();
+    if (e.key === 'Escape') closeCarousel();
+  }
+});
+
+// Close on backdrop click
+document.getElementById('carouselModal').addEventListener('click', function(e) {
+  if (e.target === this) closeCarousel();
+});
+</script>
+
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="icon">🖼️</div>
+    <h3>{% if query %}Sin resultados{% else %}La galería está vacía{% endif %}</h3>
+    <p>{% if query %}No se encontraron trabajos con ese término{% else %}¡Sube el primer trabajo de tus estudiantes!{% endif %}</p>
+    <a href="{% url 'gallery:upload' %}" class="btn-primary mt-3"><i class="bi bi-upload"></i> Subir primer trabajo</a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

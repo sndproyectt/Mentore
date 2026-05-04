@@ -1,0 +1,625 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Familias — Mentore</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{% static 'css/mentore.css' %}">
+  <style>
+    body { background: linear-gradient(135deg, #0A2A40 0%, #1570A6 55%, #2196C9 100%); min-height: 100vh; display: flex; flex-direction: column; }
+
+    /* NAV */
+    .p-nav { padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; background: rgba(0,0,0,.15); }
+    .p-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .p-brand-icon { width:34px;height:34px;background:linear-gradient(135deg,#F59E0B,#F97316);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px; }
+    .p-brand-name { font-size:18px;font-weight:800;color:#fff;letter-spacing:-.5px; }
+    .p-brand-name span { color:#F59E0B; }
+    .p-tag { font-size:12px;color:rgba(255,255,255,.55);font-weight:600; }
+
+    /* CENTERED CARD LAYOUT */
+    .p-center { flex:1; display:flex; align-items:center; justify-content:center; padding:24px 16px; }
+    .p-card { background:#fff; border-radius:20px; padding:40px 36px; width:100%; max-width:460px; box-shadow:0 20px 60px rgba(0,0,0,.28); }
+
+    /* LOGIN card inner */
+    .p-logo { text-align:center; margin-bottom:28px; }
+    .p-logo-icon { font-size:44px; display:block; margin-bottom:8px; }
+    .p-logo h1 { font-family:'Sora',sans-serif; font-size:26px; font-weight:800; color:var(--primary); }
+    .p-logo p { color:var(--gray-500); font-size:14px; margin-top:4px; }
+
+    /* TABS */
+    .p-tabs { display:flex; background:#f3f4f6; border-radius:10px; padding:4px; margin-bottom:24px; gap:4px; }
+    .p-tab-btn { flex:1;padding:9px;border:none;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;background:transparent;color:#6b7280; }
+    .p-tab-btn.active { background:white;color:var(--primary);box-shadow:0 1px 4px rgba(0,0,0,.1); }
+
+    /* ERROR STATE */
+    .p-error { background:#FFF8F0;border:1.5px solid #FED7AA;border-radius:12px;padding:16px;margin-top:12px;margin-bottom:16px; }
+    .p-error-title { display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:#92400E;margin-bottom:8px; }
+    .p-error-body { font-size:13px;color:#78350F;line-height:1.6; }
+    .p-error-tip { background:#FEF3C7;border-radius:8px;padding:10px 12px;font-size:12px;color:#92400E;margin-top:10px;line-height:1.6; }
+
+    /* HERO (when student found) */
+    .p-hero { background:linear-gradient(135deg,#0A2A40 0%,#1570A6 55%,#2196C9 100%); padding:28px 24px; }
+    .p-stats { display:flex;gap:8px;flex-wrap:wrap;margin-top:16px; }
+    .p-stat { background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:9px 14px;text-align:center;min-width:70px; }
+    .p-stat-val { font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:#fff;line-height:1; }
+    .p-stat-lbl { font-size:10px;color:rgba(255,255,255,.65);margin-top:2px;font-weight:600; }
+
+    /* TABS (student view) */
+    .p-tabs-bar { background:#fff;border-bottom:2px solid #e8f2f8;overflow-x:auto; }
+    .p-tabs-inner { display:flex;max-width:900px;margin:0 auto; }
+    .p-stab { display:flex;align-items:center;gap:7px;padding:13px 18px;font-size:14px;font-weight:700;color:#5588AA;cursor:pointer;border:none;background:none;border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:all .2s; }
+    .p-stab:hover { color:var(--primary); }
+    .p-stab.active { color:var(--primary);border-bottom-color:var(--primary); }
+    .p-tab-badge { background:var(--primary);color:#fff;font-size:10px;padding:2px 7px;border-radius:999px;font-weight:700; }
+
+    /* CONTENT */
+    .p-content { max-width:900px;margin:0 auto;padding:24px 16px 48px; }
+    .p-card2 { background:#fff;border-radius:12px;border:1px solid #D0E4EF;box-shadow:0 1px 4px rgba(33,150,201,.08);overflow:hidden;margin-bottom:20px; }
+    .p-card2-header { padding:14px 20px;border-bottom:1px solid #e8f2f8;display:flex;align-items:center;justify-content:space-between; }
+    .p-card2-title { font-size:15px;font-weight:800;color:#0D2D42; }
+
+    /* GRADE ITEMS */
+    .g-item { display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid #e8f2f8; }
+    .g-item:last-child { border-bottom:none; }
+    .g-bar { height:5px;background:#E8F2F8;border-radius:5px;overflow:hidden;flex:1; }
+    .g-bar-fill { height:100%;border-radius:5px; }
+    .g-pill { display:inline-flex;align-items:center;justify-content:center;min-width:46px;padding:3px 9px;border-radius:999px;font-size:13px;font-weight:800;font-family:'Sora',sans-serif; }
+    .g-a{background:#D1FAE5;color:#065F46;} .g-b{background:#DBEAFE;color:#1E40AF;} .g-c{background:#FEF3C7;color:#92400E;} .g-d{background:#FEE2E2;color:#991B1B;}
+
+    /* CAROUSEL */
+    .c-wrap { background:#fff;border-radius:12px;border:1px solid #D0E4EF;overflow:hidden;position:relative; }
+    .c-media { background:#f0f6fb;min-height:240px;max-height:380px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative; }
+    .c-media img { max-width:100%;max-height:380px;object-fit:contain; }
+    .c-arrow { position:absolute;top:50%;transform:translateY(-50%);z-index:5;background:rgba(255,255,255,.92);border:1.5px solid #D0E4EF;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;box-shadow:0 2px 6px rgba(0,0,0,.1);transition:all .18s; }
+    .c-arrow:hover { background:#fff; }
+    .c-arrow.prev { left:10px; } .c-arrow.next { right:10px; }
+    .c-info { padding:16px 20px; }
+    .c-dots { display:flex;justify-content:center;gap:6px;padding:8px 20px 16px;flex-wrap:wrap; }
+    .c-dot { width:8px;height:8px;border-radius:50%;background:#D0E4EF;cursor:pointer;transition:background .18s; }
+    .c-dot.active { background:var(--primary); }
+
+    /* ATT */
+    .a-dot { width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0; }
+    .a-present{background:#10B981;} .a-absent{background:#EF4444;} .a-late{background:#F59E0B;} .a-excused{background:#3B82F6;}
+
+    /* MSG */
+    .m-item { display:flex;gap:12px;align-items:flex-start;padding:16px 20px;border-bottom:1px solid #e8f2f8; }
+    .m-item:last-child { border-bottom:none; }
+    .m-icon { width:40px;height:40px;background:linear-gradient(135deg,var(--primary),#0D8FAB);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0; }
+
+    /* EMPTY */
+    .p-empty { text-align:center;padding:48px 20px;color:#80AACC; }
+    .p-empty .ei { font-size:44px;display:block;margin-bottom:10px; }
+    .p-empty h3 { font-size:15px;font-weight:700;color:#5588AA;margin-bottom:5px; }
+
+    /* AVG CIRCLE */
+    .avg-circle { width:90px;height:90px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 10px;border:4px solid; }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="p-nav">
+  <a href="/padres/" class="p-brand">
+    <div class="p-brand-icon">🎓</div>
+    <span class="p-brand-name">Ment<span>ore</span></span>
+  </a>
+  <span class="p-tag">Portal para Familias</span>
+</nav>
+
+{% if not student %}
+<!-- ══════ LOGIN / ERROR ══════ -->
+<div class="p-center">
+  <div class="p-card">
+    <div class="p-logo">
+      <span class="p-logo-icon">🎓</span>
+      <h1>Mentore</h1>
+      <p>Portal para Familias</p>
+    </div>
+
+    <!-- TABS -->
+    <div class="p-tabs">
+      <button class="p-tab-btn" onclick="window.location='{% url 'accounts:login' %}'">🧑‍🏫 Soy Profe</button>
+      <button class="p-tab-btn active">👨‍👩‍👧 Soy Padre/Madre</button>
+    </div>
+
+    <p style="font-size:14px;color:var(--gray-500);margin-bottom:18px;">Consulta el progreso, trabajos y mensajes de tu hijo/a.</p>
+
+    <!-- GOOGLE LOGIN -->
+    <a href="{% url 'accounts:google_login' %}?next=/padres/auto/" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px 18px;border-radius:8px;font-size:14px;font-weight:700;border:1.5px solid #dadce0;background:#fff;color:#3c4043;text-decoration:none;margin-bottom:14px;transition:all .2s;" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow='none'">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;">
+      Continuar con Google
+    </a>
+
+    <div style="display:flex;align-items:center;gap:10px;margin:14px 0;color:#9ca3af;font-size:13px;">
+      <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+      o ingresa tu correo
+      <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+    </div>
+
+    <form method="get">
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-600);margin-bottom:6px;">Correo del acudiente</label>
+        <input type="email" name="email" class="form-control" placeholder="tucorreo@ejemplo.com"
+               value="{{ email }}" autofocus required style="font-size:15px;padding:11px 14px;">
+      </div>
+
+      {% if email and not student %}
+      <div class="p-error">
+        <div class="p-error-title"><span style="font-size:18px;">🔍</span> Correo no registrado</div>
+        <div class="p-error-body">No encontramos un estudiante vinculado al correo <strong>{{ email }}</strong>.</div>
+        <div class="p-error-tip">
+          <strong>¿Qué hacer?</strong> Pídele al profesor que en el perfil del estudiante registre exactamente este correo como <em>Correo del acudiente</em>. También puedes intentar con el botón <strong>Continuar con Google</strong>.
+        </div>
+      </div>
+      {% endif %}
+
+      <button type="submit" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--primary),#0D8FAB);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;">
+        <i class="bi bi-arrow-right-circle-fill"></i> Ver progreso de mi hijo/a
+      </button>
+    </form>
+
+    <div style="padding:12px 14px;background:var(--primary-light);border-radius:8px;font-size:13px;color:var(--gray-600);display:flex;gap:8px;align-items:flex-start;">
+      <i class="bi bi-info-circle" style="color:var(--primary);flex-shrink:0;margin-top:1px;"></i>
+      <span>El profe registra tu correo al crear el perfil del estudiante. Comunícate con él si no puedes acceder.</span>
+    </div>
+  </div>
+</div>
+
+{% else %}
+<!-- ══════ STUDENT DASHBOARD - REDESIGN ══════ -->
+
+<!-- EXTRA STYLES FOR DASHBOARD -->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+  body { background: #F4F7FC; font-family: 'Plus Jakarta Sans', sans-serif; }
+
+  /* ── HERO ── */
+  .hero-wrap {
+    background: var(--hero-bg, linear-gradient(135deg, #0A1F35 0%, #0E3A5C 40%, #1570A6 100%));
+    position: relative; overflow: hidden; padding: 0;
+  }
+  .hero-wrap::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 80% 80% at 70% -20%, rgba(33,150,201,.35) 0%, transparent 60%),
+                radial-gradient(ellipse 50% 50% at 10% 110%, rgba(245,158,11,.15) 0%, transparent 55%);
+  }
+  .hero-inner { max-width: 1000px; margin: 0 auto; padding: 28px 24px 0; position: relative; z-index: 1; }
+
+  .student-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+
+  .avatar-ring {
+    width: 72px; height: 72px; border-radius: 20px; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,.25), rgba(255,255,255,.08));
+    border: 2px solid rgba(255,255,255,.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 900; color: #fff; overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .avatar-ring img { width: 100%; height: 100%; object-fit: cover; }
+
+  .student-info { flex: 1; }
+  .student-label { font-size: 11px; color: rgba(255,255,255,.5); font-weight: 600; letter-spacing: .8px; text-transform: uppercase; margin-bottom: 4px; }
+  .student-name { font-size: 24px; font-weight: 900; color: #fff; margin: 0; line-height: 1.1; }
+  .student-sub { font-size: 13px; color: rgba(255,255,255,.65); margin-top: 4px; font-weight: 500; }
+
+  .btn-cambiar {
+    margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.2);
+    border-radius: 10px; color: rgba(255,255,255,.85); text-decoration: none;
+    font-size: 13px; font-weight: 700; transition: all .2s; backdrop-filter: blur(4px);
+  }
+  .btn-cambiar:hover { background: rgba(255,255,255,.18); }
+
+  /* ── STAT PILLS ── */
+  .stat-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+  .stat-pill {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.15);
+    border-radius: 12px; padding: 10px 16px; backdrop-filter: blur(6px);
+    min-width: 90px;
+  }
+  .stat-icon { font-size: 18px; }
+  .stat-val { font-size: 22px; font-weight: 900; color: #fff; line-height: 1; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .stat-lbl { font-size: 10px; color: rgba(255,255,255,.55); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-top: 1px; }
+
+  /* ── TABS ── */
+  .tab-strip {
+    display: flex; gap: 0; border-bottom: 2px solid transparent;
+    margin-top: 20px; position: relative;
+  }
+  .tab-btn {
+    display: flex; align-items: center; gap: 7px;
+    padding: 14px 20px; font-size: 13px; font-weight: 700;
+    color: rgba(255,255,255,.5); background: none; border: none; cursor: pointer;
+    border-bottom: 3px solid transparent; margin-bottom: -2px;
+    white-space: nowrap; transition: all .2s; font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+  .tab-btn:hover { color: rgba(255,255,255,.85); }
+  .tab-btn.active { color: #fff; border-bottom-color: #F59E0B; }
+  .tab-badge { background: #F59E0B; color: #0A1F35; font-size: 10px; padding: 2px 7px; border-radius: 999px; font-weight: 800; }
+
+  /* ── CONTENT AREA ── */
+  .dash-body { max-width: 1000px; margin: 0 auto; padding: 28px 16px 60px; }
+  .p-section { animation: fadeUp .3s ease; }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+  /* ── CARDS ── */
+  .card {
+    background: #fff; border-radius: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(21,112,166,.07);
+    border: 1px solid #E4EEF6; overflow: hidden; margin-bottom: 20px;
+  }
+  .card-head {
+    padding: 18px 22px; border-bottom: 1px solid #EEF4FA;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .card-title { font-size: 15px; font-weight: 800; color: #0A1F35; display: flex; align-items: center; gap: 8px; }
+  .card-badge { font-size: 11px; color: #7BA9C8; font-weight: 700; background: #EEF4FA; padding: 3px 10px; border-radius: 999px; }
+
+  /* ── GRADE ROWS ── */
+  .grade-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 15px 22px; border-bottom: 1px solid #F0F6FB;
+    transition: background .15s;
+  }
+  .grade-row:last-child { border-bottom: none; }
+  .grade-row:hover { background: #FAFCFF; }
+
+  .grade-left { flex: 1; min-width: 0; }
+  .grade-name { font-weight: 700; font-size: 14px; color: #0A1F35; margin-bottom: 5px; }
+  .grade-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+  .grade-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; letter-spacing: .3px; }
+  .tag-parcial { background: #EDE9FE; color: #5B21B6; }
+  .tag-taller  { background: #DCFCE7; color: #15803D; }
+  .tag-examen  { background: #FEE2E2; color: #991B1B; }
+  .tag-quiz    { background: #FEF3C7; color: #92400E; }
+  .tag-default { background: #DBEAFE; color: #1E40AF; }
+  .grade-date { font-size: 11px; color: #9DB8CC; }
+
+  .grade-bar-bg { height: 4px; background: #E8F2F8; border-radius: 4px; overflow: hidden; flex: 1; }
+  .grade-bar-fill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+
+  .score-badge {
+    display: flex; flex-direction: column; align-items: center; flex-shrink: 0;
+    min-width: 56px;
+  }
+  .score-num { font-size: 20px; font-weight: 900; font-family: 'Plus Jakarta Sans', sans-serif; line-height: 1; }
+  .score-max { font-size: 10px; color: #9DB8CC; margin-top: 1px; }
+  .score-green { color: #059669; }
+  .score-blue  { color: #1570A6; }
+  .score-amber { color: #D97706; }
+  .score-red   { color: #DC2626; }
+
+  /* ── AVG CARD ── */
+  .avg-card { background: linear-gradient(135deg, #0E3A5C, #1570A6); border-radius: 16px; padding: 28px 24px; text-align: center; color: #fff; box-shadow: 0 4px 20px rgba(21,112,166,.3); border: none; }
+  .avg-ring {
+    width: 110px; height: 110px; border-radius: 50%; margin: 0 auto 16px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border: 5px solid rgba(255,255,255,.2);
+    background: rgba(255,255,255,.08);
+    backdrop-filter: blur(6px);
+    position: relative;
+  }
+  .avg-ring::before {
+    content: ''; position: absolute; inset: -5px; border-radius: 50%;
+    border: 5px solid transparent;
+    border-top-color: #F59E0B; border-right-color: #F59E0B;
+    animation: spin 3s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .avg-num { font-size: 34px; font-weight: 900; color: #fff; line-height: 1; font-family: 'Plus Jakarta Sans', sans-serif; }
+  .avg-label { font-size: 11px; color: rgba(255,255,255,.55); font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 6px; }
+  .avg-emoji { font-size: 18px; margin-top: 4px; }
+  .avg-text { font-size: 13px; font-weight: 700; color: rgba(255,255,255,.8); margin-top: 4px; }
+
+  /* ── ATTENDANCE ── */
+  .att-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 13px 22px; border-bottom: 1px solid #F0F6FB; transition: background .15s;
+  }
+  .att-row:last-child { border-bottom: none; }
+  .att-row:hover { background: #FAFCFF; }
+  .att-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .att-date { flex: 1; font-size: 14px; font-weight: 600; color: #0A1F35; }
+  .att-pill { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 999px; }
+  .att-P { background: #D1FAE5; color: #065F46; }
+  .att-A { background: #FEE2E2; color: #991B1B; }
+  .att-T { background: #FEF3C7; color: #92400E; }
+  .att-J { background: #DBEAFE; color: #1E40AF; }
+  .att-dot-P { background: #10B981; }
+  .att-dot-A { background: #EF4444; }
+  .att-dot-T { background: #F59E0B; }
+  .att-dot-J { background: #3B82F6; }
+
+  /* ── MESSAGES ── */
+  .msg-row {
+    display: flex; gap: 14px; padding: 18px 22px; border-bottom: 1px solid #F0F6FB; align-items: flex-start;
+    transition: background .15s;
+  }
+  .msg-row:last-child { border-bottom: none; }
+  .msg-row:hover { background: #FAFCFF; }
+  .msg-avatar {
+    width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+    background: linear-gradient(135deg, #1570A6, #0D8FAB);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+    box-shadow: 0 2px 8px rgba(21,112,166,.25);
+  }
+  .msg-subj { font-weight: 800; font-size: 14px; color: #0A1F35; }
+  .msg-time { font-size: 11px; color: #9DB8CC; }
+  .msg-body { font-size: 13px; color: #4A6B8A; line-height: 1.7; margin-top: 5px; white-space: pre-line; }
+
+  /* ── EMPTY ── */
+  .empty-state { text-align: center; padding: 56px 24px; }
+  .empty-icon { font-size: 52px; display: block; margin-bottom: 12px; filter: grayscale(.3); }
+  .empty-title { font-size: 16px; font-weight: 800; color: #3A6B8A; margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; color: #9DB8CC; }
+
+  /* ── CAROUSEL ── */
+  .c-wrap { background:#fff;border-radius:16px;border:1px solid #E4EEF6;overflow:hidden;position:relative;box-shadow:0 4px 16px rgba(21,112,166,.07); }
+  .c-media { background:#F4F7FC;min-height:260px;max-height:400px;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative; }
+  .c-media img { max-width:100%;max-height:400px;object-fit:contain; }
+  .c-arrow { position:absolute;top:50%;transform:translateY(-50%);z-index:5;background:rgba(255,255,255,.95);border:1.5px solid #D0E4EF;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:all .18s; }
+  .c-arrow:hover { background:#fff;transform:translateY(-50%) scale(1.08); }
+  .c-arrow.prev { left:12px; } .c-arrow.next { right:12px; }
+  .c-info { padding:20px 22px; }
+  .c-dots { display:flex;justify-content:center;gap:6px;padding:8px 20px 18px;flex-wrap:wrap; }
+  .c-dot { width:8px;height:8px;border-radius:50%;background:#D0E4EF;cursor:pointer;transition:all .18s; }
+  .c-dot.active { background:#1570A6;transform:scale(1.2); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .student-name { font-size: 19px; }
+    .grades-grid { grid-template-columns: 1fr !important; }
+    .btn-cambiar { padding: 7px 11px; font-size: 12px; }
+  }
+</style>
+
+<!-- ── HERO ── -->
+{% with tp=student.teacher.teacher_profile %}
+{% with ptheme=tp.theme_color|default:"ocean" %}
+<style>
+:root {
+  --hero-bg:
+    {% if ptheme == "ocean" %}linear-gradient(135deg,#0A2A40 0%,#1570A6 55%,#2196C9 100%)
+    {% elif ptheme == "forest" %}linear-gradient(135deg,#064E3B 0%,#059669 60%,#34D399 100%)
+    {% elif ptheme == "sunset" %}linear-gradient(135deg,#7C2D12 0%,#EA580C 55%,#FB923C 100%)
+    {% elif ptheme == "purple" %}linear-gradient(135deg,#3B0764 0%,#7C3AED 55%,#A78BFA 100%)
+    {% elif ptheme == "rose" %}linear-gradient(135deg,#881337 0%,#E11D48 55%,#FB7185 100%)
+    {% elif ptheme == "slate" %}linear-gradient(135deg,#0F172A 0%,#334155 55%,#64748B 100%)
+    {% elif ptheme == "amber" %}linear-gradient(135deg,#78350F 0%,#D97706 55%,#FCD34D 100%)
+    {% elif ptheme == "teal" %}linear-gradient(135deg,#134E4A 0%,#0D9488 55%,#2DD4BF 100%)
+    {% else %}linear-gradient(135deg,#0A1F35 0%,#0E3A5C 40%,#1570A6 100%){% endif %};
+}
+</style>
+<div class="hero-wrap">
+  <div class="hero-inner">
+    <div class="student-row">
+      <div class="avatar-ring">
+        {% if student.photo %}<img src="{{ student.photo.url }}" alt="">
+        {% else %}{{ student.initials }}{% endif %}
+      </div>
+      <div class="student-info">
+        <div class="student-label">Bienvenida, familia</div>
+        <h1 class="student-name">{{ student.get_full_name }}</h1>
+        <div class="student-sub">
+          {% if student.classroom %}{{ student.classroom.name }}{% endif %}
+          {% if student.classroom.grade_level %} &nbsp;·&nbsp; {{ student.classroom.grade_level }}{% endif %}
+        </div>
+        {% with tp=student.teacher.teacher_profile %}
+        {% if tp.subject %}
+        <div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:4px 12px;">
+          <span style="font-size:13px;">📚</span>
+          <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,.95);">{{ tp.subject }}</span>
+          {% if student.teacher.get_full_name %}
+          <span style="font-size:11px;color:rgba(255,255,255,.65);border-left:1px solid rgba(255,255,255,.3);padding-left:8px;margin-left:2px;">{{ student.teacher.get_full_name }}</span>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% endwith %}
+      </div>
+      <a href="/padres/" class="btn-cambiar"><i class="bi bi-arrow-left"></i> Cambiar</a>
+    </div>
+
+    <!-- STATS -->
+    <div class="stat-row">
+      <div class="stat-pill">
+        <span class="stat-icon">📊</span>
+        <div><div class="stat-val">{{ student.average_grade|default:"—" }}</div><div class="stat-lbl">Promedio</div></div>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-icon">📝</span>
+        <div><div class="stat-val">{{ grades.count }}</div><div class="stat-lbl">Notas</div></div>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-icon">🖼️</span>
+        <div><div class="stat-val">{{ works.count }}</div><div class="stat-lbl">Trabajos</div></div>
+      </div>
+      <div class="stat-pill">
+        <span class="stat-icon">✉️</span>
+        <div><div class="stat-val">{{ msgs.count }}</div><div class="stat-lbl">Mensajes</div></div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tab-strip">
+      <button class="tab-btn active" onclick="showTab('t-grades',this)"><i class="bi bi-bar-chart-fill"></i> Notas</button>
+      <button class="tab-btn" onclick="showTab('t-gallery',this)"><i class="bi bi-images"></i> Galería</button>
+      <button class="tab-btn" onclick="showTab('t-attendance',this)"><i class="bi bi-calendar-check"></i> Asistencia</button>
+      <button class="tab-btn" onclick="showTab('t-messages',this)">
+        <i class="bi bi-envelope-fill"></i> Mensajes
+        {% if msgs %}<span class="tab-badge">{{ msgs.count }}</span>{% endif %}
+      </button>
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% endwith %}
+
+<!-- ── BODY ── -->
+<div class="dash-body">
+
+  <!-- NOTAS -->
+  <div id="t-grades" class="p-section">
+    <div class="grades-grid" style="display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:start;">
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title">📋 Historial de notas</span>
+          {% if grades %}<span class="card-badge">{{ grades.count }} registros</span>{% endif %}
+        </div>
+        {% if grades %}
+          {% for grade in grades %}
+          <div class="grade-row">
+            <div class="grade-left">
+              <div class="grade-name">{{ grade.activity_name }}</div>
+              <div class="grade-meta">
+                <span class="grade-tag {% if 'parcial' in grade.get_grade_type_display|lower %}tag-parcial{% elif 'taller' in grade.get_grade_type_display|lower %}tag-taller{% elif 'examen' in grade.get_grade_type_display|lower %}tag-examen{% elif 'quiz' in grade.get_grade_type_display|lower %}tag-quiz{% else %}tag-default{% endif %}">
+                  {{ grade.get_grade_type_display }}
+                </span>
+                {% if grade.period %}<span class="grade-date">{{ grade.period }}</span>{% endif %}
+                <span class="grade-date"><i class="bi bi-calendar3"></i> {{ grade.date|date:"d/m/Y" }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div class="grade-bar-bg"><div class="grade-bar-fill" style="width:{{ grade.percentage }}%;background:{% if grade.score >= 4 %}#10B981{% elif grade.score >= 3 %}#1570A6{% elif grade.score >= 2.5 %}#F59E0B{% else %}#EF4444{% endif %};"></div></div>
+              </div>
+            </div>
+            <div class="score-badge">
+              <span class="score-num {% if grade.score >= 4 %}score-green{% elif grade.score >= 3 %}score-blue{% elif grade.score >= 2.5 %}score-amber{% else %}score-red{% endif %}">{{ grade.score }}</span>
+              <span class="score-max">/ {{ grade.max_score }}</span>
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state"><span class="empty-icon">📊</span><div class="empty-title">Sin notas aún</div><div class="empty-sub">El profesor registrará las notas aquí</div></div>
+        {% endif %}
+      </div>
+
+      <!-- AVG -->
+      <div>
+        {% with avg=student.average_grade %}
+        <div class="avg-card">
+          <div class="avg-label">Promedio general</div>
+          <div class="avg-ring">
+            <div class="avg-num">{{ avg|default:"—" }}</div>
+          </div>
+          <div class="avg-emoji">
+            {% if avg %}{% if avg >= 4 %}🌟{% elif avg >= 3 %}👍{% elif avg >= 2.5 %}📚{% else %}💪{% endif %}{% endif %}
+          </div>
+          <div class="avg-text">
+            {% if avg %}{% if avg >= 4 %}Excelente{% elif avg >= 3 %}Buen desempeño{% elif avg >= 2.5 %}En proceso{% else %}Necesita apoyo{% endif %}{% endif %}
+          </div>
+        </div>
+        {% endwith %}
+      </div>
+    </div>
+  </div>
+
+  <!-- GALERÍA -->
+  <div id="t-gallery" class="p-section" style="display:none;">
+    {% if works %}
+    <script>
+    const PW=[{% for w in works %}{title:"{{ w.title|escapejs }}",student:"{{ w.student.get_full_name|escapejs }}",date:"{{ w.created_at|date:'d/m/Y' }}",category:"{% if w.category %}{{ w.category.name|escapejs }}{% endif %}",image:"{% if w.image %}{{ w.image.url }}{% endif %}",file:"{% if w.file %}{{ w.file.url }}{% endif %}",description:"{{ w.description|escapejs }}"},{% endfor %}];
+    var pI=0;
+    function pPrev(){if(pI>0){pI--;pR();}} function pNext(){if(pI<PW.length-1){pI++;pR();}}
+    function pR(){
+      var w=PW[pI],t=PW.length;
+      document.getElementById('cMedia').innerHTML=w.image?`<img src="${w.image}" alt="${w.title}" style="max-width:100%;max-height:400px;object-fit:contain;">`:`<div style="font-size:72px;padding:48px;">${w.file?'📄':'✏️'}</div>`;
+      document.getElementById('cTitle').textContent=w.title;
+      document.getElementById('cMeta').innerHTML=`<i class="bi bi-person"></i> ${w.student} &nbsp;·&nbsp; <i class="bi bi-calendar3"></i> ${w.date}`;
+      document.getElementById('cCat').innerHTML=w.category?`<span style="font-size:11px;background:#DBEAFE;color:#1E40AF;padding:3px 10px;border-radius:999px;font-weight:700;">${w.category}</span>`:'';
+      document.getElementById('cDesc').textContent=w.description||'';
+      document.getElementById('cFile').innerHTML=w.file?`<a href="${w.file}" target="_blank" download style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:1.5px solid #1570A6;color:#1570A6;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;"><i class="bi bi-download"></i> Descargar</a>`:'';
+      document.getElementById('cPrev').style.opacity=pI===0?.3:1;
+      document.getElementById('cNext').style.opacity=pI===t-1?.3:1;
+      var dots='';for(var i=0;i<t;i++)dots+=`<div class="c-dot${i===pI?' active':''}" onclick="pI=${i};pR();" style="cursor:pointer;"></div>`;
+      document.getElementById('cDots').innerHTML=dots;
+    }
+    document.addEventListener('DOMContentLoaded',function(){if(PW.length)pR();});
+    </script>
+    <div style="margin-bottom:14px;font-size:13px;color:#4A6B8A;font-weight:700;">{{ works.count }} trabajo{{ works.count|pluralize:",s" }} publicado{{ works.count|pluralize:",s" }}</div>
+    <div class="c-wrap">
+      <div class="c-media" id="cMedia"></div>
+      <button class="c-arrow prev" id="cPrev" onclick="pPrev()">&#8249;</button>
+      <button class="c-arrow next" id="cNext" onclick="pNext()">&#8250;</button>
+      <div class="c-info">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px;">
+          <div id="cTitle" style="font-size:17px;font-weight:800;color:#0A1F35;"></div>
+          <div id="cCat"></div>
+        </div>
+        <div id="cMeta" style="font-size:12px;color:#9DB8CC;margin-bottom:8px;"></div>
+        <div id="cDesc" style="font-size:14px;color:#4A6B8A;line-height:1.7;margin-bottom:14px;"></div>
+        <div id="cFile"></div>
+      </div>
+      <div class="c-dots" id="cDots"></div>
+    </div>
+    {% else %}
+    <div class="card"><div class="empty-state"><span class="empty-icon">🖼️</span><div class="empty-title">Sin trabajos publicados</div><div class="empty-sub">El profesor publicará los trabajos aquí pronto</div></div></div>
+    {% endif %}
+  </div>
+
+  <!-- ASISTENCIA -->
+  <div id="t-attendance" class="p-section" style="display:none;">
+    {% if attendances %}
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">📅 Registro de asistencia</span>
+        <span class="card-badge">{{ attendances.count }} días</span>
+      </div>
+      {% for att in attendances %}
+      <div class="att-row">
+        <div class="att-dot att-dot-{{ att.status }}"></div>
+        <span class="att-date">{{ att.date|date:"d \d\e F, Y" }}</span>
+        <span class="att-pill att-{{ att.status }}">{{ att.get_status_display }}</span>
+        {% if att.note %}<span style="font-size:12px;color:#9DB8CC;">{{ att.note }}</span>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card"><div class="empty-state"><span class="empty-icon">✅</span><div class="empty-title">Sin registros de asistencia</div><div class="empty-sub">El profesor registrará la asistencia aquí</div></div></div>
+    {% endif %}
+  </div>
+
+  <!-- MENSAJES -->
+  <div id="t-messages" class="p-section" style="display:none;">
+    {% if msgs %}
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">✉️ Mensajes del profesor</span>
+        <span class="card-badge">{{ msgs.count }} mensaje{{ msgs.count|pluralize:",s" }}</span>
+      </div>
+      {% for msg in msgs %}
+      <div class="msg-row">
+        <div class="msg-avatar">✉️</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
+            <span class="msg-subj">{{ msg.subject }}</span>
+            <span class="msg-time"><i class="bi bi-clock"></i> {{ msg.sent_at|date:"d/m/Y H:i" }}</span>
+          </div>
+          <div class="msg-body">{{ msg.body }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card"><div class="empty-state"><span class="empty-icon">✉️</span><div class="empty-title">Sin mensajes aún</div><div class="empty-sub">El profesor te enviará mensajes aquí</div></div></div>
+    {% endif %}
+  </div>
+
+</div>
+{% endif %}
+
+<script>
+function showTab(id,btn){
+  document.querySelectorAll('.p-section').forEach(s=>s.style.display='none');
+  document.querySelectorAll('.p-stab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(id).style.display='';
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{% extends 'base/layout.html' %}
+{% block title %}Grupos{% endblock %}
+{% block page_title %}Grupos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>Grupos y Salones</h1>
+    <p>Organiza tus estudiantes por grupos</p>
+  </div>
+  <a href="{% url 'students:classroom_create' %}" class="btn-primary">
+    <i class="bi bi-plus-lg"></i> Nuevo grupo
+  </a>
+</div>
+
+{% if classrooms %}
+<div class="form-grid">
+  {% for classroom in classrooms %}
+  <div>
+    <div class="stat-card blue" style="cursor:default;">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="stat-icon blue">🏫</div>
+        {% if classroom.grade_level %}
+          <span class="badge badge-blue">{{ classroom.grade_level }}</span>
+        {% endif %}
+      </div>
+      <div style="font-weight:700;font-size:1.1rem;color:var(--gray-900);">{{ classroom.name }}</div>
+      <div style="font-size:.82rem;color:var(--gray-400);margin-top:.2rem;">{{ classroom.subject|default:"Sin materia" }}</div>
+      <div style="font-size:1.4rem;font-weight:800;color:var(--primary);margin-top:.75rem;">{{ classroom.student_count }}</div>
+      <div style="font-size:.78rem;color:var(--gray-400);">estudiantes</div>
+      <div style="margin-top:1rem;padding-top:.75rem;border-top:1px solid var(--gray-100);">
+        <a href="{% url 'students:list' %}?classroom={{ classroom.pk }}" class="btn-outline btn-sm">
+          Ver estudiantes <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="icon">🏫</div>
+    <h3>Sin grupos aún</h3>
+    <p>Crea tu primer grupo para organizar mejor a tus estudiantes</p>
+    <a href="{% url 'students:classroom_create' %}" class="btn-primary mt-3">
+      <i class="bi bi-plus-lg"></i> Crear grupo
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

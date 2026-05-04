@@ -1,0 +1,130 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Mentore{% endblock %} — Mentore</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{% static 'css/mentore.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<aside class="sidebar">
+  <!-- Logo -->
+  <a href="{% url 'students:dashboard' %}" class="sidebar-brand">
+    <div class="sidebar-brand-icon">🎓</div>
+    <span class="sidebar-brand-name">Ment<span>ore</span></span>
+  </a>
+
+  <!-- Usuario -->
+  {% if user.is_authenticated %}
+  <div class="sidebar-user-block">
+    <div class="sidebar-user-avatar">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>
+    <div>
+      <div class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</div>
+      <div class="sidebar-user-role">Profesor</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Nav -->
+  <ul class="sidebar-nav">
+    <li class="sidebar-section-label">Principal</li>
+    <li class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+      <a href="{% url 'students:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-house nav-icon"></i> Inicio
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Gestión Académica</li>
+    <li>
+      <a href="{% url 'students:classrooms' %}" class="sidebar-link {% if 'classroom' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+        <i class="bi bi-building nav-icon"></i> Mis Grupos
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'students:list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'list,create,detail,edit' %}active{% endif %}">
+        <i class="bi bi-person-badge nav-icon"></i> Estudiantes
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'grades:list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'grades' %}active{% endif %}">
+        <i class="bi bi-bar-chart nav-icon"></i> Notas
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'students:attendance' %}" class="sidebar-link {% if request.resolver_match.url_name == 'attendance' or request.resolver_match.url_name == 'save_attendance' %}active{% endif %}">
+        <i class="bi bi-check2-square nav-icon"></i> Asistencia
+      </a>
+    </li>
+
+    <li class="sidebar-section-label">Familias</li>
+    <li>
+      <a href="{% url 'students:message_list' %}" class="sidebar-link {% if 'message' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+        <i class="bi bi-envelope nav-icon"></i> Mensajería
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'students:announcement_list' %}" class="sidebar-link {% if 'announcement' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+        <i class="bi bi-megaphone nav-icon"></i> Comunicados
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'gallery:list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'gallery' %}active{% endif %}">
+        <i class="bi bi-images nav-icon"></i> Galería
+      </a>
+    </li>
+
+
+    <li class="sidebar-section-label">Herramientas</li>
+    <li>
+      <a href="{% url 'calendar_app:schedule' %}" class="sidebar-link {% if request.resolver_match.namespace == 'calendar_app' %}active{% endif %}">
+        <i class="bi bi-calendar3 nav-icon"></i> Calendario
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'accounts:profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
+        <i class="bi bi-person-circle nav-icon"></i> Mi Perfil
+      </a>
+    </li>
+  </ul>
+
+  <!-- IA chip -->
+  <a href="{% url 'ai_assistant:chat' %}" class="sidebar-ai-chip">
+    🤖 <span>Asistente IA</span>
+    <span class="ai-badge" style="margin-left:auto;background:rgba(255,255,255,.25);color:#fff;font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;">IA</span>
+  </a>
+
+  <!-- Logout -->
+  <div class="sidebar-footer">
+    <a href="{% url 'accounts:logout' %}" class="sidebar-logout">
+      <i class="bi bi-box-arrow-right nav-icon"></i> Cerrar sesión
+    </a>
+  </div>
+</aside>
+
+<div class="main-content">
+  <header class="topbar">
+    <h1 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h1>
+    <div class="topbar-right">
+      <span style="font-size:13px;color:var(--gray-500);font-weight:600;">{{ user.get_full_name|default:user.username }}</span>
+      <a href="{% url 'accounts:profile' %}" class="topbar-btn" title="Mi perfil"><i class="bi bi-person-circle"></i></a>
+    </div>
+  </header>
+
+  <div class="content-area">
+    {% for msg in messages %}
+    <div class="alert alert-{{ msg.tags|default:'info' }}" style="margin-bottom:12px;">
+      {% if msg.tags == 'success' %}✅{% elif msg.tags == 'error' %}❌{% elif msg.tags == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+      {{ msg }}
+    </div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>

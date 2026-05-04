@@ -1,0 +1,59 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro — Mentore</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{% static 'css/mentore.css' %}">
+  <style>
+    .social-btn { display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px 18px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid #dadce0;background:#fff;color:#3c4043;text-decoration:none;transition:all .2s;font-family:'Nunito',sans-serif; }
+    .social-btn:hover { background:#f8f9fa;box-shadow:0 2px 8px rgba(0,0,0,.12); }
+    .social-btn.apple { background:#000;color:#fff;border-color:#000; }
+    .social-btn.apple:hover { background:#1a1a1a; }
+    .social-btn img { width:20px;height:20px;flex-shrink:0; }
+    .divider { display:flex;align-items:center;gap:10px;margin:18px 0;color:#9ca3af;font-size:13px; }
+    .divider::before,.divider::after { content:'';flex:1;height:1px;background:#e5e7eb; }
+  </style>
+</head>
+<body>
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <span class="auth-logo-icon">🎓</span>
+      <h1>Mentore</h1>
+      <p>Crea tu cuenta de profe</p>
+    </div>
+
+    <!-- Social buttons -->
+    <a href="{% url 'accounts:google_login' %}" class="social-btn" style="margin-bottom:10px;">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+      Registrarse con Google
+    </a>
+
+    <div class="divider">o crea tu cuenta manual</div>
+
+    {% if form.errors %}
+    <div class="alert alert-danger" style="margin-bottom:14px;font-size:13px;">❌ Por favor corrige los errores.</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+      <div class="form-group">
+        <label class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.errors %}<div style="color:var(--danger);font-size:12px;margin-top:4px;">{{ field.errors.0 }}</div>{% endif %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;">
+        <i class="bi bi-person-plus"></i> Crear cuenta
+      </button>
+    </form>
+    <p class="auth-footer">
+      ¿Ya tienes cuenta? <a href="{% url 'accounts:login' %}">Inicia sesión</a>
+    </p>
+  </div>
+</div>
+</body>
+</html>

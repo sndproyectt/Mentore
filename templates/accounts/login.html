@@ -1,0 +1,123 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iniciar sesión — Mentore</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="{% static 'css/mentore.css' %}">
+  <style>
+    /* ── Social buttons ── */
+    .social-btn {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 11px 18px; border-radius: 8px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      border: 1.5px solid #dadce0; background: #fff; color: #3c4043;
+      text-decoration: none; transition: all .2s; font-family: 'Nunito', sans-serif;
+    }
+    .social-btn:hover { background: #f8f9fa; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+    .social-btn.apple { background: #000; color: #fff; border-color: #000; }
+    .social-btn.apple:hover { background: #1a1a1a; }
+    .social-btn img { width: 20px; height: 20px; flex-shrink: 0; }
+    .divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: #9ca3af; font-size: 13px; }
+    .divider::before,.divider::after { content:''; flex:1; height:1px; background: #e5e7eb; }
+    .tab-row { display:flex; background:#f3f4f6; border-radius:10px; padding:4px; margin-bottom:20px; gap:4px; }
+    .tab-btn {
+      flex:1; padding:9px; border:none; border-radius:7px;
+      font-size:13px; font-weight:700; cursor:pointer; transition:all .2s;
+      background:transparent; color:#6b7280;
+    }
+    .tab-btn.active { background:white; color:var(--primary); box-shadow:0 1px 4px rgba(0,0,0,.1); }
+  </style>
+</head>
+<body>
+<div class="auth-wrapper">
+  <div class="auth-card">
+
+    <!-- Logo -->
+    <div class="auth-logo">
+      <span class="auth-logo-icon">🎓</span>
+      <h1>Mentore</h1>
+      <p>La plataforma educativa para profes</p>
+    </div>
+
+    <!-- TABS profe / padre -->
+    <div class="tab-row">
+      <button class="tab-btn active" id="tab-profe-btn" onclick="showTab('profe')">🧑‍🏫 Soy Profe</button>
+      <button class="tab-btn"        id="tab-padre-btn" onclick="showTab('padre')">👨‍👩‍👧 Soy Padre/Madre</button>
+    </div>
+
+    <!-- ══════ PANEL PROFE ══════ -->
+    <div id="panel-profe">
+
+      <!-- Botones sociales -->
+      <a href="{% url 'accounts:google_login' %}" class="social-btn" style="margin-bottom:10px;">
+        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+        Continuar con Google
+      </a>
+
+      <div class="divider">o inicia con tu usuario</div>
+
+      {% if messages %}
+        {% for msg in messages %}
+        <div class="alert alert-{{ msg.tags|default:'info' }}" style="margin-bottom:12px;font-size:13px;">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+      {% if form.errors %}
+      <div class="alert alert-danger" style="margin-bottom:12px;font-size:13px;">❌ Usuario o contraseña incorrectos.</div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Usuario</label>
+          <input type="text" name="username" class="form-control" placeholder="Tu nombre de usuario" autofocus required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Contraseña</label>
+          <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;">
+          <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+        </button>
+      </form>
+
+      <p class="auth-footer">
+        ¿Aún no tienes cuenta? <a href="{% url 'accounts:register' %}">Regístrate aquí</a>
+      </p>
+    </div>
+
+    <!-- ══════ PANEL PADRE ══════ -->
+    <div id="panel-padre" style="display:none;">
+      <p style="font-size:14px;color:var(--gray-500);margin-bottom:18px;">
+        Consulta el progreso, trabajos y mensajes de tu hijo/a ingresando tu correo.
+      </p>
+      <form method="get" action="/padres/">
+        <div class="form-group">
+          <label class="form-label">Correo del acudiente</label>
+          <input type="email" name="email" class="form-control" placeholder="tucorreo@ejemplo.com" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;">
+          <i class="bi bi-arrow-right-circle"></i> Ver progreso de mi hijo/a
+        </button>
+      </form>
+      <div style="margin-top:16px;padding:12px;background:var(--primary-light);border-radius:8px;font-size:13px;color:var(--gray-600);display:flex;gap:8px;">
+        <i class="bi bi-info-circle" style="color:var(--primary);flex-shrink:0;margin-top:1px;"></i>
+        <span>El profe registra tu correo al crear el perfil del estudiante. Comunícate con él si no puedes acceder.</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showTab(tab) {
+  var isProfe = tab === 'profe';
+  document.getElementById('panel-profe').style.display = isProfe ? '' : 'none';
+  document.getElementById('panel-padre').style.display = isProfe ? 'none' : '';
+  document.getElementById('tab-profe-btn').className = 'tab-btn' + (isProfe ? ' active' : '');
+  document.getElementById('tab-padre-btn').className = 'tab-btn' + (!isProfe ? ' active' : '');
+}
+</script>
+</body>
+</html>

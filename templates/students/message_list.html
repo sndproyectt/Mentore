@@ -1,0 +1,71 @@
+{% extends 'base/layout.html' %}
+{% block title %}Mensajería{% endblock %}
+{% block page_title %}Mensajería{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-left">
+    <h1>✉️ Mensajería</h1>
+    <p>{{ messages_qs.count }} mensaje{{ messages_qs.count|pluralize:",s" }} enviado{{ messages_qs.count|pluralize:",s" }}</p>
+  </div>
+  <a href="{% url 'students:message_create' %}" class="btn-primary">
+    <i class="bi bi-envelope-plus"></i> Nuevo mensaje
+  </a>
+</div>
+
+<!-- STATS STRIP -->
+<div style="display:flex;gap:1rem;background:var(--white);border-radius:var(--radius);padding:1rem 1.25rem;border:1.5px solid var(--gray-100);margin-bottom:1.5rem;flex-wrap:wrap;">
+  <div style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;font-weight:700;color:var(--gray-700);">
+    <span>✉️</span><span style="font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:800;color:var(--primary);">{{ messages_qs.count }}</span><span>Enviados</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;font-weight:700;color:var(--gray-700);">
+    <span>👨‍👩‍👧</span><span style="font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:800;color:var(--teal);">{{ students.count }}</span><span>Familias</span>
+  </div>
+  <div style="margin-left:auto;">
+    <a href="/padres/" class="btn-outline btn-sm" target="_blank">
+      <i class="bi bi-box-arrow-up-right"></i> Ver portal de padres
+    </a>
+  </div>
+</div>
+
+{% if messages_qs %}
+<div style="display:flex;flex-direction:column;gap:.75rem;">
+  {% for msg in messages_qs %}
+  <div class="card" style="padding:1.1rem 1.4rem;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:.85rem;flex:1;min-width:0;">
+        <div class="avatar avatar-sm">{{ msg.student.initials }}</div>
+        <div style="min-width:0;">
+          <div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;">
+            <span style="font-weight:800;font-size:.9rem;color:var(--gray-900);">{{ msg.subject }}</span>
+          </div>
+          <div style="font-size:.78rem;color:var(--gray-500);margin-top:.1rem;">
+            Para: <strong>{{ msg.student.get_full_name }}</strong>
+            {% if msg.student.classroom %} · {{ msg.student.classroom.name }}{% endif %}
+            · {{ msg.sent_at|date:"d/m/Y H:i" }}
+          </div>
+          <p style="font-size:.85rem;color:var(--gray-600);margin:.5rem 0 0;line-height:1.6;white-space:pre-line;">{{ msg.body|truncatewords:20 }}</p>
+        </div>
+      </div>
+      <div style="display:flex;gap:.4rem;align-items:flex-start;flex-shrink:0;">
+        <form method="post" action="{% url 'students:message_delete' msg.pk %}" onsubmit="return confirm('¿Eliminar este mensaje?')">
+          {% csrf_token %}<button type="submit" class="btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="empty-state">
+    <div class="icon">✉️</div>
+    <h3>Sin mensajes enviados aún</h3>
+    <p>Envía tu primer mensaje a un padre de familia</p>
+    <a href="{% url 'students:message_create' %}" class="btn-primary mt-3">
+      <i class="bi bi-envelope-plus"></i> Enviar mensaje
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
