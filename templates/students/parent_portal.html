@@ -13,9 +13,9 @@
     /* NAV */
     .p-nav { padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; background: rgba(0,0,0,.15); }
     .p-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
-    .p-brand-icon { width:34px;height:34px;background:linear-gradient(135deg,#F59E0B,#F97316);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px; }
+    .p-brand-icon { width:34px;height:34px;background:linear-gradient(135deg,#F9C32A,#E6A800);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px; }
     .p-brand-name { font-size:18px;font-weight:800;color:#fff;letter-spacing:-.5px; }
-    .p-brand-name span { color:#F59E0B; }
+    .p-brand-name span { color:#F9C32A; }
     .p-tag { font-size:12px;color:rgba(255,255,255,.55);font-weight:600; }
 
     /* CENTERED CARD LAYOUT */
@@ -82,7 +82,7 @@
 
     /* ATT */
     .a-dot { width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0; }
-    .a-present{background:#10B981;} .a-absent{background:#EF4444;} .a-late{background:#F59E0B;} .a-excused{background:#3B82F6;}
+    .a-present{background:#10B981;} .a-absent{background:#EF4444;} .a-late{background:#F9C32A;} .a-excused{background:#3B82F6;}
 
     /* MSG */
     .m-item { display:flex;gap:12px;align-items:flex-start;padding:16px 20px;border-bottom:1px solid #e8f2f8; }
@@ -240,8 +240,8 @@
     white-space: nowrap; transition: all .2s; font-family: 'Plus Jakarta Sans', sans-serif;
   }
   .tab-btn:hover { color: rgba(255,255,255,.85); }
-  .tab-btn.active { color: #fff; border-bottom-color: #F59E0B; }
-  .tab-badge { background: #F59E0B; color: #0A1F35; font-size: 10px; padding: 2px 7px; border-radius: 999px; font-weight: 800; }
+  .tab-btn.active { color: #fff; border-bottom-color: #F9C32A; }
+  .tab-badge { background: #F9C32A; color: #0A1F35; font-size: 10px; padding: 2px 7px; border-radius: 999px; font-weight: 800; }
 
   /* ── CONTENT AREA ── */
   .dash-body { max-width: 1000px; margin: 0 auto; padding: 28px 16px 60px; }
@@ -308,7 +308,7 @@
   .avg-ring::before {
     content: ''; position: absolute; inset: -5px; border-radius: 50%;
     border: 5px solid transparent;
-    border-top-color: #F59E0B; border-right-color: #F59E0B;
+    border-top-color: #F9C32A; border-right-color: #F9C32A;
     animation: spin 3s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -333,7 +333,7 @@
   .att-J { background: #DBEAFE; color: #1E40AF; }
   .att-dot-P { background: #10B981; }
   .att-dot-A { background: #EF4444; }
-  .att-dot-T { background: #F59E0B; }
+  .att-dot-T { background: #F9C32A; }
   .att-dot-J { background: #3B82F6; }
 
   /* ── MESSAGES ── */
@@ -485,7 +485,7 @@
                 <span class="grade-date"><i class="bi bi-calendar3"></i> {{ grade.date|date:"d/m/Y" }}</span>
               </div>
               <div style="display:flex;align-items:center;gap:10px;">
-                <div class="grade-bar-bg"><div class="grade-bar-fill" style="width:{{ grade.percentage }}%;background:{% if grade.score >= 4 %}#10B981{% elif grade.score >= 3 %}#1570A6{% elif grade.score >= 2.5 %}#F59E0B{% else %}#EF4444{% endif %};"></div></div>
+                <div class="grade-bar-bg"><div class="grade-bar-fill" style="width:{{ grade.percentage }}%;background:{% if grade.score >= 4 %}#10B981{% elif grade.score >= 3 %}#1570A6{% elif grade.score >= 2.5 %}#F9C32A{% else %}#EF4444{% endif %};"></div></div>
               </div>
             </div>
             <div class="score-badge">

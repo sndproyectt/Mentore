@@ -1,0 +1,94 @@
+{% extends 'base/layout.html' %}
+{% block title %}Salones — Coordinación{% endblock %}
+{% block page_title %}Todos los Salones{% endblock %}
+{% block content %}
+
+<div class="card" style="margin-bottom:20px;">
+  <div style="padding:16px;">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="form-group" style="margin:0;flex:1;min-width:160px;">
+        <label class="form-label">Buscar salón</label>
+        <input type="text" name="q" class="form-control" placeholder="Nombre, nivel, materia…" value="{{ q }}">
+      </div>
+      <div class="form-group" style="margin:0;min-width:200px;">
+        <label class="form-label">Filtrar por docente</label>
+        <select name="teacher" class="form-control">
+          <option value="">Todos los docentes</option>
+          {% for t in teachers %}
+          <option value="{{ t.pk }}" {% if teacher_filter == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.get_full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Filtrar</button>
+      <a href="{% url 'coordinator:classroom_list' %}" class="btn btn-secondary">Limpiar</a>
+      <a href="{% url 'coordinator:classroom_create' %}" class="btn btn-primary" style="margin-left:auto;">
+        <i class="bi bi-plus-lg"></i> Nuevo salón
+      </a>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">🏫 Salones ({{ classrooms|length }})</span>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Salón</th>
+          <th>Nivel</th>
+          <th>Materia</th>
+          <th>Docentes con acceso</th>
+          <th>Estudiantes</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cr in classrooms %}
+        <tr>
+          <td style="font-weight:800;color:var(--gray-900);">{{ cr.name }}</td>
+          <td style="color:var(--gray-600);">{{ cr.grade_level|default:"—" }}</td>
+          <td style="color:var(--gray-600);">{{ cr.subject|default:"—" }}</td>
+          <td>
+            <!-- Docente principal -->
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+              <span style="font-size:10px;font-weight:700;background:var(--primary);color:#fff;padding:2px 6px;border-radius:4px;">Principal</span>
+              <span style="font-size:13px;font-weight:700;color:var(--gray-900);">{{ cr.teacher.get_full_name }}</span>
+            </div>
+            <!-- Docentes M2M adicionales -->
+            {% for t in cr.teachers.all %}
+              {% if t.pk != cr.teacher.pk %}
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">
+                <span style="font-size:10px;font-weight:700;background:var(--gray-200);color:var(--gray-600);padding:2px 6px;border-radius:4px;">Acceso</span>
+                <span style="font-size:12px;color:var(--gray-600);">{{ t.get_full_name }}</span>
+              </div>
+              {% endif %}
+            {% endfor %}
+          </td>
+          <td><span class="badge badge-success">{{ cr.student_count }}</span></td>
+          <td style="white-space:nowrap;">
+            <a href="{% url 'coordinator:classroom_assign' cr.pk %}" class="btn btn-secondary" style="font-size:12px;padding:5px 10px;">
+              <i class="bi bi-people"></i> Docentes
+            </a>
+            <form method="post" action="{% url 'coordinator:classroom_delete' cr.pk %}"
+              style="display:inline;" onsubmit="return confirm('¿Eliminar «{{ cr.name }}»? Solo si no tiene estudiantes activos.')">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-secondary" style="font-size:12px;padding:5px 10px;color:#EF4444;border-color:#FCA5A5;margin-left:4px;">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align:center;color:var(--gray-400);padding:32px;">
+            No hay salones registrados. <a href="{% url 'coordinator:classroom_create' %}" style="color:var(--primary);font-weight:700;">Crea el primero →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

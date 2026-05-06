@@ -14,6 +14,8 @@ urlpatterns = [
     path('ai/', include('ai_assistant.urls')),
     path('gallery/', include('gallery.urls')),
     path('dashboard/calendar/', include('calendar_app.urls')),
+    # Panel de coordinación
+    path('coordinacion/', include('coordinator.urls')),
     # Portal público para padres
     path('padres/', parent_portal, name='parent_portal'),
     path('padres/auto/', parent_portal_auto, name='parent_portal_auto'),

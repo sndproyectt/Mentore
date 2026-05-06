@@ -8,10 +8,10 @@
   --primary-dark:  #1570A6;
   --primary-light: #E8F5FD;
   --secondary:     #0D8FAB;
-  --accent:        #F59E0B;
+  --accent:        #F9C32A;
   --success:       #10B981;
   --danger:        #EF4444;
-  --warning:       #F59E0B;
+  --warning:       #F9C32A;
   --gray-50:       #F4F9FC;
   --gray-100:      #E8F2F8;
   --gray-200:      #D0E4EF;
@@ -45,11 +45,11 @@ h1,h2,h3,h4{font-family:'Sora',sans-serif;font-weight:700;color:var(--gray-900);
 .sidebar::-webkit-scrollbar{width:4px;}
 .sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:4px;}
 .sidebar-brand{padding:20px 20px 14px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;gap:10px;text-decoration:none!important;}
-.sidebar-brand-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),#F97316);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.sidebar-brand-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),#E6A800);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
 .sidebar-brand-name{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:#fff;letter-spacing:-.5px;}
 .sidebar-brand-name span{color:var(--accent);}
 .sidebar-user-block{padding:12px 20px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.06);}
-.sidebar-user-avatar{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),#F97316);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:13px;flex-shrink:0;}
+.sidebar-user-avatar{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),#E6A800);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:13px;flex-shrink:0;}
 .sidebar-user-name{font-size:13px;font-weight:700;color:#E0F0FA;}
 .sidebar-user-role{font-size:11px;color:#7AAED0;}
 .sidebar-nav{list-style:none;padding:10px 0;flex:1;}

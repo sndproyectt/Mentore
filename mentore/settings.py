@@ -12,36 +12,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # 🔐 Seguridad
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev')
-
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
-
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
-CSRF_TRUSTED_ORIGINS = os.getenv(
-    'CSRF_TRUSTED_ORIGINS',
-    'https://*.onrender.com,http://localhost:8000'
-).split(',')
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com"
+]
 
-# Apps
 INSTALLED_APPS = [
     'django.contrib.admin', 'django.contrib.auth', 'django.contrib.contenttypes',
     'django.contrib.sessions', 'django.contrib.messages', 'django.contrib.staticfiles',
-    'accounts', 'students', 'grades', 'ai_assistant', 'gallery', 'calendar_app',
+    'accounts', 'students', 'grades', 'ai_assistant', 'gallery', 'calendar_app', 'coordinator',
 ]
 
-# Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-]
-
-# WhiteNoise opcional (no rompe local si no está instalado)
-try:
-    import whitenoise  # noqa
-    MIDDLEWARE.append('whitenoise.middleware.WhiteNoiseMiddleware')
-except ImportError:
-    pass
-
-MIDDLEWARE += [
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -68,12 +54,14 @@ TEMPLATES = [{
 
 WSGI_APPLICATION = 'mentore.wsgi.application'
 
-# Base de datos (SQLite local)
+# Base de datos (PostgreSQL en producción / SQLite en local fallback)
+import dj_database_url
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(
+        default=os.getenv('DATABASE_URL', f"sqlite:///{BASE_DIR / 'db.sqlite3'}"),
+        conn_max_age=600
+    )
 }
 
 # Passwords

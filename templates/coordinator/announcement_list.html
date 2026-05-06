@@ -1,0 +1,82 @@
+{% extends 'base/layout.html' %}
+{% block title %}Comunicados Globales — Coordinación{% endblock %}
+{% block page_title %}Comunicados Globales{% endblock %}
+{% block content %}
+
+<!-- FILTROS -->
+<div class="card" style="margin-bottom:20px;">
+  <div style="padding:16px;">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="form-group" style="margin:0;flex:1;min-width:160px;">
+        <label class="form-label">Buscar</label>
+        <input type="text" name="q" class="form-control" placeholder="Título, contenido…" value="{{ q }}">
+      </div>
+      <div class="form-group" style="margin:0;min-width:160px;">
+        <label class="form-label">Profesor</label>
+        <select name="teacher" class="form-control">
+          <option value="">Todos</option>
+          {% for t in teachers %}
+          <option value="{{ t.pk }}" {% if teacher_filter == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.get_full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="margin:0;min-width:140px;">
+        <label class="form-label">Prioridad</label>
+        <select name="priority" class="form-control">
+          <option value="">Todas</option>
+          {% for val, lbl in priority_choices %}
+          <option value="{{ val }}" {% if priority_filter == val %}selected{% endif %}>{{ lbl }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Filtrar</button>
+      <a href="{% url 'coordinator:announcement_list' %}" class="btn btn-secondary">Limpiar</a>
+      <a href="{% url 'coordinator:announcement_create' %}" class="btn btn-primary" style="margin-left:auto;">
+        <i class="bi bi-plus-lg"></i> Nuevo comunicado
+      </a>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">📢 Comunicados ({{ announcements|length }})</span>
+  </div>
+  {% if announcements %}
+  <div style="display:flex;flex-direction:column;gap:0;">
+    {% for ann in announcements %}
+    <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 20px;border-bottom:1px solid var(--gray-100);border-left:4px solid {% if ann.priority == 'high' %}#EF4444{% elif ann.priority == 'medium' %}var(--accent){% else %}var(--primary){% endif %};">
+      <span style="font-size:20px;flex-shrink:0;">{% if ann.priority == 'high' %}🚨{% elif ann.priority == 'medium' %}⚠️{% else %}📋{% endif %}</span>
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+          <div style="font-weight:800;font-size:15px;color:var(--gray-900);">{{ ann.title }}</div>
+          <span class="badge {% if ann.priority == 'high' %}badge-danger{% elif ann.priority == 'medium' %}badge-warning{% else %}badge-info{% endif %}" style="font-size:10px;">{{ ann.get_priority_display }}</span>
+        </div>
+        <div style="font-size:13px;color:var(--gray-600);margin-bottom:6px;line-height:1.5;">{{ ann.content|truncatechars:120 }}</div>
+        <div style="font-size:11px;color:var(--gray-400);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span>👩‍🏫 {{ ann.teacher.get_full_name }}</span>
+          <span>📅 {{ ann.created_at|date:"d/m/Y H:i" }}</span>
+          {% if ann.classroom %}<span>🏫 {{ ann.classroom.name }}</span>{% else %}<span style="color:var(--primary);font-weight:700;">🌐 Global</span>{% endif %}
+        </div>
+      </div>
+      <div style="flex-shrink:0;">
+        <form method="post" action="{% url 'coordinator:announcement_delete' ann.pk %}" onsubmit="return confirm('¿Eliminar este comunicado?')">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary" style="font-size:11px;padding:4px 8px;color:#EF4444;border-color:#FCA5A5;">
+            <i class="bi bi-trash"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state" style="padding:48px;">
+    <span class="empty-icon">📢</span>
+    <h3>Sin comunicados</h3>
+    <p>No hay comunicados que coincidan con los filtros.</p>
+    <a href="{% url 'coordinator:announcement_create' %}" class="btn btn-primary" style="margin-top:12px;"><i class="bi bi-plus-lg"></i> Crear comunicado</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

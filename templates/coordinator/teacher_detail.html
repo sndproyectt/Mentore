@@ -1,0 +1,142 @@
+{% extends 'base/layout.html' %}
+{% block title %}{{ teacher.get_full_name }} — Coordinación{% endblock %}
+{% block page_title %}Detalle del Profesor{% endblock %}
+{% block content %}
+
+<!-- BREADCRUMB -->
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:13px;color:var(--gray-500);">
+  <a href="{% url 'coordinator:teacher_list' %}" style="color:var(--primary);text-decoration:none;font-weight:700;">Profesores</a>
+  <i class="bi bi-chevron-right"></i>
+  <span>{{ teacher.get_full_name }}</span>
+</div>
+
+<div style="display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;">
+
+  <!-- PERFIL IZQUIERDO -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div class="card" style="text-align:center;padding:24px;">
+      <div style="width:72px;height:72px;border-radius:18px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:28px;margin:0 auto 12px;">
+        {% if teacher.teacher_profile.avatar %}
+        <img src="{{ teacher.teacher_profile.avatar.url }}" style="width:100%;height:100%;object-fit:cover;border-radius:15px;">
+        {% else %}
+        {{ teacher.first_name|first|upper }}{{ teacher.last_name|first|upper }}
+        {% endif %}
+      </div>
+      <h2 style="font-size:18px;font-weight:800;color:var(--gray-900);margin-bottom:4px;">{{ teacher.get_full_name }}</h2>
+      <div style="font-size:13px;color:var(--gray-500);margin-bottom:8px;">{{ teacher.email }}</div>
+      {% if teacher.teacher_profile.role == 'coordinator' %}
+      <span class="badge" style="background:#FEF3C7;color:#92400E;font-size:12px;">⭐ Coordinador</span>
+      {% else %}
+      <span class="badge badge-primary" style="font-size:12px;">📚 Profesor</span>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <div class="card-header"><span class="card-title">📋 Datos</span></div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+        {% if teacher.teacher_profile.subject %}
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-400);letter-spacing:.7px;">Materia</div>
+          <div style="font-weight:700;color:var(--gray-900);">{{ teacher.teacher_profile.subject }}</div>
+        </div>
+        {% endif %}
+        {% if teacher.teacher_profile.school_name %}
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-400);letter-spacing:.7px;">Colegio</div>
+          <div style="font-weight:600;color:var(--gray-700);">{{ teacher.teacher_profile.school_name }}</div>
+        </div>
+        {% endif %}
+        {% if teacher.teacher_profile.city %}
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-400);letter-spacing:.7px;">Ciudad</div>
+          <div style="font-weight:600;color:var(--gray-700);">{{ teacher.teacher_profile.city }}</div>
+        </div>
+        {% endif %}
+        {% if teacher.teacher_profile.phone %}
+        <div>
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--gray-400);letter-spacing:.7px;">Teléfono</div>
+          <div style="font-weight:600;color:var(--gray-700);">{{ teacher.teacher_profile.phone }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <a href="{% url 'coordinator:classroom_list' %}?teacher={{ teacher.pk }}" class="btn btn-secondary" style="justify-content:flex-start;gap:10px;">
+        <i class="bi bi-building"></i> Ver salones de este profe
+      </a>
+      <a href="{% url 'coordinator:teacher_change_role' teacher.pk %}" class="btn btn-secondary" style="justify-content:flex-start;gap:10px;">
+        <i class="bi bi-arrow-left-right"></i> Cambiar rol
+      </a>
+      <a href="{% url 'coordinator:teacher_list' %}" class="btn btn-secondary" style="justify-content:flex-start;gap:10px;">
+        <i class="bi bi-arrow-left"></i> Volver a la lista
+      </a>
+    </div>
+  </div>
+
+  <!-- DERECHA -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <!-- Salones -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🏫 Salones asignados ({{ classrooms|length }})</span>
+        <a href="{% url 'coordinator:classroom_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Nuevo</a>
+      </div>
+      {% if classrooms %}
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead><tr><th>Salón</th><th>Nivel</th><th>Materia</th><th>Estudiantes</th><th></th></tr></thead>
+          <tbody>
+            {% for cr in classrooms %}
+            <tr>
+              <td style="font-weight:700;">{{ cr.name }}</td>
+              <td>{{ cr.grade_level|default:"—" }}</td>
+              <td>{{ cr.subject|default:"—" }}</td>
+              <td><span class="badge badge-success">{{ cr.student_count }}</span></td>
+              <td>
+                <a href="{% url 'coordinator:classroom_assign' cr.pk %}" class="btn btn-secondary" style="font-size:11px;padding:4px 8px;">
+                  <i class="bi bi-arrow-left-right"></i> Reasignar
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:28px;">
+        <span class="empty-icon">🏫</span>
+        <h3>Sin salones asignados</h3>
+        <p>Este profesor no tiene salones aún.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Comunicados recientes -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📢 Comunicados ({{ announce|length }})</span>
+        <a href="{% url 'coordinator:announcement_list' %}?teacher={{ teacher.pk }}" class="btn btn-secondary btn-sm">Ver todos</a>
+      </div>
+      {% if announce %}
+      <div style="display:flex;flex-direction:column;gap:8px;padding:12px 16px;">
+        {% for ann in announce %}
+        <div style="padding:10px 12px;background:var(--gray-50);border-radius:8px;border-left:3px solid {% if ann.priority == 'high' %}#EF4444{% elif ann.priority == 'medium' %}var(--accent){% else %}var(--primary){% endif %};">
+          <div style="font-weight:700;font-size:13px;color:var(--gray-900);">{{ ann.title }}</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">
+            {{ ann.created_at|date:"d/m/Y" }}
+            {% if ann.classroom %} · {{ ann.classroom.name }}{% endif %}
+            · <span class="badge {% if ann.priority == 'high' %}badge-danger{% elif ann.priority == 'medium' %}badge-warning{% else %}badge-info{% endif %}" style="font-size:10px;">{{ ann.get_priority_display }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="padding:20px;text-align:center;color:var(--gray-400);font-size:13px;">Sin comunicados.</div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

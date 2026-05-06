@@ -2,122 +2,427 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Iniciar sesión — Mentore</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mentore — Plataforma Educativa</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="{% static 'css/mentore.css' %}">
   <style>
-    /* ── Social buttons ── */
-    .social-btn {
-      display: flex; align-items: center; justify-content: center; gap: 10px;
-      width: 100%; padding: 11px 18px; border-radius: 8px;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      background: #f0f6fb;
+      font-family: 'Nunito', 'Segoe UI', sans-serif;
+    }
+
+    /* ── PANEL IZQUIERDO (hero) ── */
+    .hero-panel {
+      flex: 1;
+      background: linear-gradient(145deg, #0A2A40 0%, #1570A6 55%, #2196C9 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-panel::before {
+      content: '';
+      position: absolute;
+      width: 420px; height: 420px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.05);
+      top: -100px; right: -100px;
+    }
+    .hero-panel::after {
+      content: '';
+      position: absolute;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: rgba(249,195,42,.08);
+      bottom: -80px; left: -60px;
+    }
+    .hero-logo {
+      width: 90px; height: 90px;
+      border-radius: 22px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.25);
+      position: relative; z-index: 1;
+    }
+    .hero-logo img { width: 100%; height: 100%; object-fit: cover; }
+    .hero-title {
+      font-size: 38px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -.5px;
+      position: relative; z-index: 1;
+      margin-bottom: 10px;
+    }
+    .hero-title span { color: #F9C32A; }
+    .hero-sub {
+      font-size: 16px;
+      color: rgba(255,255,255,.7);
+      text-align: center;
+      max-width: 320px;
+      line-height: 1.6;
+      position: relative; z-index: 1;
+      margin-bottom: 40px;
+    }
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      position: relative; z-index: 1;
+      width: 100%;
+      max-width: 340px;
+    }
+    .feature-list li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 12px;
+      padding: 13px 16px;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .feature-list li .fi {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      background: rgba(255,255,255,.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+
+    /* ── PANEL DERECHO (formulario) ── */
+    .form-panel {
+      width: 480px;
+      flex-shrink: 0;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 48px 44px;
+      overflow-y: auto;
+    }
+
+    /* Tabs Profe / Padre / Registro */
+    .main-tabs {
+      display: flex;
+      background: #f3f4f6;
+      border-radius: 12px;
+      padding: 4px;
+      gap: 4px;
+      margin-bottom: 28px;
+    }
+    .main-tab {
+      flex: 1; padding: 10px 8px; border: none;
+      border-radius: 9px; font-size: 12px; font-weight: 700;
+      cursor: pointer; transition: all .2s;
+      background: transparent; color: #6b7280;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .main-tab.active {
+      background: #fff; color: #1570A6;
+      box-shadow: 0 1px 6px rgba(0,0,0,.1);
+    }
+
+    /* Campos */
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block; font-size: 12px; font-weight: 700;
+      color: #3A6B8A; text-transform: uppercase;
+      letter-spacing: .5px; margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%; padding: 11px 14px; font-size: 14px;
+      border: 1.5px solid #D8EAF5; border-radius: 9px;
+      color: #0D2D42; font-family: inherit;
+      transition: border-color .2s, box-shadow .2s;
+      background: #FAFCFF; outline: none;
+    }
+    .field input:focus {
+      border-color: #1570A6;
+      box-shadow: 0 0 0 3px rgba(21,112,166,.1);
+      background: #fff;
+    }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    /* Botón primario */
+    .btn-main {
+      width: 100%; padding: 13px; font-size: 15px; font-weight: 700;
+      border: none; border-radius: 10px; cursor: pointer;
+      background: linear-gradient(135deg, #1570A6, #0D8FAB);
+      color: #fff; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      box-shadow: 0 4px 14px rgba(21,112,166,.3);
+      transition: all .2s;
+    }
+    .btn-main:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(21,112,166,.4); }
+
+    /* Google btn */
+    .google-btn {
+      width: 100%; padding: 11px 18px; border-radius: 9px;
       font-size: 14px; font-weight: 700; cursor: pointer;
       border: 1.5px solid #dadce0; background: #fff; color: #3c4043;
-      text-decoration: none; transition: all .2s; font-family: 'Nunito', sans-serif;
+      text-decoration: none; transition: all .2s; font-family: inherit;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      margin-bottom: 16px;
     }
-    .social-btn:hover { background: #f8f9fa; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
-    .social-btn.apple { background: #000; color: #fff; border-color: #000; }
-    .social-btn.apple:hover { background: #1a1a1a; }
-    .social-btn img { width: 20px; height: 20px; flex-shrink: 0; }
-    .divider { display: flex; align-items: center; gap: 10px; margin: 18px 0; color: #9ca3af; font-size: 13px; }
-    .divider::before,.divider::after { content:''; flex:1; height:1px; background: #e5e7eb; }
-    .tab-row { display:flex; background:#f3f4f6; border-radius:10px; padding:4px; margin-bottom:20px; gap:4px; }
-    .tab-btn {
-      flex:1; padding:9px; border:none; border-radius:7px;
-      font-size:13px; font-weight:700; cursor:pointer; transition:all .2s;
-      background:transparent; color:#6b7280;
+    .google-btn:hover { background: #f8f9fa; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
+    .google-btn img { width: 20px; height: 20px; }
+
+    /* Divider */
+    .divider {
+      display: flex; align-items: center; gap: 10px;
+      margin: 16px 0; color: #9ca3af; font-size: 12px;
     }
-    .tab-btn.active { background:white; color:var(--primary); box-shadow:0 1px 4px rgba(0,0,0,.1); }
+    .divider::before, .divider::after {
+      content: ''; flex: 1; height: 1px; background: #e5e7eb;
+    }
+
+    /* Alertas */
+    .alert-err {
+      background: #FFF1F2; border: 1px solid #FECDD3;
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 13px; color: #9F1239; margin-bottom: 14px;
+    }
+    .alert-ok {
+      background: #F0FDF4; border: 1px solid #BBF7D0;
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 13px; color: #14532D; margin-bottom: 14px;
+    }
+
+    /* Padre info box */
+    .padre-info {
+      background: #E8F5FD; border: 1px solid #A8D9F5;
+      border-radius: 10px; padding: 14px; font-size: 13px;
+      color: #1570A6; display: flex; gap: 10px; align-items: flex-start;
+      margin-top: 14px; line-height: 1.5;
+    }
+
+    /* Responsive */
+    @media (max-width: 800px) {
+      .hero-panel { display: none; }
+      .form-panel { width: 100%; padding: 32px 24px; }
+    }
   </style>
 </head>
 <body>
-<div class="auth-wrapper">
-  <div class="auth-card">
 
-    <!-- Logo -->
-    <div class="auth-logo">
-      <span class="auth-logo-icon">🎓</span>
-      <h1>Mentore</h1>
-      <p>La plataforma educativa para profes</p>
+<!-- ── PANEL IZQUIERDO ── -->
+<div class="hero-panel">
+  <div class="hero-logo">
+    <img src="{% static 'img/logo_mentore.png' %}" alt="Mentore">
+  </div>
+  <div class="hero-title">Ment<span>ore</span></div>
+  <p class="hero-sub">
+    La plataforma educativa que conecta docentes, estudiantes y familias en un solo lugar.
+  </p>
+  <ul class="feature-list">
+    <li>
+      <div class="fi">📋</div>
+      <span>Control de asistencia rápido y visual</span>
+    </li>
+    <li>
+      <div class="fi">📊</div>
+      <span>Registro y seguimiento de notas</span>
+    </li>
+    <li>
+      <div class="fi">📢</div>
+      <span>Comunicados a docentes y padres</span>
+    </li>
+    <li>
+      <div class="fi">✨</div>
+      <span>Asistente IA integrado para profes</span>
+    </li>
+  </ul>
+</div>
+
+<!-- ── PANEL DERECHO ── -->
+<div class="form-panel">
+
+  <div style="margin-bottom:28px;">
+    <div style="font-size:22px;font-weight:900;color:#0D2D42;margin-bottom:4px;">Bienvenido 👋</div>
+    <div style="font-size:14px;color:#80AACC;">Elige cómo deseas continuar</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="main-tabs">
+    <button class="main-tab active" id="tab-login" onclick="showPanel('login')">
+      <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+    </button>
+    <button class="main-tab" id="tab-register" onclick="showPanel('register')">
+      <i class="bi bi-person-plus"></i> Registrarme
+    </button>
+    <button class="main-tab" id="tab-padre" onclick="showPanel('padre')">
+      <i class="bi bi-people"></i> Soy Padre/Madre
+    </button>
+  </div>
+
+  <!-- ═══ PANEL: INICIAR SESIÓN ═══ -->
+  <div id="panel-login">
+    <a href="{% url 'accounts:google_login' %}" class="google-btn">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+      Continuar con Google
+    </a>
+    <div class="divider">o con usuario y contraseña</div>
+
+    {% if messages %}{% for msg in messages %}
+    <div class="alert-{% if 'error' in msg.tags or 'danger' in msg.tags %}err{% else %}ok{% endif %}">
+      {{ msg }}
     </div>
+    {% endfor %}{% endif %}
+    {% if form.errors %}
+    <div class="alert-err">❌ Usuario o contraseña incorrectos. Intenta de nuevo.</div>
+    {% endif %}
 
-    <!-- TABS profe / padre -->
-    <div class="tab-row">
-      <button class="tab-btn active" id="tab-profe-btn" onclick="showTab('profe')">🧑‍🏫 Soy Profe</button>
-      <button class="tab-btn"        id="tab-padre-btn" onclick="showTab('padre')">👨‍👩‍👧 Soy Padre/Madre</button>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_type" value="login">
+      <div class="field">
+        <label>Usuario</label>
+        <input type="text" name="username" placeholder="Tu nombre de usuario" autofocus required>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" name="password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn-main" style="margin-top:4px;">
+        <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
+      </button>
+    </form>
+
+    <div style="text-align:center;margin-top:18px;font-size:13px;color:#80AACC;">
+      ¿No tienes cuenta?
+      <button onclick="showPanel('register')"
+        style="background:none;border:none;color:#1570A6;font-weight:700;cursor:pointer;font-size:13px;">
+        Regístrate aquí →
+      </button>
     </div>
+  </div>
 
-    <!-- ══════ PANEL PROFE ══════ -->
-    <div id="panel-profe">
+  <!-- ═══ PANEL: REGISTRO ═══ -->
+  <div id="panel-register" style="display:none;">
+    <a href="{% url 'accounts:google_login' %}" class="google-btn">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+      Registrarse con Google
+    </a>
+    <div class="divider">o crea tu cuenta</div>
 
-      <!-- Botones sociales -->
-      <a href="{% url 'accounts:google_login' %}" class="social-btn" style="margin-bottom:10px;">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-        Continuar con Google
-      </a>
+    {% if reg_form.errors %}
+    <div class="alert-err">❌ Por favor corrige los errores del formulario.</div>
+    {% endif %}
 
-      <div class="divider">o inicia con tu usuario</div>
-
-      {% if messages %}
-        {% for msg in messages %}
-        <div class="alert alert-{{ msg.tags|default:'info' }}" style="margin-bottom:12px;font-size:13px;">{{ msg }}</div>
-        {% endfor %}
-      {% endif %}
-      {% if form.errors %}
-      <div class="alert alert-danger" style="margin-bottom:12px;font-size:13px;">❌ Usuario o contraseña incorrectos.</div>
-      {% endif %}
-
-      <form method="post">
-        {% csrf_token %}
-        <div class="form-group">
-          <label class="form-label">Usuario</label>
-          <input type="text" name="username" class="form-control" placeholder="Tu nombre de usuario" autofocus required>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="form_type" value="register">
+      <div class="field-row">
+        <div class="field">
+          <label>Nombre *</label>
+          <input type="text" name="first_name"
+            value="{{ reg_form.first_name.value|default:'' }}"
+            placeholder="Tu nombre" required>
+          {% if reg_form.first_name.errors %}<div style="font-size:11px;color:#EF4444;margin-top:3px;">{{ reg_form.first_name.errors.0 }}</div>{% endif %}
         </div>
-        <div class="form-group">
-          <label class="form-label">Contraseña</label>
-          <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+        <div class="field">
+          <label>Apellido *</label>
+          <input type="text" name="last_name"
+            value="{{ reg_form.last_name.value|default:'' }}"
+            placeholder="Tu apellido" required>
+          {% if reg_form.last_name.errors %}<div style="font-size:11px;color:#EF4444;margin-top:3px;">{{ reg_form.last_name.errors.0 }}</div>{% endif %}
         </div>
-        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;">
-          <i class="bi bi-box-arrow-in-right"></i> Iniciar sesión
-        </button>
-      </form>
+      </div>
+      <div class="field">
+        <label>Correo electrónico *</label>
+        <input type="email" name="email"
+          value="{{ reg_form.email.value|default:'' }}"
+          placeholder="tucorreo@ejemplo.com" required>
+        {% if reg_form.email.errors %}<div style="font-size:11px;color:#EF4444;margin-top:3px;">{{ reg_form.email.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="field">
+        <label>Nombre de usuario *</label>
+        <input type="text" name="username"
+          value="{{ reg_form.username.value|default:'' }}"
+          placeholder="Ej: profe_ana, jgarcia…" required>
+        {% if reg_form.username.errors %}<div style="font-size:11px;color:#EF4444;margin-top:3px;">{{ reg_form.username.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Contraseña *</label>
+          <input type="password" name="password1" placeholder="Mínimo 8 caracteres" required>
+          {% if reg_form.password1.errors %}<div style="font-size:11px;color:#EF4444;margin-top:3px;">{{ reg_form.password1.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="field">
+          <label>Confirmar *</label>
+          <input type="password" name="password2" placeholder="Repite la contraseña" required>
+          {% if reg_form.password2.errors %}<div style="font-size:11px;color:#EF4444;margin-top:3px;">{{ reg_form.password2.errors.0 }}</div>{% endif %}
+        </div>
+      </div>
+      <button type="submit" class="btn-main">
+        <i class="bi bi-person-check"></i> Crear cuenta
+      </button>
+    </form>
 
-      <p class="auth-footer">
-        ¿Aún no tienes cuenta? <a href="{% url 'accounts:register' %}">Regístrate aquí</a>
-      </p>
+    <div style="text-align:center;margin-top:16px;font-size:13px;color:#80AACC;">
+      ¿Ya tienes cuenta?
+      <button onclick="showPanel('login')"
+        style="background:none;border:none;color:#1570A6;font-weight:700;cursor:pointer;font-size:13px;">
+        Inicia sesión →
+      </button>
     </div>
+  </div>
 
-    <!-- ══════ PANEL PADRE ══════ -->
-    <div id="panel-padre" style="display:none;">
-      <p style="font-size:14px;color:var(--gray-500);margin-bottom:18px;">
-        Consulta el progreso, trabajos y mensajes de tu hijo/a ingresando tu correo.
-      </p>
-      <form method="get" action="/padres/">
-        <div class="form-group">
-          <label class="form-label">Correo del acudiente</label>
-          <input type="email" name="email" class="form-control" placeholder="tucorreo@ejemplo.com" required>
-        </div>
-        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;">
-          <i class="bi bi-arrow-right-circle"></i> Ver progreso de mi hijo/a
-        </button>
-      </form>
-      <div style="margin-top:16px;padding:12px;background:var(--primary-light);border-radius:8px;font-size:13px;color:var(--gray-600);display:flex;gap:8px;">
-        <i class="bi bi-info-circle" style="color:var(--primary);flex-shrink:0;margin-top:1px;"></i>
-        <span>El profe registra tu correo al crear el perfil del estudiante. Comunícate con él si no puedes acceder.</span>
+  <!-- ═══ PANEL: PADRE/MADRE ═══ -->
+  <div id="panel-padre" style="display:none;">
+    <div style="background:linear-gradient(135deg,#E8F5FD,#FFF8EE);border:1px solid #A8D9F5;border-radius:12px;padding:18px;margin-bottom:20px;display:flex;gap:12px;align-items:flex-start;">
+      <div style="width:44px;height:44px;border-radius:11px;background:linear-gradient(135deg,#1570A6,#F9C32A);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">👨‍👩‍👧</div>
+      <div>
+        <div style="font-weight:800;font-size:15px;color:#0D2D42;margin-bottom:3px;">Portal para padres</div>
+        <div style="font-size:13px;color:#5588AA;line-height:1.5;">Ingresa el correo que registraste con el docente para ver el progreso, notas y mensajes de tu hijo/a.</div>
       </div>
     </div>
 
+    <form method="get" action="/padres/">
+      <div class="field">
+        <label>Correo del acudiente</label>
+        <input type="email" name="email" placeholder="tucorreo@ejemplo.com" required>
+      </div>
+      <button type="submit" class="btn-main">
+        <i class="bi bi-arrow-right-circle"></i> Ver progreso de mi hijo/a
+      </button>
+    </form>
+
+    <div class="padre-info">
+      <i class="bi bi-info-circle" style="flex-shrink:0;margin-top:1px;"></i>
+      <span>El docente registra tu correo al crear el perfil del estudiante. Si no puedes acceder, comunícate con él.</span>
+    </div>
   </div>
+
 </div>
 
 <script>
-function showTab(tab) {
-  var isProfe = tab === 'profe';
-  document.getElementById('panel-profe').style.display = isProfe ? '' : 'none';
-  document.getElementById('panel-padre').style.display = isProfe ? 'none' : '';
-  document.getElementById('tab-profe-btn').className = 'tab-btn' + (isProfe ? ' active' : '');
-  document.getElementById('tab-padre-btn').className = 'tab-btn' + (!isProfe ? ' active' : '');
+const PANELS = ['login', 'register', 'padre'];
+const TABS   = { login:'tab-login', register:'tab-register', padre:'tab-padre' };
+
+function showPanel(name) {
+  PANELS.forEach(p => {
+    document.getElementById('panel-' + p).style.display = p === name ? '' : 'none';
+    document.getElementById(TABS[p]).classList.toggle('active', p === name);
+  });
 }
+
+// Si hay errores de registro, mostrar ese panel al cargar
+{% if reg_form.errors %}
+showPanel('register');
+{% endif %}
 </script>
 </body>
 </html>

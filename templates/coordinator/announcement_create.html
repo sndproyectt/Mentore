@@ -1,0 +1,205 @@
+{% extends 'base/layout.html' %}
+{% block title %}Nuevo Comunicado — Coordinación{% endblock %}
+{% block page_title %}Nuevo Comunicado Global{% endblock %}
+{% block extra_css %}
+<style>
+.recipient-section { border:2px solid var(--gray-200);border-radius:12px;overflow:hidden; }
+.recipient-tab-row { display:flex;background:var(--gray-50);border-bottom:2px solid var(--gray-100); }
+.recipient-tab {
+  flex:1;padding:11px 14px;border:none;background:transparent;
+  font-size:13px;font-weight:700;color:var(--gray-500);
+  cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.recipient-tab.active { background:#fff;color:var(--primary);border-bottom:2px solid var(--primary);margin-bottom:-2px; }
+.recipient-panel { display:none;padding:14px; }
+.recipient-panel.active { display:block; }
+.person-list { max-height:240px;overflow-y:auto;display:flex;flex-direction:column;gap:2px; }
+.person-row { display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s; }
+.person-row:hover { background:var(--primary-light); }
+.person-row input[type=checkbox] { width:16px;height:16px;accent-color:var(--primary);cursor:pointer;flex-shrink:0; }
+.person-avatar { width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+.person-name { font-weight:700;font-size:13px;color:var(--gray-900); }
+.person-sub  { font-size:11px;color:var(--gray-400); }
+.priority-group { display:grid;grid-template-columns:repeat(3,1fr);gap:10px; }
+.priority-opt { position:relative; }
+.priority-opt input { position:absolute;opacity:0;width:0;height:0; }
+.priority-opt label { display:flex;flex-direction:column;align-items:center;gap:5px;padding:14px 8px;border:2px solid var(--gray-200);border-radius:11px;cursor:pointer;font-size:13px;font-weight:700;color:var(--gray-500);transition:all .2s;background:var(--gray-50); }
+.priority-opt label .pi { font-size:22px; }
+.priority-opt.low  input:checked + label { border-color:var(--primary);color:var(--primary);background:var(--primary-light); }
+.priority-opt.med  input:checked + label { border-color:#F9C32A;color:#92400E;background:#FFFBEB; }
+.priority-opt.high input:checked + label { border-color:#EF4444;color:#991B1B;background:#FFF1F1; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:780px;margin:0 auto;">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+    <div>
+      <h2 style="font-size:20px;font-weight:800;color:var(--gray-900);margin:0 0 2px;">📢 Nuevo comunicado global</h2>
+      <p style="font-size:13px;color:var(--gray-500);margin:0;">Como coordinador, puedes enviar a docentes y/o padres de familia</p>
+    </div>
+    <a href="{% url 'coordinator:announcement_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
+  </div>
+
+  <form method="post" id="annForm">
+    {% csrf_token %}
+    <div class="card" style="padding:24px;margin-bottom:16px;">
+
+      <div class="form-group">
+        <label class="form-label">📌 Título *</label>
+        <input type="text" name="title" class="form-control" placeholder="Ej: Inicio de semestre, Reunión general…" required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">📝 Contenido *</label>
+        <textarea name="content" class="form-control" rows="5" placeholder="Escribe el comunicado completo…" required></textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">🏷️ Prioridad</label>
+        <div class="priority-group">
+          <div class="priority-opt low">
+            <input type="radio" name="priority" id="p-low" value="low" checked>
+            <label for="p-low"><span class="pi">📋</span> Informativo</label>
+          </div>
+          <div class="priority-opt med">
+            <input type="radio" name="priority" id="p-med" value="medium">
+            <label for="p-med"><span class="pi">⚠️</span> Importante</label>
+          </div>
+          <div class="priority-opt high">
+            <input type="radio" name="priority" id="p-high" value="high">
+            <label for="p-high"><span class="pi">🚨</span> Urgente</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- DESTINATARIOS -->
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label" style="margin-bottom:10px;">
+          👥 Destinatarios *
+          <span style="font-weight:400;font-size:11px;color:var(--gray-400);margin-left:6px;">— elige docentes, padres o ambos</span>
+        </label>
+
+        <div class="recipient-section">
+          <div class="recipient-tab-row">
+            <button type="button" class="recipient-tab active" onclick="switchTab('docentes',this)">
+              <i class="bi bi-person-workspace"></i> Docentes
+              <span id="badge-docentes" style="background:var(--primary);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px;">0</span>
+            </button>
+            <button type="button" class="recipient-tab" onclick="switchTab('padres',this)">
+              <i class="bi bi-people"></i> Padres de familia
+              <span id="badge-padres" style="background:var(--gray-300);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px;">0</span>
+            </button>
+          </div>
+
+          <!-- Panel Docentes -->
+          <div class="recipient-panel active" id="panel-docentes">
+            <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="selAll('chk-doc',true)"><i class="bi bi-check-all"></i> Todos</button>
+              <button type="button" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="selAll('chk-doc',false)"><i class="bi bi-x-lg"></i> Ninguno</button>
+            </div>
+            <div class="person-list">
+              {% for t in all_teachers %}
+              <label class="person-row">
+                <input type="checkbox" name="teacher_recipients" value="{{ t.pk }}" class="chk-doc" onchange="updateBadge('docentes','chk-doc')">
+                <div class="person-avatar">{{ t.first_name|first|upper }}{{ t.last_name|first|upper }}</div>
+                <div>
+                  <div class="person-name">{{ t.get_full_name }}</div>
+                  <div class="person-sub">
+                    {{ t.teacher_profile.subject|default:"Sin materia" }}
+                    {% if t.teacher_profile.role == 'coordinator' %} · ⭐ Coordinador{% endif %}
+                  </div>
+                </div>
+              </label>
+              {% empty %}
+              <div style="padding:16px;text-align:center;color:var(--gray-400);font-size:13px;">No hay docentes registrados.</div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Panel Padres -->
+          <div class="recipient-panel" id="panel-padres">
+            <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="selAll('chk-padre',true)"><i class="bi bi-check-all"></i> Todos</button>
+              <button type="button" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="selAll('chk-padre',false)"><i class="bi bi-x-lg"></i> Ninguno</button>
+              {% for cr in classrooms %}
+              <button type="button" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="selByClass('{{ cr.pk }}')">
+                <i class="bi bi-building"></i> {{ cr.name }}
+              </button>
+              {% endfor %}
+            </div>
+            <div class="person-list">
+              {% for s in students_with_parent %}
+              <label class="person-row">
+                <input type="checkbox" name="parent_recipients" value="{{ s.pk }}"
+                  class="chk-padre" data-classroom="{{ s.classroom_id|default:'' }}"
+                  onchange="updateBadge('padres','chk-padre')">
+                <div class="person-avatar" style="background:linear-gradient(135deg,#059669,#34D399);">
+                  {{ s.first_name|first|upper }}{{ s.last_name|first|upper }}
+                </div>
+                <div>
+                  <div class="person-name">{{ s.get_full_name }}</div>
+                  <div class="person-sub">
+                    👨‍👩‍👧 {{ s.parent_name|default:"Sin acudiente" }}
+                    {% if s.parent_email %} · {{ s.parent_email }}{% endif %}
+                    {% if s.classroom %} · {{ s.classroom.name }}{% endif %}
+                    · Prof. {{ s.teacher.get_full_name }}
+                  </div>
+                </div>
+              </label>
+              {% empty %}
+              <div style="padding:16px;text-align:center;color:var(--gray-400);font-size:13px;">No hay padres registrados en el sistema.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:8px;font-size:12px;color:var(--gray-500);display:flex;gap:16px;">
+          <span><strong id="total-docentes">0</strong> docente(s)</span>
+          <span><strong id="total-padres">0</strong> padre(s)</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button type="submit" class="btn btn-primary" style="padding:12px 28px;font-size:15px;">
+        <i class="bi bi-megaphone-fill"></i> Publicar comunicado
+      </button>
+      <a href="{% url 'coordinator:announcement_list' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.recipient-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.recipient-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+}
+function updateBadge(name, cls) {
+  const n = document.querySelectorAll('.' + cls + ':checked').length;
+  document.getElementById('badge-' + name).textContent = n;
+  document.getElementById('total-' + name).textContent = n;
+}
+function selAll(cls, checked) {
+  document.querySelectorAll('.' + cls).forEach(c => c.checked = checked);
+  const name = cls === 'chk-doc' ? 'docentes' : 'padres';
+  updateBadge(name, cls);
+}
+function selByClass(crId) {
+  document.querySelectorAll('.chk-padre').forEach(c => {
+    if (c.dataset.classroom === crId) c.checked = true;
+  });
+  updateBadge('padres', 'chk-padre');
+}
+document.getElementById('annForm').addEventListener('submit', function(e) {
+  const td = document.querySelectorAll('.chk-doc:checked').length;
+  const tp = document.querySelectorAll('.chk-padre:checked').length;
+  if (td + tp === 0) { e.preventDefault(); alert('Selecciona al menos un destinatario.'); }
+});
+</script>
+{% endblock %}

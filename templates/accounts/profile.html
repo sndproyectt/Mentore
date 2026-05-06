@@ -58,7 +58,7 @@
 </style>
 
 <!-- HERO con tema aplicado -->
-<div class="banner-{{ theme }}" id="page-hero" style="border-radius:14px;padding:24px 28px;color:white;display:flex;align-items:center;gap:18px;margin-bottom:24px;position:relative;overflow:hidden;flex-wrap:wrap;">
+<div class="banner-{{ theme }}" id="page-hero" style="background:var(--hero-gradient);border-radius:14px;padding:24px 28px;color:white;display:flex;align-items:center;gap:18px;margin-bottom:24px;position:relative;overflow:hidden;flex-wrap:wrap;">
   <div style="position:absolute;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.05);top:-100px;right:-60px;"></div>
   <div class="icon-{{ theme }}" id="hero-icon" style="width:72px;height:72px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:800;color:white;border:2px solid rgba(255,255,255,.3);flex-shrink:0;overflow:hidden;position:relative;z-index:1;">
     {% if profile.avatar %}<img src="{{ profile.avatar.url }}" style="width:100%;height:100%;object-fit:cover;">
@@ -232,22 +232,40 @@
 
 <script>
 const THEMES = {
-  ocean:  { banner:'linear-gradient(135deg,#0A2A40 0%,#1570A6 55%,#2196C9 100%)', icon:'linear-gradient(135deg,#1570A6,#2196C9)' },
-  forest: { banner:'linear-gradient(135deg,#064E3B 0%,#059669 60%,#34D399 100%)', icon:'linear-gradient(135deg,#059669,#34D399)' },
-  sunset: { banner:'linear-gradient(135deg,#7C2D12 0%,#EA580C 55%,#FB923C 100%)', icon:'linear-gradient(135deg,#EA580C,#FB923C)' },
-  purple: { banner:'linear-gradient(135deg,#3B0764 0%,#7C3AED 55%,#A78BFA 100%)', icon:'linear-gradient(135deg,#7C3AED,#A78BFA)' },
-  rose:   { banner:'linear-gradient(135deg,#881337 0%,#E11D48 55%,#FB7185 100%)', icon:'linear-gradient(135deg,#E11D48,#FB7185)' },
-  slate:  { banner:'linear-gradient(135deg,#0F172A 0%,#334155 55%,#64748B 100%)', icon:'linear-gradient(135deg,#334155,#64748B)' },
-  amber:  { banner:'linear-gradient(135deg,#78350F 0%,#D97706 55%,#FCD34D 100%)', icon:'linear-gradient(135deg,#D97706,#FCD34D)' },
-  teal:   { banner:'linear-gradient(135deg,#134E4A 0%,#0D9488 55%,#2DD4BF 100%)', icon:'linear-gradient(135deg,#0D9488,#2DD4BF)' },
+  ocean:  { banner:'linear-gradient(135deg,#0A2A40 0%,#1570A6 55%,#2196C9 100%)', icon:'linear-gradient(135deg,#1570A6,#2196C9)',  primary:'#2196C9', dark:'#1570A6', light:'#E8F5FD', sideTop:'#0A2A40', sideMid:'#0E3D5C', sideBot:'#1570A6' },
+  forest: { banner:'linear-gradient(135deg,#064E3B 0%,#059669 60%,#34D399 100%)', icon:'linear-gradient(135deg,#059669,#34D399)',  primary:'#059669', dark:'#064E3B', light:'#D1FAE5', sideTop:'#052E17', sideMid:'#065F46', sideBot:'#059669' },
+  sunset: { banner:'linear-gradient(135deg,#7C2D12 0%,#EA580C 55%,#FB923C 100%)', icon:'linear-gradient(135deg,#EA580C,#FB923C)',  primary:'#EA580C', dark:'#7C2D12', light:'#FFEDD5', sideTop:'#431407', sideMid:'#9A3412', sideBot:'#EA580C' },
+  purple: { banner:'linear-gradient(135deg,#3B0764 0%,#7C3AED 55%,#A78BFA 100%)', icon:'linear-gradient(135deg,#7C3AED,#A78BFA)',  primary:'#7C3AED', dark:'#3B0764', light:'#EDE9FE', sideTop:'#1E0440', sideMid:'#4C1D95', sideBot:'#7C3AED' },
+  rose:   { banner:'linear-gradient(135deg,#881337 0%,#E11D48 55%,#FB7185 100%)', icon:'linear-gradient(135deg,#E11D48,#FB7185)',  primary:'#E11D48', dark:'#881337', light:'#FFE4E6', sideTop:'#4C0519', sideMid:'#9F1239', sideBot:'#E11D48' },
+  slate:  { banner:'linear-gradient(135deg,#0F172A 0%,#334155 55%,#64748B 100%)', icon:'linear-gradient(135deg,#334155,#64748B)',  primary:'#475569', dark:'#0F172A', light:'#F1F5F9', sideTop:'#020617', sideMid:'#1E293B', sideBot:'#334155' },
+  amber:  { banner:'linear-gradient(135deg,#78350F 0%,#D97706 55%,#FCD34D 100%)', icon:'linear-gradient(135deg,#D97706,#FCD34D)',  primary:'#D97706', dark:'#78350F', light:'#FEF3C7', sideTop:'#3D1A00', sideMid:'#92400E', sideBot:'#D97706' },
+  teal:   { banner:'linear-gradient(135deg,#134E4A 0%,#0D9488 55%,#2DD4BF 100%)', icon:'linear-gradient(135deg,#0D9488,#2DD4BF)',  primary:'#0D9488', dark:'#134E4A', light:'#CCFBF1', sideTop:'#042F2E', sideMid:'#0F5C57', sideBot:'#0D9488' },
 };
 
 function pickTheme(t) {
+  const th = THEMES[t];
   document.getElementById('theme_color_input').value = t;
-  document.getElementById('preview-banner').style.background = THEMES[t].banner;
-  document.getElementById('preview-icon').style.background   = THEMES[t].icon;
-  document.getElementById('page-hero').style.background      = THEMES[t].banner;
-  document.getElementById('hero-icon').style.background      = THEMES[t].icon;
+
+  // Vista previa en sidebar
+  document.getElementById('preview-banner').style.background = th.banner;
+  document.getElementById('preview-icon').style.background   = th.icon;
+
+  // Hero del perfil
+  document.getElementById('page-hero').style.background = th.banner;
+  document.getElementById('hero-icon').style.background  = th.icon;
+
+  // Actualizar variables CSS globales → toda la página cambia en tiempo real
+  const root = document.documentElement;
+  root.style.setProperty('--primary',       th.primary);
+  root.style.setProperty('--primary-dark',  th.dark);
+  root.style.setProperty('--primary-light', th.light);
+  root.style.setProperty('--hero-gradient', th.banner);
+
+  // Sidebar
+  const sidebar = document.querySelector('.sidebar');
+  if (sidebar) sidebar.style.background = `linear-gradient(180deg, ${th.sideTop} 0%, ${th.sideMid} 60%, ${th.sideBot} 100%)`;
+
+  // Marcar swatch activo
   document.querySelectorAll('.swatch').forEach(s => {
     s.classList.toggle('active', s.dataset.theme === t);
   });

@@ -7,6 +7,100 @@
   <title>{% block title %}Mentore{% endblock %} — Mentore</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="{% static 'css/mentore.css' %}">
+
+  {# ── TEMA GLOBAL: sobreescribe variables CSS según el tema del profe ── #}
+  {% if user.is_authenticated %}
+  {% with theme=user.teacher_profile.theme_color|default:"ocean" %}
+  <style>
+    :root {
+      {% if theme == "forest" %}
+        --primary:        #059669;
+        --primary-dark:   #064E3B;
+        --primary-light:  #D1FAE5;
+        --secondary:      #34D399;
+        --sidebar-top:    #052E17;
+        --sidebar-mid:    #065F46;
+        --sidebar-bot:    #059669;
+        --hero-gradient:  linear-gradient(135deg,#064E3B 0%,#059669 60%,#34D399 100%);
+      {% elif theme == "sunset" %}
+        --primary:        #EA580C;
+        --primary-dark:   #7C2D12;
+        --primary-light:  #FFEDD5;
+        --secondary:      #FB923C;
+        --sidebar-top:    #431407;
+        --sidebar-mid:    #9A3412;
+        --sidebar-bot:    #EA580C;
+        --hero-gradient:  linear-gradient(135deg,#7C2D12 0%,#EA580C 55%,#FB923C 100%);
+      {% elif theme == "purple" %}
+        --primary:        #7C3AED;
+        --primary-dark:   #3B0764;
+        --primary-light:  #EDE9FE;
+        --secondary:      #A78BFA;
+        --sidebar-top:    #1E0440;
+        --sidebar-mid:    #4C1D95;
+        --sidebar-bot:    #7C3AED;
+        --hero-gradient:  linear-gradient(135deg,#3B0764 0%,#7C3AED 55%,#A78BFA 100%);
+      {% elif theme == "rose" %}
+        --primary:        #E11D48;
+        --primary-dark:   #881337;
+        --primary-light:  #FFE4E6;
+        --secondary:      #FB7185;
+        --sidebar-top:    #4C0519;
+        --sidebar-mid:    #9F1239;
+        --sidebar-bot:    #E11D48;
+        --hero-gradient:  linear-gradient(135deg,#881337 0%,#E11D48 55%,#FB7185 100%);
+      {% elif theme == "slate" %}
+        --primary:        #475569;
+        --primary-dark:   #0F172A;
+        --primary-light:  #F1F5F9;
+        --secondary:      #64748B;
+        --sidebar-top:    #020617;
+        --sidebar-mid:    #1E293B;
+        --sidebar-bot:    #334155;
+        --hero-gradient:  linear-gradient(135deg,#0F172A 0%,#334155 55%,#64748B 100%);
+      {% elif theme == "amber" %}
+        --primary:        #D97706;
+        --primary-dark:   #78350F;
+        --primary-light:  #FEF3C7;
+        --secondary:      #F9C32A;
+        --sidebar-top:    #3D1A00;
+        --sidebar-mid:    #92400E;
+        --sidebar-bot:    #D97706;
+        --hero-gradient:  linear-gradient(135deg,#78350F 0%,#D97706 55%,#FCD34D 100%);
+      {% elif theme == "teal" %}
+        --primary:        #0D9488;
+        --primary-dark:   #134E4A;
+        --primary-light:  #CCFBF1;
+        --secondary:      #2DD4BF;
+        --sidebar-top:    #042F2E;
+        --sidebar-mid:    #0F5C57;
+        --sidebar-bot:    #0D9488;
+        --hero-gradient:  linear-gradient(135deg,#134E4A 0%,#0D9488 55%,#2DD4BF 100%);
+      {% else %}{# ocean (default) #}
+        --primary:        #2196C9;
+        --primary-dark:   #1570A6;
+        --primary-light:  #E8F5FD;
+        --secondary:      #0D8FAB;
+        --sidebar-top:    #0A2A40;
+        --sidebar-mid:    #0E3D5C;
+        --sidebar-bot:    #1570A6;
+        --hero-gradient:  linear-gradient(135deg,#0A2A40 0%,#1570A6 55%,#2196C9 100%);
+      {% endif %}
+    }
+    .sidebar {
+      background: linear-gradient(180deg,
+        var(--sidebar-top, #0A2A40) 0%,
+        var(--sidebar-mid, #0E3D5C) 60%,
+        var(--sidebar-bot, #1570A6) 100%);
+    }
+    .topbar { border-bottom-color: var(--primary-light); }
+    .auth-wrapper {
+      background: var(--hero-gradient, linear-gradient(135deg,#0A2A40 0%,#2196C9 55%,#0D8FAB 100%));
+    }
+  </style>
+  {% endwith %}
+  {% endif %}
+
   {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -14,7 +108,9 @@
 <aside class="sidebar">
   <!-- Logo -->
   <a href="{% url 'students:dashboard' %}" class="sidebar-brand">
-    <div class="sidebar-brand-icon">🎓</div>
+    <div class="sidebar-brand-icon" style="background:none;padding:0;overflow:hidden;">
+      <img src="{% static 'img/logo_mentore.png' %}" alt="Mentore" style="width:42px;height:42px;object-fit:cover;border-radius:10px;display:block;">
+    </div>
     <span class="sidebar-brand-name">Ment<span>ore</span></span>
   </a>
 
@@ -24,7 +120,9 @@
     <div class="sidebar-user-avatar">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>
     <div>
       <div class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</div>
-      <div class="sidebar-user-role">Profesor</div>
+      <div class="sidebar-user-role">
+        {% if user.teacher_profile.role == 'coordinator' %}⭐ Coordinador{% else %}📚 Profesor{% endif %}
+      </div>
     </div>
   </div>
   {% endif %}
@@ -32,20 +130,55 @@
   <!-- Nav -->
   <ul class="sidebar-nav">
     <li class="sidebar-section-label">Principal</li>
-    <li class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-      <a href="{% url 'students:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+    <li>
+      <a href="{% url 'students:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.namespace == 'students' %}active{% endif %}">
         <i class="bi bi-house nav-icon"></i> Inicio
       </a>
     </li>
 
-    <li class="sidebar-section-label">Gestión Académica</li>
+    {% if user.is_authenticated %}
+
+    {% if user.teacher_profile.role == 'coordinator' %}
+    <!-- ── MENÚ COORDINADOR ── -->
+    <li class="sidebar-section-label">Coordinación</li>
     <li>
-      <a href="{% url 'students:classrooms' %}" class="sidebar-link {% if 'classroom' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+      <a href="{% url 'coordinator:dashboard' %}" class="sidebar-link {% if request.resolver_match.namespace == 'coordinator' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-shield-check nav-icon"></i> Panel coordinador
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'coordinator:classroom_list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'coordinator' and 'classroom' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+        <i class="bi bi-building nav-icon"></i> Todos los salones
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'coordinator:teacher_list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'coordinator' and 'teacher' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+        <i class="bi bi-people nav-icon"></i> Profesores
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'coordinator:student_list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'coordinator' and request.resolver_match.url_name == 'student_list' %}active{% endif %}">
+        <i class="bi bi-person-badge nav-icon"></i> Todos los estudiantes
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'coordinator:announcement_list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'coordinator' and 'announcement' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+        <i class="bi bi-megaphone nav-icon"></i> Comunicados globales
+      </a>
+    </li>
+    <li class="sidebar-section-label">Mi gestión</li>
+    {% else %}
+    <!-- ── MENÚ PROFESOR ── -->
+    <li class="sidebar-section-label">Gestión Académica</li>
+    {% endif %}
+
+    <li>
+      <a href="{% url 'students:classrooms' %}" class="sidebar-link {% if request.resolver_match.namespace == 'students' and 'classroom' in request.resolver_match.url_name|default:'' %}active{% endif %}">
         <i class="bi bi-building nav-icon"></i> Mis Grupos
       </a>
     </li>
     <li>
-      <a href="{% url 'students:list' %}" class="sidebar-link {% if request.resolver_match.url_name in 'list,create,detail,edit' %}active{% endif %}">
+      <a href="{% url 'students:list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'students' and request.resolver_match.url_name in 'list,create,detail,edit' %}active{% endif %}">
         <i class="bi bi-person-badge nav-icon"></i> Estudiantes
       </a>
     </li>
@@ -62,12 +195,19 @@
 
     <li class="sidebar-section-label">Familias</li>
     <li>
-      <a href="{% url 'students:message_list' %}" class="sidebar-link {% if 'message' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+      <a href="{% url 'students:message_list' %}" class="sidebar-link {% if request.resolver_match.url_name == 'message_list' or request.resolver_match.url_name == 'message_create' %}active{% endif %}">
         <i class="bi bi-envelope nav-icon"></i> Mensajería
       </a>
     </li>
     <li>
-      <a href="{% url 'students:announcement_list' %}" class="sidebar-link {% if 'announcement' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+      <a href="{% url 'students:inbox' %}" class="sidebar-link {% if request.resolver_match.url_name == 'inbox' %}active{% endif %}" style="position:relative;">
+        <i class="bi bi-tray nav-icon"></i> Bandeja de entrada
+        {% with unread=request.user.received_direct_messages.filter %}
+        {% endwith %}
+      </a>
+    </li>
+    <li>
+      <a href="{% url 'students:announcement_list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'students' and 'announcement' in request.resolver_match.url_name|default:'' %}active{% endif %}">
         <i class="bi bi-megaphone nav-icon"></i> Comunicados
       </a>
     </li>
@@ -76,7 +216,6 @@
         <i class="bi bi-images nav-icon"></i> Galería
       </a>
     </li>
-
 
     <li class="sidebar-section-label">Herramientas</li>
     <li>
@@ -89,6 +228,8 @@
         <i class="bi bi-person-circle nav-icon"></i> Mi Perfil
       </a>
     </li>
+
+    {% endif %}
   </ul>
 
   <!-- IA chip -->
@@ -109,6 +250,9 @@
   <header class="topbar">
     <h1 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h1>
     <div class="topbar-right">
+      {% if user.is_authenticated and user.teacher_profile.role == 'coordinator' %}
+      <span style="font-size:11px;font-weight:700;padding:3px 10px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border-radius:20px;">⭐ Coordinador</span>
+      {% endif %}
       <span style="font-size:13px;color:var(--gray-500);font-weight:600;">{{ user.get_full_name|default:user.username }}</span>
       <a href="{% url 'accounts:profile' %}" class="topbar-btn" title="Mi perfil"><i class="bi bi-person-circle"></i></a>
     </div>

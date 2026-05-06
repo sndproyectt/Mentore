@@ -25,4 +25,6 @@ urlpatterns = [
     path('messages/', views.message_list, name='message_list'),
     path('messages/new/', views.message_create, name='message_create'),
     path('messages/<int:pk>/delete/', views.message_delete, name='message_delete'),
+    # Bandeja de entrada del docente
+    path('inbox/', views.inbox_view, name='inbox'),
 ]

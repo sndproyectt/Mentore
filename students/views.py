@@ -1,102 +1,215 @@
-from django.shortcuts import render, redirect, get_object_or_404
+"""
+Vistas del módulo students — Mentore.
+Los profesores ven SOLO sus salones y estudiantes.
+Compatible con el nuevo M2M Classroom.teachers.
+"""
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib import messages
 from django.db.models import Q, Avg
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from datetime import date, timedelta
-from .models import Student, Classroom, Announcement, Attendance, Message
-from grades.models import Grade
+from django.shortcuts import render, redirect, get_object_or_404
 
+from .models import Classroom, Student, Announcement, Attendance, Message, DirectMessage
+
+# ── helpers ──────────────────────────────────────────────────────────────────
+
+def _teacher_classrooms(user):
+    """Salones donde el usuario es propietario (FK) O está en la lista M2M."""
+    return Classroom.objects.filter(
+        Q(teacher=user) | Q(teachers=user)
+    ).distinct()
+
+# ── Dashboard ─────────────────────────────────────────────────────────────────
 
 @login_required
 def dashboard(request):
-    students = Student.objects.filter(teacher=request.user, active=True)
-    classrooms = Classroom.objects.filter(teacher=request.user)
-    total_grades = Grade.objects.filter(student__teacher=request.user)
-    avg = total_grades.aggregate(Avg('score'))['score__avg'] or 0
-    recent_students = students.order_by('-created_at')[:5]
-    announcements = Announcement.objects.filter(teacher=request.user).order_by('-created_at')[:3]
-    # Attendance today
-    today = date.today()
-    present_today = Attendance.objects.filter(student__teacher=request.user, date=today, status='present').count()
-    absent_today  = Attendance.objects.filter(student__teacher=request.user, date=today, status='absent').count()
-    context = {
-        'total_students': students.count(),
-        'total_classrooms': classrooms.count(),
-        'total_grades': total_grades.count(),
-        'avg_grade': round(avg, 1),
+    from datetime import date
+    from grades.models import Grade
+
+    classrooms      = _teacher_classrooms(request.user)
+    students_qs     = Student.objects.filter(teacher=request.user, active=True)
+    total_students  = students_qs.count()
+
+    today           = date.today()
+    present_today   = Attendance.objects.filter(
+        student__teacher=request.user, date=today, status='present'
+    ).count()
+    absent_today    = Attendance.objects.filter(
+        student__teacher=request.user, date=today, status='absent'
+    ).count()
+
+    grades_qs       = Grade.objects.filter(student__teacher=request.user)
+    total_grades    = grades_qs.count()
+    avg_raw         = grades_qs.aggregate(Avg('score'))['score__avg']
+    avg_grade       = round(avg_raw, 1) if avg_raw else 0
+
+    unread_msgs     = Message.objects.filter(
+        student__teacher=request.user, is_read=False
+    ).count()
+
+    recent_students = students_qs.order_by('-created_at')[:6]
+
+    announcements   = Announcement.objects.filter(
+        teacher=request.user
+    ).order_by('-created_at')[:4]
+
+    return render(request, 'students/dashboard.html', {
+        'classrooms':      classrooms,
+        'total_students':  total_students,
+        'present_today':   present_today,
+        'absent_today':    absent_today,
+        'total_grades':    total_grades,
+        'avg_grade':       avg_grade,
+        'unread_msgs':     unread_msgs,
         'recent_students': recent_students,
-        'classrooms': classrooms,
-        'announcements': announcements,
-        'present_today': present_today,
-        'absent_today': absent_today,
-    }
-    return render(request, 'students/dashboard.html', context)
+        'announcements':   announcements,
+    })
+
+# ── Classrooms ────────────────────────────────────────────────────────────────
+
+@login_required
+def classroom_list(request):
+    classrooms = _teacher_classrooms(request.user).prefetch_related('teachers')
+    return render(request, 'students/classroom_list.html', {'classrooms': classrooms})
 
 
 @login_required
+def classroom_create(request):
+    """Profesores pueden crear sus propios salones."""
+    if request.method == 'POST':
+        p = request.POST
+        cr = Classroom.objects.create(
+            teacher=request.user,
+            name=p.get('name', ''),
+            grade_level=p.get('grade_level', ''),
+            subject=p.get('subject', ''),
+        )
+        cr.teachers.add(request.user)   # el creador entra al M2M también
+        messages.success(request, f'Grupo «{cr.name}» creado exitosamente.')
+        return redirect('students:classrooms')
+    return render(request, 'students/classroom_form.html', {'action': 'Crear'})
+
+
+@login_required
+def classroom_edit(request, pk):
+    classroom = get_object_or_404(Classroom, pk=pk, teacher=request.user)
+    if request.method == 'POST':
+        p = request.POST
+        classroom.name        = p.get('name', classroom.name)
+        classroom.grade_level = p.get('grade_level', classroom.grade_level)
+        classroom.subject     = p.get('subject', classroom.subject)
+        classroom.save()
+        messages.success(request, f'Grupo «{classroom.name}» actualizado.')
+        return redirect('students:classrooms')
+    return render(request, 'students/classroom_form.html', {
+        'action': 'Editar', 'classroom': classroom
+    })
+
+
+@login_required
+def classroom_delete(request, pk):
+    classroom = get_object_or_404(Classroom, pk=pk, teacher=request.user)
+    if request.method == 'POST':
+        name = classroom.name
+        classroom.delete()
+        messages.success(request, f'Grupo «{name}» eliminado.')
+        return redirect('students:classrooms')
+    return redirect('students:classrooms')
+
+# ── Students ──────────────────────────────────────────────────────────────────
+
+@login_required
 def student_list(request):
-    query = request.GET.get('q', '')
+    query        = request.GET.get('q', '')
     classroom_id = request.GET.get('classroom', '')
-    students = Student.objects.filter(teacher=request.user, active=True)
+    students     = Student.objects.filter(teacher=request.user, active=True)
     if query:
         students = students.filter(
-            Q(first_name__icontains=query) | Q(last_name__icontains=query) | Q(document_id__icontains=query)
+            Q(first_name__icontains=query) |
+            Q(last_name__icontains=query)  |
+            Q(document_id__icontains=query)
         )
     if classroom_id:
         students = students.filter(classroom_id=classroom_id)
-    classrooms = Classroom.objects.filter(teacher=request.user)
+    classrooms = _teacher_classrooms(request.user)
     return render(request, 'students/student_list.html', {
-        'students': students, 'classrooms': classrooms,
-        'query': query, 'selected_classroom': classroom_id,
+        'students':           students,
+        'classrooms':         classrooms,
+        'query':              query,
+        'selected_classroom': classroom_id,
     })
 
 
 @login_required
 def student_create(request):
-    classrooms = Classroom.objects.filter(teacher=request.user)
+    classrooms = _teacher_classrooms(request.user)
     if request.method == 'POST':
         p = request.POST
-        student = Student.objects.create(
+        Student.objects.create(
             teacher=request.user,
-            first_name=p.get('first_name', ''), last_name=p.get('last_name', ''),
-            document_id=p.get('document_id', ''), email=p.get('email', ''),
-            parent_email=p.get('parent_email', '').strip().lower(), parent_name=p.get('parent_name', ''),
-            parent_phone=p.get('parent_phone', ''), gender=p.get('gender', ''),
-            notes=p.get('notes', ''), classroom_id=p.get('classroom') or None,
+            classroom_id=p.get('classroom') or None,
+            first_name=p.get('first_name', ''),
+            last_name=p.get('last_name', ''),
+            document_id=p.get('document_id', ''),
+            email=p.get('email', ''),
+            parent_email=p.get('parent_email', ''),
+            parent_name=p.get('parent_name', ''),
+            parent_phone=p.get('parent_phone', ''),
+            gender=p.get('gender', ''),
+            notes=p.get('notes', ''),
+            date_of_birth=p.get('date_of_birth') or None,
         )
-        if 'photo' in request.FILES:
-            student.photo = request.FILES['photo']
-            student.save()
-        messages.success(request, f'Estudiante {student.get_full_name()} creado exitosamente.')
+        messages.success(request, 'Estudiante creado correctamente.')
         return redirect('students:list')
-    return render(request, 'students/student_form.html', {'classrooms': classrooms, 'action': 'Crear'})
+    return render(request, 'students/student_form.html', {
+        'classrooms': classrooms, 'action': 'Crear',
+    })
+
+
+@login_required
+def student_detail(request, pk):
+    student          = get_object_or_404(Student, pk=pk, teacher=request.user)
+    grades           = student.grades.order_by('-date')
+    all_attendances  = student.attendances.order_by('-date')
+    present          = all_attendances.filter(status='present').count()
+    absent           = all_attendances.filter(status='absent').count()
+    attendances      = all_attendances[:30]
+    messages_sent    = student.messages.order_by('-sent_at')[:10]
+    return render(request, 'students/student_detail.html', {
+        'student':       student,
+        'grades':        grades,
+        'attendances':   attendances,
+        'present':       present,
+        'absent':        absent,
+        'messages_sent': messages_sent,
+    })
 
 
 @login_required
 def student_edit(request, pk):
-    student = get_object_or_404(Student, pk=pk, teacher=request.user)
-    classrooms = Classroom.objects.filter(teacher=request.user)
+    student    = get_object_or_404(Student, pk=pk, teacher=request.user)
+    classrooms = _teacher_classrooms(request.user)
     if request.method == 'POST':
         p = request.POST
-        student.first_name = p.get('first_name', student.first_name)
-        student.last_name = p.get('last_name', student.last_name)
-        student.document_id = p.get('document_id', student.document_id)
-        student.email = p.get('email', student.email).strip().lower()
-        student.parent_email = p.get('parent_email', student.parent_email).strip().lower()
-        student.parent_name = p.get('parent_name', student.parent_name)
+        student.first_name   = p.get('first_name', student.first_name)
+        student.last_name    = p.get('last_name',  student.last_name)
+        student.document_id  = p.get('document_id', student.document_id)
+        student.email        = p.get('email', student.email)
+        student.parent_email = p.get('parent_email', student.parent_email)
+        student.parent_name  = p.get('parent_name', student.parent_name)
         student.parent_phone = p.get('parent_phone', student.parent_phone)
-        student.gender = p.get('gender', student.gender)
-        student.notes = p.get('notes', student.notes)
+        student.gender       = p.get('gender', student.gender)
+        student.notes        = p.get('notes', student.notes)
         student.classroom_id = p.get('classroom') or None
-        if 'photo' in request.FILES:
+        if p.get('date_of_birth'):
+            student.date_of_birth = p.get('date_of_birth')
+        if request.FILES.get('photo'):
             student.photo = request.FILES['photo']
         student.save()
-        messages.success(request, 'Estudiante actualizado correctamente.')
-        return redirect('students:list')
+        messages.success(request, f'{student.get_full_name()} actualizado.')
+        return redirect('students:detail', pk=student.pk)
     return render(request, 'students/student_form.html', {
-        'student': student, 'classrooms': classrooms, 'action': 'Editar'
+        'classrooms': classrooms, 'student': student, 'action': 'Editar',
     })
 
 
@@ -107,71 +220,133 @@ def student_delete(request, pk):
         name = student.get_full_name()
         student.active = False
         student.save()
-        messages.success(request, f'Estudiante {name} eliminado.')
+        messages.success(request, f'{name} ha sido desactivado.')
+        return redirect('students:list')
     return redirect('students:list')
 
+# ── Attendance ────────────────────────────────────────────────────────────────
 
 @login_required
-def student_detail(request, pk):
-    student = get_object_or_404(Student, pk=pk, teacher=request.user)
-    grades = student.grades.order_by('-date')
-    all_attendances = student.attendances.order_by('-date')
-    present = all_attendances.filter(status='P').count()
-    absent  = all_attendances.filter(status='A').count()
-    attendances = all_attendances[:30]
-    messages_sent = student.messages.order_by('-sent_at')[:10]
-    return render(request, 'students/student_detail.html', {
-        'student': student, 'grades': grades,
-        'attendances': attendances, 'present': present, 'absent': absent,
-        'messages_sent': messages_sent,
-        'student_data': [],
+def attendance_view(request):
+    classrooms       = _teacher_classrooms(request.user)
+    selected_date    = request.GET.get('date', '')
+    selected_classroom = request.GET.get('classroom', '')
+    students         = []
+    attendance_map   = {}
+    status_choices   = Attendance.STATUS_CHOICES
+
+    if not selected_date:
+        from datetime import date
+        selected_date = date.today().isoformat()
+
+    if selected_classroom:
+        classroom = get_object_or_404(
+            Classroom, pk=selected_classroom
+        )
+        if not classroom.has_teacher_access(request.user):
+            messages.error(request, 'No tienes acceso a ese salón.')
+            return redirect('students:attendance')
+        students = Student.objects.filter(
+            classroom=classroom, active=True
+        ).order_by('last_name', 'first_name')
+        existing = Attendance.objects.filter(
+            student__in=students, date=selected_date
+        )
+        attendance_map = {a.student_id: a for a in existing}
+
+    return render(request, 'students/attendance.html', {
+        'classrooms':         classrooms,
+        'students':           students,
+        'attendance_map':     attendance_map,
+        'selected_date':      selected_date,
+        'selected_classroom': selected_classroom,
+        'status_choices':     status_choices,
     })
 
 
 @login_required
-def classroom_list(request):
-    classrooms = Classroom.objects.filter(teacher=request.user)
-    return render(request, 'students/classroom_list.html', {'classrooms': classrooms})
+def save_attendance(request):
+    if request.method != 'POST':
+        return redirect('students:attendance')
 
+    classroom_id = request.POST.get('classroom_id')
+    date_str     = request.POST.get('date')
+    classroom    = get_object_or_404(Classroom, pk=classroom_id)
 
-@login_required
-def classroom_create(request):
-    if request.method == 'POST':
-        p = request.POST
-        Classroom.objects.create(
-            teacher=request.user, name=p.get('name', ''),
-            grade_level=p.get('grade_level', ''), subject=p.get('subject', ''),
+    if not classroom.has_teacher_access(request.user):
+        messages.error(request, 'No tienes permiso para guardar asistencia en este salón.')
+        return redirect('students:attendance')
+
+    students = Student.objects.filter(classroom=classroom, active=True)
+    for student in students:
+        status = request.POST.get(f'status_{student.pk}', 'present')
+        note   = request.POST.get(f'note_{student.pk}', '')
+        Attendance.objects.update_or_create(
+            student=student, date=date_str,
+            defaults={'status': status, 'note': note}
         )
-        messages.success(request, 'Grupo creado exitosamente.')
-        return redirect('students:classrooms')
-    return render(request, 'students/classroom_form.html', {'action': 'Crear'})
+    messages.success(request, f'Asistencia del {date_str} guardada correctamente.')
+    return redirect(
+        f"{__import__('django.urls', fromlist=['reverse']).reverse('students:attendance')}"
+        f"?classroom={classroom_id}&date={date_str}"
+    )
 
+# ── Announcements ─────────────────────────────────────────────────────────────
 
-# ── ANNOUNCEMENTS ────────────────────────────────────────────
 @login_required
 def announcement_list(request):
-    announcements = Announcement.objects.filter(teacher=request.user)
-    classrooms = Classroom.objects.filter(teacher=request.user)
+    announcements = Announcement.objects.filter(
+        teacher=request.user
+    ).order_by('-created_at')
+    classrooms = _teacher_classrooms(request.user)
     return render(request, 'students/announcement_list.html', {
-        'announcements': announcements, 'classrooms': classrooms
+        'announcements': announcements, 'classrooms': classrooms,
     })
 
 
 @login_required
 def announcement_create(request):
-    classrooms = Classroom.objects.filter(teacher=request.user)
+    from django.contrib.auth.models import User
+    classrooms           = _teacher_classrooms(request.user)
+    all_teachers         = User.objects.exclude(pk=request.user.pk).filter(
+        teacher_profile__isnull=False
+    ).order_by('last_name', 'first_name').select_related('teacher_profile')
+    students_with_parent = Student.objects.filter(
+        teacher=request.user, active=True
+    ).exclude(parent_email='').select_related('classroom').order_by('last_name')
+
     if request.method == 'POST':
-        p = request.POST
-        Announcement.objects.create(
-            teacher=request.user,
-            title=p.get('title', ''),
-            content=p.get('content', ''),
-            priority=p.get('priority', 'low'),
-            classroom_id=p.get('classroom') or None,
-        )
-        messages.success(request, 'Comunicado creado correctamente.')
-        return redirect('students:announcement_list')
-    return render(request, 'students/announcement_form.html', {'classrooms': classrooms})
+        p             = request.POST
+        title         = p.get('title', '').strip()
+        content_txt   = p.get('content', '').strip()
+        priority      = p.get('priority', 'low')
+        t_ids         = p.getlist('teacher_recipients')
+        s_ids         = p.getlist('parent_recipients')
+
+        if not title or not content_txt:
+            messages.error(request, 'El título y el contenido son obligatorios.')
+        elif not t_ids and not s_ids:
+            messages.error(request, 'Selecciona al menos un destinatario.')
+        else:
+            ann = Announcement.objects.create(
+                teacher=request.user,
+                title=title,
+                content=content_txt,
+                priority=priority,
+            )
+            if t_ids:
+                ann.teacher_recipients.set(t_ids)
+            if s_ids:
+                ann.student_recipients.set(s_ids)
+            total = len(t_ids) + len(s_ids)
+            messages.success(request, f'Comunicado publicado para {total} destinatario(s).')
+            return redirect('students:announcement_list')
+
+    return render(request, 'students/announcement_form.html', {
+        'classrooms':           classrooms,
+        'all_teachers':         all_teachers,
+        'students_with_parent': students_with_parent,
+    })
 
 
 @login_required
@@ -182,104 +357,155 @@ def announcement_delete(request, pk):
         messages.success(request, 'Comunicado eliminado.')
     return redirect('students:announcement_list')
 
+# ── Messages ──────────────────────────────────────────────────────────────────
 
-# ── ATTENDANCE ────────────────────────────────────────────────
-@login_required
-def attendance_view(request):
-    classroom_id = request.GET.get('classroom', '')
-    selected_date = request.GET.get('date', date.today().isoformat())
-    classrooms = Classroom.objects.filter(teacher=request.user)
-    students = []
-    attendance_map = {}
-
-    if classroom_id:
-        students = Student.objects.filter(teacher=request.user, classroom_id=classroom_id, active=True)
-        records = Attendance.objects.filter(student__in=students, date=selected_date)
-        attendance_map = {r.student_id: r for r in records}
-
-    return render(request, 'students/attendance.html', {
-        'classrooms': classrooms, 'students': students,
-        'selected_classroom': classroom_id, 'selected_date': selected_date,
-        'attendance_map': attendance_map,
-        'status_choices': Attendance.STATUS_CHOICES,
-    })
-
-
-@login_required
-@require_POST
-def save_attendance(request):
-    classroom_id = request.POST.get('classroom_id')
-    selected_date = request.POST.get('date', date.today().isoformat())
-    students = Student.objects.filter(teacher=request.user, classroom_id=classroom_id, active=True)
-    for student in students:
-        status = request.POST.get(f'status_{student.pk}', 'present')
-        note   = request.POST.get(f'note_{student.pk}', '')
-        Attendance.objects.update_or_create(
-            student=student, date=selected_date,
-            defaults={'status': status, 'note': note}
-        )
-    messages.success(request, f'Asistencia guardada para {selected_date}.')
-    return redirect(f"/dashboard/attendance/?classroom={classroom_id}&date={selected_date}")
-
-
-# ── SCHEDULE ────────────────────────────────────────────────
-@login_required
-def schedule_view(request):
-    classrooms = Classroom.objects.filter(teacher=request.user)
-    return render(request, 'students/schedule.html', {'classrooms': classrooms})
-
-
-# ── MESSAGING ────────────────────────────────────────────────
 @login_required
 def message_list(request):
-    messages_qs = Message.objects.filter(teacher=request.user).select_related('student')
-    students    = Student.objects.filter(teacher=request.user, active=True)
-    classrooms  = Classroom.objects.filter(teacher=request.user)
+    query        = request.GET.get('q', '')
+    classroom_id = request.GET.get('classroom', '')
+    students_qs  = Student.objects.filter(teacher=request.user, active=True)
+    if query:
+        students_qs = students_qs.filter(
+            Q(first_name__icontains=query) | Q(last_name__icontains=query)
+        )
+    if classroom_id:
+        students_qs = students_qs.filter(classroom_id=classroom_id)
+    classrooms = _teacher_classrooms(request.user)
     return render(request, 'students/message_list.html', {
-        'messages_qs': messages_qs,
-        'students': students,
-        'classrooms': classrooms,
+        'students':           students_qs,
+        'classrooms':         classrooms,
+        'query':              query,
+        'selected_classroom': classroom_id,
     })
 
+
+@login_required
+def message_send(request, student_pk):
+    student = get_object_or_404(Student, pk=student_pk, teacher=request.user)
+    if request.method == 'POST':
+        p = request.POST
+        grade_level = p.get('grade_level', '')
+        subject_val = p.get('subject',     '')
+        body_val    = p.get('body',        '')
+        if not subject_val or not body_val:
+            messages.error(request, 'El asunto y el mensaje son obligatorios.')
+        else:
+            Message.objects.create(
+                teacher=request.user,
+                student=student,
+                subject=subject_val,
+                body=body_val,
+            )
+            messages.success(request, f'Mensaje enviado a {student.get_full_name()}.')
+            return redirect('students:message_list')
+    return render(request, 'students/message_send.html', {'student': student})
+
+# ── Parent Portal ─────────────────────────────────────────────────────────────
+
+def parent_portal(request):
+    email    = ''
+    student  = None
+    works    = []
+    grades   = []
+    msgs     = []
+    attendances = []
+
+    if request.method == 'POST':
+        email = request.POST.get('email', '').strip().lower()
+        try:
+            student = Student.objects.select_related(
+                'teacher', 'teacher__teacher_profile', 'classroom'
+            ).get(parent_email__iexact=email, active=True)
+            # Asegurar que el perfil del profesor exista
+            from accounts.models import TeacherProfile
+            TeacherProfile.objects.get_or_create(user=student.teacher)
+        except Student.DoesNotExist:
+            student = None
+
+        if student:
+            from gallery.models import StudentWork
+            works  = StudentWork.objects.filter(
+                student=student, is_public=True
+            ).order_by('-created_at')
+            grades = student.grades.order_by('-date')
+            msgs   = student.messages.order_by('-sent_at')
+            try:
+                attendances = student.attendances.order_by('-date')
+            except Exception:
+                attendances = []
+            student.messages.filter(is_read=False).update(is_read=True)
+
+    return render(request, 'students/parent_portal.html', {
+        'email':       email,
+        'student':     student,
+        'works':       works,
+        'grades':      grades,
+        'msgs':        msgs,
+        'attendances': attendances,
+    })
+
+
+# ── Message create / delete (URLs legacy) ────────────────────────────────────
 
 @login_required
 def message_create(request):
-    students   = Student.objects.filter(teacher=request.user, active=True).select_related('classroom')
-    classrooms = Classroom.objects.filter(teacher=request.user)
-    preselect  = request.GET.get('student', '')
+    """Mensaje a docentes (DirectMessage) y/o padres (Message vinculado a estudiante)."""
+    from django.contrib.auth.models import User
+    classrooms           = _teacher_classrooms(request.user)
+    all_teachers         = User.objects.exclude(pk=request.user.pk).filter(
+        teacher_profile__isnull=False
+    ).order_by('last_name', 'first_name').select_related('teacher_profile')
+    students_with_parent = Student.objects.filter(
+        teacher=request.user, active=True
+    ).exclude(parent_email='').select_related('classroom').order_by('last_name')
 
     if request.method == 'POST':
-        p = request.POST
-        student_ids = p.getlist('students')
-        subject     = p.get('subject', '').strip()
-        body        = p.get('body', '').strip()
+        p             = request.POST
+        subject_val   = p.get('subject', '').strip()
+        body_val      = p.get('body', '').strip()
+        t_ids         = p.getlist('teacher_recipients')
+        s_ids         = p.getlist('parent_recipients')
 
-        if not student_ids or not subject or not body:
-            messages.error(request, 'Completa todos los campos obligatorios.')
+        if not subject_val or not body_val:
+            messages.error(request, 'El asunto y el mensaje son obligatorios.')
+        elif not t_ids and not s_ids:
+            messages.error(request, 'Selecciona al menos un destinatario.')
         else:
             count = 0
-            for sid in student_ids:
+            # Mensajes a docentes (DirectMessage)
+            for tid in t_ids:
                 try:
-                    st = Student.objects.get(pk=sid, teacher=request.user)
+                    recipient = User.objects.get(pk=tid)
+                    DirectMessage.objects.create(
+                        sender=request.user,
+                        recipient=recipient,
+                        subject=subject_val,
+                        body=body_val,
+                    )
+                    count += 1
+                except User.DoesNotExist:
+                    pass
+            # Mensajes a padres (Message vinculado a estudiante)
+            for sid in s_ids:
+                try:
+                    student = Student.objects.get(pk=sid, active=True)
                     Message.objects.create(
                         teacher=request.user,
-                        student=st,
-                        subject=subject,
-                        body=body,
+                        student=student,
+                        subject=subject_val,
+                        body=body_val,
                     )
                     count += 1
                 except Student.DoesNotExist:
                     pass
-            messages.success(request, f'Mensaje enviado a {count} estudiante{"s" if count != 1 else ""}.')
+            messages.success(request, f'Mensaje enviado a {count} destinatario(s).')
             return redirect('students:message_list')
 
     return render(request, 'students/message_form.html', {
-        'students': students,
-        'classrooms': classrooms,
-        'preselect': preselect,
+        'classrooms':           classrooms,
+        'all_teachers':         all_teachers,
+        'students_with_parent': students_with_parent,
     })
-
-
 @login_required
 def message_delete(request, pk):
     msg = get_object_or_404(Message, pk=pk, teacher=request.user)
@@ -289,64 +515,72 @@ def message_delete(request, pk):
     return redirect('students:message_list')
 
 
-# ── PARENT PORTAL ────────────────────────────────────────────
-def parent_portal(request):
-    """Portal público para padres: galería + notas + mensajes por correo."""
-    email   = request.GET.get('email', '').strip().lower()
+# ── Schedule ──────────────────────────────────────────────────────────────────
+
+@login_required
+def schedule_view(request):
+    classrooms = _teacher_classrooms(request.user)
+    return render(request, 'students/schedule.html', {'classrooms': classrooms})
+
+
+# ── Parent portal auto (URL legacy) ──────────────────────────────────────────
+
+def parent_portal_auto(request):
+    """
+    Acceso directo al portal del padre con email en GET (?email=...).
+    Compatible con la URL legacy /padres/auto/.
+    """
+    email = request.GET.get('email', '').strip().lower()
     student = None
-    works   = []
-    grades  = []
-    msgs    = []
-    attendances = []
+    works = grades = msgs = attendances = []
 
     if email:
-        from gallery.models import StudentWork
-        # Search by parent_email OR student email (iexact handles uppercase)
-        student = Student.objects.filter(active=True).filter(
-            Q(parent_email__iexact=email) | Q(email__iexact=email)
-        ).first()
-        # Fallback: handle stored emails with leading/trailing spaces
-        if not student:
-            student = Student.objects.filter(active=True).filter(
-                Q(parent_email__icontains=email) | Q(email__icontains=email)
-            ).first()
-            if student:
-                stored_pe = (student.parent_email or "").strip().lower()
-                stored_e  = (student.email or "").strip().lower()
-                if stored_pe != email and stored_e != email:
-                    student = None
-
-        if student:
-            # Ensure teacher profile exists for subject display in template
-            try:
-                from accounts.models import TeacherProfile
-                TeacherProfile.objects.get_or_create(user=student.teacher)
-            except Exception:
-                pass
+        try:
+            from accounts.models import TeacherProfile
+            student = Student.objects.select_related(
+                'teacher', 'teacher__teacher_profile', 'classroom'
+            ).get(parent_email__iexact=email, active=True)
+            TeacherProfile.objects.get_or_create(user=student.teacher)
+            from gallery.models import StudentWork
             works       = StudentWork.objects.filter(student=student, is_public=True).order_by('-created_at')
             grades      = student.grades.order_by('-date')
             msgs        = student.messages.order_by('-sent_at')
-            try:
-                attendances = student.attendances.order_by('-date')
-            except Exception:
-                attendances = []
+            attendances = student.attendances.order_by('-date')
             student.messages.filter(is_read=False).update(is_read=True)
+        except Student.DoesNotExist:
+            student = None
 
     return render(request, 'students/parent_portal.html', {
-        'email': email,
-        'student': student,
-        'works': works,
-        'grades': grades,
-        'msgs': msgs,
-        'attendances': attendances,
+        'email': email, 'student': student,
+        'works': works, 'grades': grades,
+        'msgs': msgs, 'attendances': attendances,
     })
 
 
-def parent_portal_auto(request):
-    """Auto-login para padres autenticados con Google OAuth."""
-    if not request.user.is_authenticated:
-        return redirect('/accounts/social/google/?next=/padres/auto/')
-    email = request.user.email.strip().lower()
-    if email:
-        return redirect(f'/padres/?email={email}')
-    return redirect('/padres/')
+# ── Inbox: comunicados y mensajes RECIBIDOS por el docente ────────────────────
+
+@login_required
+def inbox_view(request):
+    """Bandeja de entrada del docente: comunicados + mensajes directos recibidos."""
+    # Comunicados donde este docente es destinatario
+    received_announcements = Announcement.objects.filter(
+        teacher_recipients=request.user
+    ).select_related('teacher').order_by('-created_at')
+
+    # Mensajes directos recibidos de otros docentes
+    received_messages = DirectMessage.objects.filter(
+        recipient=request.user
+    ).select_related('sender').order_by('-sent_at')
+
+    # Marcar mensajes directos como leídos al abrir la bandeja
+    received_messages.filter(is_read=False).update(is_read=True)
+
+    unread_count = DirectMessage.objects.filter(
+        recipient=request.user, is_read=False
+    ).count()
+
+    return render(request, 'students/inbox.html', {
+        'received_announcements': received_announcements,
+        'received_messages':      received_messages,
+        'unread_count':           unread_count,
+    })
