@@ -201,7 +201,7 @@
     </li>
     <li>
       <a href="{% url 'students:inbox' %}" class="sidebar-link {% if request.resolver_match.url_name == 'inbox' %}active{% endif %}" style="position:relative;">
-        <i class="bi bi-tray nav-icon"></i> Bandeja de entrada
+        <i class="bi bi-envelope-arrow-down nav-icon"></i> Bandeja de entrada
         {% with unread=request.user.received_direct_messages.filter %}
         {% endwith %}
       </a>

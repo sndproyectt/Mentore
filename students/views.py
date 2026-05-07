@@ -410,8 +410,13 @@ def parent_portal(request):
     msgs     = []
     attendances = []
 
+    # Accept both POST (from login page) and GET (legacy direct URL)
     if request.method == 'POST':
         email = request.POST.get('email', '').strip().lower()
+    elif request.GET.get('email'):
+        email = request.GET.get('email', '').strip().lower()
+
+    if email:
         try:
             student = Student.objects.select_related(
                 'teacher', 'teacher__teacher_profile', 'classroom'

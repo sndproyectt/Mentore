@@ -97,35 +97,16 @@ def register_view(request):
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('students:dashboard')
-
-    login_form = LoginForm()
-    reg_form   = RegisterForm()
-
+    form = LoginForm()
     if request.method == 'POST':
-        form_type = request.POST.get('form_type', 'login')
-
-        if form_type == 'register':
-            reg_form = RegisterForm(request.POST)
-            if reg_form.is_valid():
-                user = reg_form.save()
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                messages.success(request, f'¡Bienvenido a Mentore, {user.first_name}!')
-                return redirect('students:dashboard')
-            # reg_form.errors will trigger the register panel in JS
+        form = LoginForm(data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            return redirect('students:dashboard')
         else:
-            login_form = LoginForm(data=request.POST)
-            if login_form.is_valid():
-                user = login_form.get_user()
-                login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-                messages.success(request, f'¡Bienvenido de nuevo, {user.first_name or user.username}!')
-                return redirect('students:dashboard')
-            else:
-                messages.error(request, 'Usuario o contraseña incorrectos.')
-
-    return render(request, 'accounts/login.html', {
-        'form':     login_form,
-        'reg_form': reg_form,
-    })
+            messages.error(request, 'Usuario o contraseña incorrectos.')
+    return render(request, 'accounts/login.html', {'form': form})
 
 
 def logout_view(request):

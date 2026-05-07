@@ -113,57 +113,78 @@
 <!-- ══════ LOGIN / ERROR ══════ -->
 <div class="p-center">
   <div class="p-card">
-    <div class="p-logo">
-      <span class="p-logo-icon">🎓</span>
-      <h1>Mentore</h1>
-      <p>Portal para Familias</p>
+    <!-- Logo real -->
+    <div class="p-logo" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:22px;">
+      <img src="{% static 'img/logo_mentore.png' %}" alt="Mentore"
+        style="width:52px;height:52px;border-radius:13px;object-fit:cover;box-shadow:0 3px 10px rgba(0,0,0,.15);">
+      <div style="text-align:left;">
+        <h1 style="font-size:22px;font-weight:900;color:var(--primary);line-height:1;">Mentore</h1>
+        <p style="font-size:12px;color:var(--gray-500);margin:0;">Portal para Familias</p>
+      </div>
     </div>
 
-    <!-- TABS -->
-    <div class="p-tabs">
-      <button class="p-tab-btn" onclick="window.location='{% url 'accounts:login' %}'">🧑‍🏫 Soy Profe</button>
-      <button class="p-tab-btn active">👨‍👩‍👧 Soy Padre/Madre</button>
-    </div>
+    <p style="font-size:14px;color:var(--gray-600);margin-bottom:20px;text-align:center;">
+      Consulta el progreso, notas y mensajes de tu hijo/a.
+    </p>
 
-    <p style="font-size:14px;color:var(--gray-500);margin-bottom:18px;">Consulta el progreso, trabajos y mensajes de tu hijo/a.</p>
-
-    <!-- GOOGLE LOGIN -->
-    <a href="{% url 'accounts:google_login' %}?next=/padres/auto/" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px 18px;border-radius:8px;font-size:14px;font-weight:700;border:1.5px solid #dadce0;background:#fff;color:#3c4043;text-decoration:none;margin-bottom:14px;transition:all .2s;" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow='none'">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;">
-      Continuar con Google
-    </a>
-
-    <div style="display:flex;align-items:center;gap:10px;margin:14px 0;color:#9ca3af;font-size:13px;">
-      <div style="flex:1;height:1px;background:#e5e7eb;"></div>
-      o ingresa tu correo
-      <div style="flex:1;height:1px;background:#e5e7eb;"></div>
-    </div>
-
-    <form method="get">
+    <!-- CORREO -->
+    <form method="get" id="parentForm">
       <div style="margin-bottom:14px;">
-        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-600);margin-bottom:6px;">Correo del acudiente</label>
-        <input type="email" name="email" class="form-control" placeholder="tucorreo@ejemplo.com"
-               value="{{ email }}" autofocus required style="font-size:15px;padding:11px 14px;">
+        <label style="display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#3A6B8A;margin-bottom:6px;">
+          Correo del acudiente
+        </label>
+        <input type="email" name="email" id="emailInput"
+          class="form-control"
+          placeholder="tucorreo@ejemplo.com"
+          value="{{ email }}"
+          autofocus required
+          style="font-size:15px;padding:12px 14px;border:1.5px solid #D8EAF5;border-radius:9px;background:#FAFCFF;">
       </div>
 
       {% if email and not student %}
       <div class="p-error">
         <div class="p-error-title"><span style="font-size:18px;">🔍</span> Correo no registrado</div>
-        <div class="p-error-body">No encontramos un estudiante vinculado al correo <strong>{{ email }}</strong>.</div>
+        <div class="p-error-body">No encontramos ningún estudiante vinculado al correo <strong>{{ email }}</strong>.</div>
         <div class="p-error-tip">
-          <strong>¿Qué hacer?</strong> Pídele al profesor que en el perfil del estudiante registre exactamente este correo como <em>Correo del acudiente</em>. También puedes intentar con el botón <strong>Continuar con Google</strong>.
+          <strong>¿Qué hacer?</strong> Pídele al docente que registre exactamente este correo en el perfil del estudiante como <em>Correo del acudiente</em>.
         </div>
       </div>
       {% endif %}
 
-      <button type="submit" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--primary),#0D8FAB);color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;">
+      <button type="submit"
+        style="width:100%;padding:13px;background:linear-gradient(135deg,#1570A6,#0D8FAB);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;box-shadow:0 4px 14px rgba(21,112,166,.3);transition:all .2s;"
+        onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='none'">
         <i class="bi bi-arrow-right-circle-fill"></i> Ver progreso de mi hijo/a
       </button>
     </form>
 
-    <div style="padding:12px 14px;background:var(--primary-light);border-radius:8px;font-size:13px;color:var(--gray-600);display:flex;gap:8px;align-items:flex-start;">
-      <i class="bi bi-info-circle" style="color:var(--primary);flex-shrink:0;margin-top:1px;"></i>
-      <span>El profe registra tu correo al crear el perfil del estudiante. Comunícate con él si no puedes acceder.</span>
+    <!-- SEPARADOR -->
+    <div style="display:flex;align-items:center;gap:10px;margin:4px 0 16px;color:#9ca3af;font-size:12px;">
+      <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+      ¿tienes cuenta Google?
+      <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+    </div>
+
+    <!-- GOOGLE -->
+    <a href="{% url 'accounts:google_login' %}?next=/padres/auto/"
+      style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px 18px;border-radius:10px;font-size:14px;font-weight:700;border:1.5px solid #dadce0;background:#fff;color:#3c4043;text-decoration:none;margin-bottom:16px;transition:all .2s;box-shadow:0 1px 4px rgba(0,0,0,.08);"
+      onmouseover="this.style.boxShadow='0 3px 10px rgba(0,0,0,.13)'" onmouseout="this.style.boxShadow='0 1px 4px rgba(0,0,0,.08)'">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width:20px;height:20px;">
+      Continuar con Google
+    </a>
+
+    <!-- INFO -->
+    <div style="padding:11px 14px;background:#E8F5FD;border-radius:9px;font-size:12px;color:#3A6B8A;display:flex;gap:8px;align-items:flex-start;">
+      <i class="bi bi-info-circle-fill" style="color:#1570A6;flex-shrink:0;margin-top:1px;"></i>
+      <span>El docente registra tu correo al crear el perfil del estudiante. Si no puedes ingresar, comunícate con él.</span>
+    </div>
+
+    <!-- Volver al login -->
+    <div style="text-align:center;margin-top:18px;">
+      <a href="{% url 'accounts:login' %}"
+        style="font-size:13px;color:#1570A6;font-weight:700;text-decoration:none;">
+        <i class="bi bi-arrow-left"></i> Soy docente — ir al login
+      </a>
     </div>
   </div>
 </div>

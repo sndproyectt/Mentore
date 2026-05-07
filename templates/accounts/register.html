@@ -2,58 +2,163 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Registro — Mentore</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crear cuenta — Mentore</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="{% static 'css/mentore.css' %}">
   <style>
-    .social-btn { display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:11px 18px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid #dadce0;background:#fff;color:#3c4043;text-decoration:none;transition:all .2s;font-family:'Nunito',sans-serif; }
-    .social-btn:hover { background:#f8f9fa;box-shadow:0 2px 8px rgba(0,0,0,.12); }
-    .social-btn.apple { background:#000;color:#fff;border-color:#000; }
-    .social-btn.apple:hover { background:#1a1a1a; }
-    .social-btn img { width:20px;height:20px;flex-shrink:0; }
-    .divider { display:flex;align-items:center;gap:10px;margin:18px 0;color:#9ca3af;font-size:13px; }
-    .divider::before,.divider::after { content:'';flex:1;height:1px;background:#e5e7eb; }
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    body { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(145deg,#0A2A40 0%,#1570A6 55%,#2196C9 100%); font-family:'Nunito','Segoe UI',sans-serif; padding:24px; }
+
+    /* Blob decorativo */
+    body::before { content:''; position:fixed; width:600px; height:600px; border-radius:50%; background:rgba(255,255,255,.04); top:-200px; right:-150px; pointer-events:none; }
+    body::after  { content:''; position:fixed; width:400px; height:400px; border-radius:50%; background:rgba(249,195,42,.06); bottom:-120px; left:-100px; pointer-events:none; }
+
+    .card-wrap {
+      background:#fff; border-radius:20px; width:100%; max-width:560px;
+      padding:40px 44px; box-shadow:0 20px 60px rgba(0,0,0,.22);
+      position:relative; z-index:1;
+    }
+
+    /* Header */
+    .reg-header { display:flex; align-items:center; gap:14px; margin-bottom:28px; }
+    .reg-logo { width:52px; height:52px; border-radius:13px; overflow:hidden; flex-shrink:0; }
+    .reg-logo img { width:100%; height:100%; object-fit:cover; }
+    .reg-eyebrow { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.7px; color:#1570A6; margin-bottom:2px; }
+    .reg-title { font-size:22px; font-weight:900; color:#0D2D42; }
+
+    /* Google */
+    .google-btn { width:100%; padding:12px 18px; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; border:1.5px solid #dadce0; background:#fff; color:#3c4043; text-decoration:none; transition:all .2s; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 1px 4px rgba(0,0,0,.08); }
+    .google-btn:hover { background:#f8f9fa; box-shadow:0 3px 10px rgba(0,0,0,.12); }
+    .google-btn img { width:20px; height:20px; }
+
+    /* Divider */
+    .divider { display:flex; align-items:center; gap:10px; margin:18px 0; color:#9ca3af; font-size:12px; }
+    .divider::before,.divider::after { content:''; flex:1; height:1px; background:#e5e7eb; }
+
+    /* Grid */
+    .field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .field { margin-bottom:14px; }
+    .field label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#3A6B8A; margin-bottom:5px; }
+    .field input { width:100%; padding:11px 14px; font-size:14px; border:1.5px solid #D8EAF5; border-radius:9px; color:#0D2D42; font-family:inherit; transition:border-color .2s,box-shadow .2s; background:#FAFCFF; outline:none; }
+    .field input:focus { border-color:#1570A6; box-shadow:0 0 0 3px rgba(21,112,166,.1); background:#fff; }
+    .field .err { font-size:11px; color:#EF4444; margin-top:3px; }
+    .field input.invalid { border-color:#EF4444; }
+
+    /* Submit */
+    .btn-main { width:100%; padding:13px; font-size:15px; font-weight:700; border:none; border-radius:10px; cursor:pointer; background:linear-gradient(135deg,#1570A6,#0D8FAB); color:#fff; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; box-shadow:0 4px 14px rgba(21,112,166,.3); transition:all .2s; margin-top:4px; }
+    .btn-main:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(21,112,166,.4); }
+
+    /* Error banner */
+    .alert-err { background:#FFF1F2; border:1px solid #FECDD3; border-radius:8px; padding:10px 14px; font-size:13px; color:#9F1239; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+
+    /* Footer */
+    .form-footer { text-align:center; margin-top:18px; font-size:13px; color:#80AACC; }
+    .form-footer a { color:#1570A6; font-weight:700; text-decoration:none; }
+    .form-footer a:hover { text-decoration:underline; }
+
+    /* Hint helper */
+    .pwd-hint { font-size:11px; color:#9ca3af; margin-top:4px; line-height:1.4; }
+
+    @media (max-width:520px) { .card-wrap { padding:28px 20px; } .field-row { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
-<div class="auth-wrapper">
-  <div class="auth-card">
-    <div class="auth-logo">
-      <span class="auth-logo-icon">🎓</span>
-      <h1>Mentore</h1>
-      <p>Crea tu cuenta de profe</p>
+
+<div class="card-wrap">
+
+  <!-- Header -->
+  <div class="reg-header">
+    <div class="reg-logo">
+      <img src="{% static 'img/logo_mentore.png' %}" alt="Mentore">
+    </div>
+    <div>
+      <div class="reg-eyebrow">Mentore</div>
+      <div class="reg-title">Crear cuenta de docente</div>
+    </div>
+  </div>
+
+  <!-- Google register -->
+  <a href="{% url 'accounts:google_login' %}" class="google-btn">
+    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+    Registrarse con Google (recomendado)
+  </a>
+
+  <div class="divider">o crea tu cuenta manualmente</div>
+
+  {% if form.non_field_errors %}
+  <div class="alert-err"><i class="bi bi-exclamation-circle-fill"></i> {{ form.non_field_errors.0 }}</div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="field-row">
+      <div class="field">
+        <label>Nombre *</label>
+        <input type="text" name="first_name"
+          value="{{ form.first_name.value|default:'' }}"
+          class="{% if form.first_name.errors %}invalid{% endif %}"
+          placeholder="Tu nombre" required>
+        {% if form.first_name.errors %}<div class="err">{{ form.first_name.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="field">
+        <label>Apellido *</label>
+        <input type="text" name="last_name"
+          value="{{ form.last_name.value|default:'' }}"
+          class="{% if form.last_name.errors %}invalid{% endif %}"
+          placeholder="Tu apellido" required>
+        {% if form.last_name.errors %}<div class="err">{{ form.last_name.errors.0 }}</div>{% endif %}
+      </div>
     </div>
 
-    <!-- Social buttons -->
-    <a href="{% url 'accounts:google_login' %}" class="social-btn" style="margin-bottom:10px;">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-      Registrarse con Google
-    </a>
+    <div class="field">
+      <label>Correo electrónico *</label>
+      <input type="email" name="email"
+        value="{{ form.email.value|default:'' }}"
+        class="{% if form.email.errors %}invalid{% endif %}"
+        placeholder="tucorreo@ejemplo.com" required>
+      {% if form.email.errors %}<div class="err">{{ form.email.errors.0 }}</div>{% endif %}
+    </div>
 
-    <div class="divider">o crea tu cuenta manual</div>
+    <div class="field">
+      <label>Nombre de usuario *</label>
+      <input type="text" name="username"
+        value="{{ form.username.value|default:'' }}"
+        class="{% if form.username.errors %}invalid{% endif %}"
+        placeholder="Ej: profe_ana, jgarcia…" required autocomplete="username">
+      {% if form.username.errors %}<div class="err">{{ form.username.errors.0 }}</div>{% endif %}
+    </div>
 
-    {% if form.errors %}
-    <div class="alert alert-danger" style="margin-bottom:14px;font-size:13px;">❌ Por favor corrige los errores.</div>
-    {% endif %}
-
-    <form method="post">
-      {% csrf_token %}
-      {% for field in form %}
-      <div class="form-group">
-        <label class="form-label">{{ field.label }}</label>
-        {{ field }}
-        {% if field.errors %}<div style="color:var(--danger);font-size:12px;margin-top:4px;">{{ field.errors.0 }}</div>{% endif %}
+    <div class="field-row">
+      <div class="field">
+        <label>Contraseña *</label>
+        <input type="password" name="password1"
+          class="{% if form.password1.errors %}invalid{% endif %}"
+          placeholder="Mínimo 8 caracteres" required autocomplete="new-password">
+        {% if form.password1.errors %}<div class="err">{{ form.password1.errors.0 }}</div>{% endif %}
+        <div class="pwd-hint">Mínimo 8 caracteres, no solo números.</div>
       </div>
-      {% endfor %}
-      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:11px;">
-        <i class="bi bi-person-plus"></i> Crear cuenta
-      </button>
-    </form>
-    <p class="auth-footer">
-      ¿Ya tienes cuenta? <a href="{% url 'accounts:login' %}">Inicia sesión</a>
-    </p>
+      <div class="field">
+        <label>Confirmar contraseña *</label>
+        <input type="password" name="password2"
+          class="{% if form.password2.errors %}invalid{% endif %}"
+          placeholder="Repite la contraseña" required autocomplete="new-password">
+        {% if form.password2.errors %}<div class="err">{{ form.password2.errors.0 }}</div>{% endif %}
+      </div>
+    </div>
+
+    <button type="submit" class="btn-main">
+      <i class="bi bi-person-check-fill"></i> Crear mi cuenta
+    </button>
+  </form>
+
+  <div class="form-footer">
+    ¿Ya tienes cuenta? <a href="{% url 'accounts:login' %}">← Iniciar sesión</a>
   </div>
+
 </div>
+
 </body>
 </html>
