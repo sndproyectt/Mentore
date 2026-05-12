@@ -73,10 +73,8 @@ WSGI_APPLICATION = 'mentore.wsgi.application'
 # ============================================================
 
 DATABASES = {
-    'default': dj_database_url.config(
-        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
-        conn_max_age=600,
-        ssl_require=False
+    'default': dj_database_url.parse(
+        'postgresql://mentore_user:qqk2SRDbTg5r15ZpDup6kL4oMfYevz6Q@dpg-d7tojf8sfn5c73dq018g-a.oregon-postgres.render.com/mentore'
     )
 }
 
