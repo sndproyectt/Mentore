@@ -486,58 +486,66 @@
 
   <!-- NOTAS -->
   <div id="t-grades" class="p-section">
-    <div class="grades-grid" style="display:grid;grid-template-columns:1fr 260px;gap:20px;align-items:start;">
 
-      <div class="card">
-        <div class="card-head">
-          <span class="card-title">📋 Historial de notas</span>
-          {% if grades %}<span class="card-badge">{{ grades.count }} registros</span>{% endif %}
-        </div>
-        {% if grades %}
-          {% for grade in grades %}
-          <div class="grade-row">
-            <div class="grade-left">
-              <div class="grade-name">{{ grade.activity_name }}</div>
-              <div class="grade-meta">
-                <span class="grade-tag {% if 'parcial' in grade.get_grade_type_display|lower %}tag-parcial{% elif 'taller' in grade.get_grade_type_display|lower %}tag-taller{% elif 'examen' in grade.get_grade_type_display|lower %}tag-examen{% elif 'quiz' in grade.get_grade_type_display|lower %}tag-quiz{% else %}tag-default{% endif %}">
-                  {{ grade.get_grade_type_display }}
-                </span>
-                {% if grade.period %}<span class="grade-date">{{ grade.period }}</span>{% endif %}
-                <span class="grade-date"><i class="bi bi-calendar3"></i> {{ grade.date|date:"d/m/Y" }}</span>
-              </div>
-              <div style="display:flex;align-items:center;gap:10px;">
-                <div class="grade-bar-bg"><div class="grade-bar-fill" style="width:{{ grade.percentage }}%;background:{% if grade.score >= 4 %}#10B981{% elif grade.score >= 3 %}#1570A6{% elif grade.score >= 2.5 %}#F9C32A{% else %}#EF4444{% endif %};"></div></div>
-              </div>
-            </div>
-            <div class="score-badge">
-              <span class="score-num {% if grade.score >= 4 %}score-green{% elif grade.score >= 3 %}score-blue{% elif grade.score >= 2.5 %}score-amber{% else %}score-red{% endif %}">{{ grade.score }}</span>
-              <span class="score-max">/ {{ grade.max_score }}</span>
-            </div>
-          </div>
-          {% endfor %}
-        {% else %}
-          <div class="empty-state"><span class="empty-icon">📊</span><div class="empty-title">Sin notas aún</div><div class="empty-sub">El profesor registrará las notas aquí</div></div>
-        {% endif %}
+    <!-- RESUMEN GENERAL + CHIPS POR MATERIA -->
+    <div style="display:flex;align-items:stretch;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
+      <div class="avg-card" style="min-width:150px;flex-shrink:0;padding:20px 18px;">
+        <div class="avg-label">Promedio general</div>
+        <div class="avg-ring"><div class="avg-num">{{ general_avg|default:"—" }}</div></div>
+        <div class="avg-emoji">{% if general_avg %}{% if general_avg >= 4 %}🌟{% elif general_avg >= 3 %}👍{% elif general_avg >= 2.5 %}📚{% else %}💪{% endif %}{% endif %}</div>
+        <div class="avg-text">{% if general_avg %}{% if general_avg >= 4 %}Excelente{% elif general_avg >= 3 %}Buen desempeño{% elif general_avg >= 2.5 %}En proceso{% else %}Necesita apoyo{% endif %}{% endif %}</div>
       </div>
-
-      <!-- AVG -->
-      <div>
-        {% with avg=student.average_grade %}
-        <div class="avg-card">
-          <div class="avg-label">Promedio general</div>
-          <div class="avg-ring">
-            <div class="avg-num">{{ avg|default:"—" }}</div>
-          </div>
-          <div class="avg-emoji">
-            {% if avg %}{% if avg >= 4 %}🌟{% elif avg >= 3 %}👍{% elif avg >= 2.5 %}📚{% else %}💪{% endif %}{% endif %}
-          </div>
-          <div class="avg-text">
-            {% if avg %}{% if avg >= 4 %}Excelente{% elif avg >= 3 %}Buen desempeño{% elif avg >= 2.5 %}En proceso{% else %}Necesita apoyo{% endif %}{% endif %}
-          </div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start;flex:1;">
+        {% for data in subjects_data %}
+        <div style="background:#fff;border:1.5px solid #D8EAF5;border-radius:12px;padding:12px 16px;min-width:130px;flex:1;max-width:190px;">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#5588AA;margin-bottom:4px;">{{ data.name }}</div>
+          <div style="font-size:24px;font-weight:900;color:{% if data.avg >= 4 %}#065F46{% elif data.avg >= 3 %}#1E40AF{% elif data.avg >= 2.5 %}#92400E{% else %}#991B1B{% endif %};">{{ data.avg|default:"—" }}</div>
+          <div style="font-size:10px;color:#9DB8CC;margin-top:2px;">{{ data.grades|length }} actividade{{ data.grades|length|pluralize:",s" }}</div>
         </div>
-        {% endwith %}
+        {% empty %}
+        <div style="font-size:13px;color:#9DB8CC;padding:12px;align-self:center;">Sin materias aún.</div>
+        {% endfor %}
       </div>
     </div>
+
+    <!-- NOTAS AGRUPADAS POR MATERIA -->
+    {% if subjects_data %}
+      {% for data in subjects_data %}
+      <div class="card" style="margin-bottom:14px;overflow:hidden;">
+        <div style="background:#E8F5FD;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #D8EAF5;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:17px;">📚</span>
+            <span style="font-weight:800;font-size:14px;color:#0D2D42;">{{ data.name }}</span>
+            <span style="font-size:11px;color:#5588AA;">{{ data.grades|length }} actividade{{ data.grades|length|pluralize:",s" }}</span>
+          </div>
+          {% if data.avg %}
+          <span style="font-size:20px;font-weight:900;color:{% if data.avg >= 4 %}#065F46{% elif data.avg >= 3 %}#1E40AF{% elif data.avg >= 2.5 %}#92400E{% else %}#991B1B{% endif %};">{{ data.avg }}</span>
+          {% endif %}
+        </div>
+        {% for grade in data.grades %}
+        <div class="grade-row">
+          <div class="grade-left">
+            <div class="grade-name">{{ grade.activity_name }}</div>
+            <div class="grade-meta">
+              <span class="grade-tag {% if grade.grade_type == 'exam' %}tag-examen{% elif grade.grade_type == 'quiz' %}tag-quiz{% else %}tag-default{% endif %}">{{ grade.get_grade_type_display }}</span>
+              {% if grade.period %}<span class="grade-date">{{ grade.period }}</span>{% endif %}
+              <span class="grade-date"><i class="bi bi-calendar3"></i> {{ grade.date|date:"d/m/Y" }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="grade-bar-bg"><div class="grade-bar-fill" style="width:{{ grade.percentage }}%;background:{% if grade.score >= 4 %}#10B981{% elif grade.score >= 3 %}#1570A6{% elif grade.score >= 2.5 %}#F9C32A{% else %}#EF4444{% endif %};"></div></div>
+            </div>
+          </div>
+          <div class="score-badge">
+            <span class="score-num {% if grade.score >= 4 %}score-green{% elif grade.score >= 3 %}score-blue{% elif grade.score >= 2.5 %}score-amber{% else %}score-red{% endif %}">{{ grade.score }}</span>
+            <span class="score-max">/ {{ grade.max_score }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state"><span class="empty-icon">📊</span><div class="empty-title">Sin notas aún</div><div class="empty-sub">El profesor registrará las notas aquí</div></div>
+    {% endif %}
   </div>
 
   <!-- GALERÍA -->

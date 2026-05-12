@@ -1,0 +1,75 @@
+{% extends 'base/layout.html' %}
+{% block title %}Materias — Coordinación{% endblock %}
+{% block page_title %}Gestión de Materias{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+  <div>
+    <p style="font-size:13px;color:var(--gray-500);margin:0;">
+      Crea materias y asigna docentes a cada una.
+    </p>
+  </div>
+  <a href="{% url 'coordinator:subject_create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-lg"></i> Nueva materia
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">📚 Materias ({{ subjects|length }})</span>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Materia</th>
+          <th>Código</th>
+          <th>Docentes asignados</th>
+          <th>Notas</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for subj in subjects %}
+        <tr>
+          <td>
+            <div style="font-weight:800;font-size:14px;color:var(--gray-900);">{{ subj.name }}</div>
+            {% if subj.description %}<div style="font-size:11px;color:var(--gray-400);">{{ subj.description|truncatechars:50 }}</div>{% endif %}
+          </td>
+          <td style="color:var(--gray-500);font-size:13px;">{{ subj.code|default:"—" }}</td>
+          <td>
+            {% for ta in subj.teacher_assignments.all %}
+            <div style="font-size:12px;font-weight:600;color:var(--gray-700);">
+              <i class="bi bi-person-fill" style="color:var(--primary);"></i> {{ ta.teacher.get_full_name }}
+            </div>
+            {% empty %}
+            <span style="color:var(--gray-300);font-size:12px;">Sin docentes</span>
+            {% endfor %}
+          </td>
+          <td><span class="badge badge-info">{{ subj.grade_count }}</span></td>
+          <td>
+            {% if subj.active %}
+            <span class="badge badge-success">Activa</span>
+            {% else %}
+            <span class="badge badge-gray">Inactiva</span>
+            {% endif %}
+          </td>
+          <td style="white-space:nowrap;">
+            <a href="{% url 'coordinator:subject_assign' subj.pk %}" class="btn btn-secondary" style="font-size:12px;padding:5px 10px;">
+              <i class="bi bi-people"></i> Docentes
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align:center;color:var(--gray-400);padding:32px;">
+            No hay materias. <a href="{% url 'coordinator:subject_create' %}" style="color:var(--primary);font-weight:700;">Crea la primera →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

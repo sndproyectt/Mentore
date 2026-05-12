@@ -27,24 +27,28 @@ def dashboard(request):
     from grades.models import Grade
 
     classrooms      = _teacher_classrooms(request.user)
-    students_qs     = Student.objects.filter(teacher=request.user, active=True)
+    shared_cr_ids   = request.user.shared_classrooms.values_list('id', flat=True)
+    students_qs     = Student.objects.filter(
+        Q(teacher=request.user) | Q(classroom_id__in=shared_cr_ids)
+    ).filter(active=True).distinct()
     total_students  = students_qs.count()
 
     today           = date.today()
+    _sid_qs         = students_qs.values_list('id', flat=True)
     present_today   = Attendance.objects.filter(
-        student__teacher=request.user, date=today, status='present'
+        student_id__in=_sid_qs, date=today, status='present'
     ).count()
     absent_today    = Attendance.objects.filter(
-        student__teacher=request.user, date=today, status='absent'
+        student_id__in=_sid_qs, date=today, status='absent'
     ).count()
 
-    grades_qs       = Grade.objects.filter(student__teacher=request.user)
+    grades_qs       = Grade.objects.filter(student_id__in=_sid_qs)
     total_grades    = grades_qs.count()
     avg_raw         = grades_qs.aggregate(Avg('score'))['score__avg']
     avg_grade       = round(avg_raw, 1) if avg_raw else 0
 
     unread_msgs     = Message.objects.filter(
-        student__teacher=request.user, is_read=False
+        student_id__in=_sid_qs, is_read=False
     ).count()
 
     recent_students = students_qs.order_by('-created_at')[:6]
@@ -122,7 +126,10 @@ def classroom_delete(request, pk):
 def student_list(request):
     query        = request.GET.get('q', '')
     classroom_id = request.GET.get('classroom', '')
-    students     = Student.objects.filter(teacher=request.user, active=True)
+    shared_cr_ids = request.user.shared_classrooms.values_list('id', flat=True)
+    students = Student.objects.filter(
+        Q(teacher=request.user) | Q(classroom_id__in=shared_cr_ids)
+    ).filter(active=True).distinct()
     if query:
         students = students.filter(
             Q(first_name__icontains=query) |
@@ -168,8 +175,14 @@ def student_create(request):
 
 @login_required
 def student_detail(request, pk):
-    student          = get_object_or_404(Student, pk=pk, teacher=request.user)
-    grades           = student.grades.order_by('-date')
+    shared_cr_ids    = request.user.shared_classrooms.values_list('id', flat=True)
+    student          = get_object_or_404(
+        Student.objects.filter(
+            Q(teacher=request.user) | Q(classroom_id__in=shared_cr_ids)
+        ).distinct(),
+        pk=pk
+    )
+    grades           = student.grades.select_related('subject').order_by('subject__name', '-date')
     all_attendances  = student.attendances.order_by('-date')
     present          = all_attendances.filter(status='present').count()
     absent           = all_attendances.filter(status='absent').count()
@@ -187,7 +200,13 @@ def student_detail(request, pk):
 
 @login_required
 def student_edit(request, pk):
-    student    = get_object_or_404(Student, pk=pk, teacher=request.user)
+    shared_cr_ids = request.user.shared_classrooms.values_list('id', flat=True)
+    student    = get_object_or_404(
+        Student.objects.filter(
+            Q(teacher=request.user) | Q(classroom_id__in=shared_cr_ids)
+        ).distinct(),
+        pk=pk
+    )
     classrooms = _teacher_classrooms(request.user)
     if request.method == 'POST':
         p = request.POST
@@ -215,7 +234,13 @@ def student_edit(request, pk):
 
 @login_required
 def student_delete(request, pk):
-    student = get_object_or_404(Student, pk=pk, teacher=request.user)
+    shared_cr_ids = request.user.shared_classrooms.values_list('id', flat=True)
+    student = get_object_or_404(
+        Student.objects.filter(
+            Q(teacher=request.user) | Q(classroom_id__in=shared_cr_ids)
+        ).distinct(),
+        pk=pk
+    )
     if request.method == 'POST':
         name = student.get_full_name()
         student.active = False
@@ -381,7 +406,13 @@ def message_list(request):
 
 @login_required
 def message_send(request, student_pk):
-    student = get_object_or_404(Student, pk=student_pk, teacher=request.user)
+    _sc_ids = request.user.shared_classrooms.values_list('id', flat=True)
+    student = get_object_or_404(
+        Student.objects.filter(
+            Q(teacher=request.user) | Q(classroom_id__in=_sc_ids)
+        ).distinct(),
+        pk=student_pk
+    )
     if request.method == 'POST':
         p = request.POST
         grade_level = p.get('grade_level', '')
@@ -432,7 +463,7 @@ def parent_portal(request):
             works  = StudentWork.objects.filter(
                 student=student, is_public=True
             ).order_by('-created_at')
-            grades = student.grades.order_by('-date')
+            grades = list(student.grades.select_related('subject').order_by('subject__name', '-date'))
             msgs   = student.messages.order_by('-sent_at')
             try:
                 attendances = student.attendances.order_by('-date')
@@ -440,13 +471,33 @@ def parent_portal(request):
                 attendances = []
             student.messages.filter(is_read=False).update(is_read=True)
 
+            # Agrupar notas por materia
+            _sd = {}
+            for g in grades:
+                key  = g.subject_id if g.subject else f'txt_{g.subject_text}'
+                name = g.subject.name if g.subject else (g.subject_text or 'Sin materia')
+                if key not in _sd:
+                    _sd[key] = {'name': name, 'grades': [], 'avg': None}
+                _sd[key]['grades'].append(g)
+            for key, data in _sd.items():
+                sc = [float(g.score) for g in data['grades']]
+                data['avg'] = round(sum(sc)/len(sc), 2) if sc else None
+            subjects_data = list(_sd.values())
+            all_sc = [float(g.score) for g in grades]
+            general_avg = round(sum(all_sc)/len(all_sc), 2) if all_sc else None
+        else:
+            subjects_data = []
+            general_avg   = None
+
     return render(request, 'students/parent_portal.html', {
-        'email':       email,
-        'student':     student,
-        'works':       works,
-        'grades':      grades,
-        'msgs':        msgs,
-        'attendances': attendances,
+        'email':         email,
+        'student':       student,
+        'works':         works,
+        'grades':        grades,
+        'msgs':          msgs,
+        'attendances':   attendances,
+        'subjects_data': subjects_data,
+        'general_avg':   general_avg,
     })
 
 
@@ -525,7 +576,15 @@ def message_delete(request, pk):
 @login_required
 def schedule_view(request):
     classrooms = _teacher_classrooms(request.user)
-    return render(request, 'students/schedule.html', {'classrooms': classrooms})
+    return render(request, 'students/schedule.html', {
+        'classrooms':    classrooms,
+        'days':          ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'],
+        'hours':         ['6:00', '7:00', '8:00', '9:00', '10:00', '11:00',
+                          '12:00', '1:00', '2:00', '3:00', '4:00', '5:00'],
+        'day_numbers':   ['1', '2', '3', '4', '5'],
+        'subject_colors': ['#E8EAF6', '#E8F5E9', '#FFF8E1',
+                           '#FCE4EC', '#E0F2F1', '#F3E5F5', '#FFF3F0'],
+    })
 
 
 # ── Parent portal auto (URL legacy) ──────────────────────────────────────────

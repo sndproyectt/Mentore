@@ -12,7 +12,7 @@ from accounts.decorators import coordinator_required
 from accounts.models import TeacherProfile, ROLE_CHOICES
 from accounts.forms import CoordinatorCreateTeacherForm
 from students.models import Classroom, Student, Announcement, DirectMessage, Message
-from grades.models import Grade
+from grades.models import Grade, Subject, TeacherSubject
 
 User = get_user_model()
 
@@ -68,15 +68,26 @@ def coordinator_dashboard(request):
             classroom_count=Count('classrooms'),
         )
     )
+    total_subjects = Subject.objects.filter(active=True).count()
+    subjects_summary = (
+        Subject.objects
+        .filter(active=True)
+        .prefetch_related('teacher_assignments', 'teacher_assignments__teacher')
+        .annotate(grade_count=Count('grades'))
+        .order_by('name')[:6]
+    )
+
     context = {
         'total_classrooms':      total_classrooms,
         'total_students':        total_students,
         'total_teachers':        total_teachers,
         'total_announce':        total_announce,
-        'avg_grade':             round(avg_grade, 1),
+        'total_subjects':        total_subjects,
+        'avg_grade':             round(float(avg_grade), 1),
         'classrooms_summary':    classrooms_summary,
         'recent_announcements':  recent_announcements,
         'teachers':              teachers,
+        'subjects_summary':      subjects_summary,
     }
     return render(request, 'coordinator/dashboard.html', context)
 
@@ -447,4 +458,108 @@ def student_list(request):
         'q':              q,
         'classroom_id':   classroom_id,
         'teacher_filter': teacher_filter,
+    })
+
+
+# ── Materias ───────────────────────────────────────────────────
+
+@coordinator_required
+def subject_list(request):
+    """Lista de todas las materias y sus docentes asignados."""
+    subjects = Subject.objects.prefetch_related(
+        'teacher_assignments', 'teacher_assignments__teacher',
+        'teacher_assignments__teacher__teacher_profile'
+    ).annotate(grade_count=Count('grades'))
+    return render(request, 'coordinator/subject_list.html', {
+        'subjects': subjects,
+    })
+
+
+@coordinator_required
+def subject_create(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        code = request.POST.get('code', '').strip()
+        desc = request.POST.get('description', '').strip()
+        if not name:
+            messages.error(request, 'El nombre de la materia es obligatorio.')
+        elif Subject.objects.filter(name__iexact=name).exists():
+            messages.error(request, f'Ya existe una materia llamada «{name}».')
+        else:
+            Subject.objects.create(name=name, code=code, description=desc)
+            messages.success(request, f'Materia «{name}» creada.')
+            return redirect('coordinator:subject_list')
+    return render(request, 'coordinator/subject_form.html', {'action': 'Crear'})
+
+
+@coordinator_required
+def subject_assign(request, subject_id):
+    """Asignar/quitar docentes a una materia."""
+    subject   = get_object_or_404(Subject, pk=subject_id)
+    all_users = _all_teachers()
+
+    if request.method == 'POST':
+        action     = request.POST.get('action', '')
+        teacher_id = request.POST.get('teacher_id', '').strip()
+        if action == 'add' and teacher_id:
+            teacher = get_object_or_404(User, pk=teacher_id)
+            ts, created = TeacherSubject.objects.get_or_create(
+                teacher=teacher, subject=subject
+            )
+            if created:
+                messages.success(request, f'{teacher.get_full_name()} asignado a «{subject.name}».')
+            else:
+                messages.warning(request, f'{teacher.get_full_name()} ya tenía esta materia.')
+        elif action == 'remove' and teacher_id:
+            teacher = get_object_or_404(User, pk=teacher_id)
+            TeacherSubject.objects.filter(teacher=teacher, subject=subject).delete()
+            messages.success(request, f'{teacher.get_full_name()} quitado de «{subject.name}».')
+        return redirect('coordinator:subject_assign', subject_id=subject.pk)
+
+    assigned_ids = subject.teacher_assignments.values_list('teacher_id', flat=True)
+    assigned     = all_users.filter(pk__in=assigned_ids)
+    available    = all_users.exclude(pk__in=assigned_ids)
+
+    return render(request, 'coordinator/subject_assign.html', {
+        'subject':   subject,
+        'assigned':  assigned,
+        'available': available,
+    })
+
+
+@coordinator_required
+def teacher_subjects(request, teacher_id):
+    """Ver/gestionar materias asignadas a un docente específico."""
+    teacher  = get_object_or_404(User, pk=teacher_id)
+    profile, _ = TeacherProfile.objects.get_or_create(user=teacher)
+    all_subjects = Subject.objects.filter(active=True)
+    assigned_ids = TeacherSubject.objects.filter(
+        teacher=teacher
+    ).values_list('subject_id', flat=True)
+    assigned     = all_subjects.filter(pk__in=assigned_ids)
+    available    = all_subjects.exclude(pk__in=assigned_ids)
+
+    if request.method == 'POST':
+        action     = request.POST.get('action', '')
+        subject_id = request.POST.get('subject_id', '').strip()
+        if action == 'add' and subject_id:
+            subj = get_object_or_404(Subject, pk=subject_id)
+            _, created = TeacherSubject.objects.get_or_create(
+                teacher=teacher, subject=subj
+            )
+            if created:
+                messages.success(request, f'Materia «{subj.name}» asignada.')
+            else:
+                messages.warning(request, 'Ya tenía esa materia.')
+        elif action == 'remove' and subject_id:
+            subj = get_object_or_404(Subject, pk=subject_id)
+            TeacherSubject.objects.filter(teacher=teacher, subject=subj).delete()
+            messages.success(request, f'Materia «{subj.name}» removida.')
+        return redirect('coordinator:teacher_subjects', teacher_id=teacher.pk)
+
+    return render(request, 'coordinator/teacher_subjects.html', {
+        'teacher':   teacher,
+        'profile':   profile,
+        'assigned':  assigned,
+        'available': available,
     })

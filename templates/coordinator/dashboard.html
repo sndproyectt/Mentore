@@ -5,16 +5,21 @@
 
 <!-- HERO -->
 <div style="background:var(--hero-gradient,linear-gradient(135deg,#0A2A40 0%,#1570A6 55%,#2196C9 100%));border-radius:14px;padding:24px 28px;color:white;margin-bottom:24px;position:relative;overflow:hidden;">
-  <div style="position:absolute;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.05);top:-100px;right:-60px;"></div>
+  <div style="position:absolute;width:320px;height:320px;border-radius:50%;background:rgba(255,255,255,.05);top:-120px;right:-70px;"></div>
   <div style="position:relative;z-index:1;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
     <div style="font-size:40px;">⭐</div>
-    <div>
+    <div style="flex:1;">
       <h2 style="color:white;font-size:20px;font-weight:800;margin-bottom:4px;">Panel de Coordinación</h2>
-      <p style="color:rgba(255,255,255,.75);margin:0;font-size:14px;">Bienvenido/a, {{ request.user.first_name }}. Tienes acceso total al sistema.</p>
+      <p style="color:rgba(255,255,255,.75);margin:0;font-size:14px;">Bienvenido/a, <strong>{{ request.user.first_name }}</strong>. Tienes acceso total al sistema.</p>
     </div>
-    <a href="{% url 'coordinator:classroom_create' %}" style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:10px 18px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:8px;color:white;text-decoration:none;font-weight:700;font-size:14px;">
-      <i class="bi bi-plus-lg"></i> Nuevo salón
-    </a>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a href="{% url 'coordinator:classroom_create' %}" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:8px;color:white;text-decoration:none;font-weight:700;font-size:13px;">
+        <i class="bi bi-plus-lg"></i> Nuevo salón
+      </a>
+      <a href="{% url 'coordinator:subject_create' %}" style="display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.25);border-radius:8px;color:white;text-decoration:none;font-weight:700;font-size:13px;">
+        <i class="bi bi-book-plus"></i> Nueva materia
+      </a>
+    </div>
   </div>
 </div>
 
@@ -22,7 +27,7 @@
 <div class="stats-grid" style="margin-bottom:24px;">
   <div class="stat-card">
     <div class="stat-icon blue">🏫</div>
-    <div><div class="stat-value">{{ total_classrooms }}</div><div class="stat-label">Salones totales</div></div>
+    <div><div class="stat-value">{{ total_classrooms }}</div><div class="stat-label">Salones</div></div>
   </div>
   <div class="stat-card">
     <div class="stat-icon green">👧</div>
@@ -30,47 +35,99 @@
   </div>
   <div class="stat-card">
     <div class="stat-icon orange">👩‍🏫</div>
-    <div><div class="stat-value">{{ total_teachers }}</div><div class="stat-label">Profesores</div></div>
+    <div><div class="stat-value">{{ total_teachers }}</div><div class="stat-label">Docentes</div></div>
   </div>
   <div class="stat-card">
-    <div class="stat-icon sky">⭐</div>
-    <div><div class="stat-value">{{ avg_grade }}</div><div class="stat-label">Promedio global</div></div>
+    <div class="stat-icon purple">📚</div>
+    <div><div class="stat-value">{{ total_subjects }}</div><div class="stat-label">Materias activas</div></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon sky">📊</div>
+    <div>
+      <div class="stat-value">{{ avg_grade }}</div>
+      <div class="stat-label">Promedio global</div>
+    </div>
   </div>
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;align-items:start;">
 
-  <!-- TABLA DE SALONES -->
-  <div class="card">
-    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
-      <span class="card-title">🏫 Salones y profesores asignados</span>
-      <a href="{% url 'coordinator:classroom_list' %}" class="btn btn-secondary" style="font-size:12px;padding:6px 12px;">Ver todos</a>
+  <!-- COLUMNA PRINCIPAL -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <!-- SALONES -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">🏫 Salones</span>
+        <a href="{% url 'coordinator:classroom_list' %}" class="btn btn-secondary" style="font-size:12px;padding:5px 12px;">Ver todos</a>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead>
+            <tr><th>Salón</th><th>Nivel</th><th>Docentes</th><th>Estudiantes</th><th></th></tr>
+          </thead>
+          <tbody>
+            {% for cr in classrooms_summary %}
+            <tr>
+              <td style="font-weight:800;color:var(--gray-900);">{{ cr.name }}</td>
+              <td><span class="badge badge-primary" style="font-size:10px;">{{ cr.grade_level|default:"—" }}</span></td>
+              <td>
+                <div style="font-weight:600;font-size:12px;color:var(--gray-900);">{{ cr.teacher.get_full_name }}</div>
+                {% for t in cr.teachers.all %}{% if t.pk != cr.teacher.pk %}
+                <div style="font-size:11px;color:var(--gray-400);">+ {{ t.get_full_name }}</div>
+                {% endif %}{% endfor %}
+              </td>
+              <td><span class="badge badge-success">{{ cr.student_count }}</span></td>
+              <td>
+                <a href="{% url 'coordinator:classroom_assign' cr.pk %}" class="btn btn-secondary" style="font-size:11px;padding:4px 9px;">
+                  <i class="bi bi-people"></i>
+                </a>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:24px;">No hay salones. <a href="{% url 'coordinator:classroom_create' %}" style="color:var(--primary);font-weight:700;">Crear uno →</a></td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
-    <div style="overflow-x:auto;">
-      <table class="table">
-        <thead><tr><th>Salón</th><th>Nivel</th><th>Profesor</th><th>Estudiantes</th><th></th></tr></thead>
-        <tbody>
-          {% for cr in classrooms_summary %}
-          <tr>
-            <td style="font-weight:700;color:var(--gray-900);">{{ cr.name }}</td>
-            <td><span class="badge badge-primary">{{ cr.grade_level|default:"—" }}</span></td>
-            <td>
-              <div style="font-weight:600;font-size:13px;">{{ cr.teacher.get_full_name }}</div>
-              <div style="font-size:11px;color:var(--gray-400);">{{ cr.teacher.teacher_profile.subject|default:"Sin materia" }}</div>
-            </td>
-            <td><span class="badge badge-success">{{ cr.student_count }}</span></td>
-            <td>
-              <a href="{% url 'coordinator:classroom_assign' cr.pk %}" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;">
-                <i class="bi bi-arrow-left-right"></i> Reasignar
-              </a>
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="5" style="text-align:center;color:var(--gray-400);padding:24px;">No hay salones registrados.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+
+    <!-- MATERIAS -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📚 Materias del sistema</span>
+        <a href="{% url 'coordinator:subject_list' %}" class="btn btn-secondary" style="font-size:12px;padding:5px 12px;">Gestionar</a>
+      </div>
+      {% if subjects_summary %}
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0;border-top:1px solid var(--gray-100);">
+        {% for subj in subjects_summary %}
+        <div style="padding:14px 18px;border-right:1px solid var(--gray-100);border-bottom:1px solid var(--gray-100);">
+          <div style="font-weight:800;font-size:13px;color:var(--gray-900);margin-bottom:6px;">{{ subj.name }}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              {% for ta in subj.teacher_assignments.all %}
+              <div style="font-size:11px;color:var(--gray-500);">
+                <i class="bi bi-person-fill" style="color:var(--primary);font-size:9px;"></i> {{ ta.teacher.get_full_name }}
+              </div>
+              {% empty %}
+              <div style="font-size:11px;color:var(--gray-300);font-style:italic;">Sin docente</div>
+              {% endfor %}
+            </div>
+            <span class="badge badge-info" style="font-size:10px;">{{ subj.grade_count }} notas</span>
+          </div>
+          <a href="{% url 'coordinator:subject_assign' subj.pk %}" style="display:inline-flex;align-items:center;gap:4px;margin-top:8px;font-size:11px;color:var(--primary);font-weight:700;text-decoration:none;">
+            <i class="bi bi-pencil"></i> Gestionar
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="padding:24px;text-align:center;color:var(--gray-400);font-size:13px;">
+        No hay materias creadas. <a href="{% url 'coordinator:subject_create' %}" style="color:var(--primary);font-weight:700;">Crear la primera →</a>
+      </div>
+      {% endif %}
     </div>
+
   </div>
 
   <!-- SIDEBAR DERECHO -->
@@ -78,23 +135,23 @@
 
     <!-- Comunicados recientes -->
     <div class="card">
-      <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
-        <span class="card-title">📢 Comunicados recientes</span>
+      <div class="card-header">
+        <span class="card-title">📢 Comunicados</span>
         <a href="{% url 'coordinator:announcement_list' %}" style="font-size:12px;color:var(--primary);text-decoration:none;font-weight:700;">Ver todos</a>
       </div>
-      <div style="padding:12px 16px;display:flex;flex-direction:column;gap:10px;">
+      <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
         {% for ann in recent_announcements %}
-        <div style="padding:10px 12px;background:var(--gray-50);border-radius:8px;border-left:3px solid {% if ann.priority == 'high' %}#EF4444{% elif ann.priority == 'medium' %}var(--accent){% else %}var(--primary){% endif %};">
-          <div style="font-weight:700;font-size:13px;color:var(--gray-900);">{{ ann.title|truncatechars:40 }}</div>
+        <div style="padding:10px 12px;background:var(--gray-50);border-radius:8px;border-left:3px solid {% if ann.priority == 'high' %}#EF4444{% elif ann.priority == 'medium' %}#F9C32A{% else %}var(--primary){% endif %};">
+          <div style="font-weight:700;font-size:12px;color:var(--gray-900);">{{ ann.title|truncatechars:38 }}</div>
           <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">
             {{ ann.teacher.get_full_name }} · {{ ann.created_at|date:"d M Y" }}
           </div>
         </div>
         {% empty %}
-        <p style="color:var(--gray-400);font-size:13px;text-align:center;padding:12px 0;">Sin comunicados aún.</p>
+        <p style="color:var(--gray-400);font-size:13px;text-align:center;padding:10px 0;">Sin comunicados aún.</p>
         {% endfor %}
         <a href="{% url 'coordinator:announcement_create' %}" class="btn btn-primary" style="margin-top:4px;justify-content:center;">
-          <i class="bi bi-plus-lg"></i> Nuevo comunicado global
+          <i class="bi bi-plus-lg"></i> Nuevo comunicado
         </a>
       </div>
     </div>
@@ -104,14 +161,49 @@
       <div class="card-header"><span class="card-title">⚡ Accesos rápidos</span></div>
       <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
         <a href="{% url 'coordinator:teacher_create' %}" class="btn btn-primary" style="justify-content:flex-start;gap:10px;">
-          <i class="bi bi-person-plus"></i> Crear nuevo profesor
+          <i class="bi bi-person-plus"></i> Crear docente
+        </a>
+        <a href="{% url 'coordinator:subject_create' %}" class="btn btn-secondary" style="justify-content:flex-start;gap:10px;">
+          <i class="bi bi-book-plus"></i> Crear materia
         </a>
         <a href="{% url 'coordinator:classroom_create' %}" class="btn btn-secondary" style="justify-content:flex-start;gap:10px;">
-          <i class="bi bi-building-add"></i> Crear nuevo salón
+          <i class="bi bi-building-add"></i> Crear salón
         </a>
         <a href="{% url 'coordinator:student_list' %}" class="btn btn-secondary" style="justify-content:flex-start;gap:10px;">
           <i class="bi bi-person-badge"></i> Ver todos los estudiantes
         </a>
+        <a href="{% url 'grades:list' %}" class="btn btn-secondary" style="justify-content:flex-start;gap:10px;">
+          <i class="bi bi-bar-chart"></i> Ver todas las notas
+        </a>
+      </div>
+    </div>
+
+    <!-- Docentes -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">👩‍🏫 Docentes</span>
+        <a href="{% url 'coordinator:teacher_list' %}" style="font-size:12px;color:var(--primary);text-decoration:none;font-weight:700;">Ver todos</a>
+      </div>
+      <div>
+        {% for t in teachers|slice:":5" %}
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--gray-100);">
+          <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            {{ t.first_name|first|upper }}{{ t.last_name|first|upper }}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;font-size:13px;color:var(--gray-900);">{{ t.get_full_name }}</div>
+            <div style="font-size:11px;color:var(--gray-400);">
+              {{ t.classroom_count }} salón{{ t.classroom_count|pluralize:",es" }} ·
+              {{ t.student_count }} estudiante{{ t.student_count|pluralize:"s" }}
+            </div>
+          </div>
+          <a href="{% url 'coordinator:teacher_subjects' t.pk %}" class="btn btn-secondary" style="font-size:10px;padding:3px 8px;" title="Materias">
+            <i class="bi bi-book"></i>
+          </a>
+        </div>
+        {% empty %}
+        <div style="padding:18px;text-align:center;color:var(--gray-400);font-size:13px;">Sin docentes registrados.</div>
+        {% endfor %}
       </div>
     </div>
 

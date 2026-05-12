@@ -3,29 +3,45 @@
 {% block page_title %}Gestión de Notas{% endblock %}
 {% block content %}
 
-<div class="page-header">
+<!-- ENCABEZADO -->
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
   <div>
-    <h1>Notas</h1>
-    <p>{{ grades.count }} nota{{ grades.count|pluralize:",s" }} registrada{{ grades.count|pluralize:",s" }} · Promedio: <strong>{{ avg }}</strong></p>
+    <p style="font-size:14px;color:var(--gray-500);margin:0;">
+      {{ grades.count }} nota{{ grades.count|pluralize:",s" }} · Promedio general: 
+      <strong style="color:var(--primary);">{{ avg }}</strong>
+      {% if not is_coord and my_subjects %}
+      · Tus materias:
+      {% for s in my_subjects %}<span style="background:var(--primary-light);color:var(--primary);font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;margin-left:4px;">{{ s.name }}</span>{% endfor %}
+      {% endif %}
+    </p>
   </div>
-  <div style="display:flex;gap:10px;">
-<a href="{% url 'grades:create' %}" class="btn btn-primary"><i class="bi bi-plus-circle-fill"></i> Registrar nota</a>
-  </div>
+  <a href="{% url 'grades:create' %}" class="btn btn-primary">
+    <i class="bi bi-plus-circle-fill"></i> Registrar nota
+  </a>
 </div>
 
-<div class="filter-bar">
-  <form method="get">
-    <div class="filter-bar-inner">
-      <div class="filter-item" style="flex:2;">
-        <span class="filter-label">Buscar</span>
-        <div class="filter-search">
-          <i class="bi bi-search"></i>
-          <input type="text" name="q" value="{{ query }}" placeholder="Estudiante o actividad...">
-        </div>
+<!-- FILTROS -->
+<div class="card" style="margin-bottom:18px;">
+  <div style="padding:14px 18px;">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="form-group" style="margin:0;flex:2;min-width:160px;">
+        <label class="form-label">Buscar</label>
+        <input type="text" name="q" class="form-control" placeholder="Estudiante o actividad…" value="{{ query }}">
+      </div>
+      <div class="form-group" style="margin:0;min-width:160px;">
+        <label class="form-label">Materia</label>
+        <select name="subject" class="form-control">
+          <option value="">Todas</option>
+          {% for subj in subjects %}
+          <option value="{{ subj.pk }}" {% if selected_subject == subj.pk|stringformat:"s" %}selected{% endif %}>
+            {{ subj.name }}
+          </option>
+          {% endfor %}
+        </select>
       </div>
       {% if classrooms %}
-      <div class="filter-item">
-        <span class="filter-label">Grupo</span>
+      <div class="form-group" style="margin:0;min-width:140px;">
+        <label class="form-label">Grupo</label>
         <select name="classroom" class="form-control">
           <option value="">Todos</option>
           {% for c in classrooms %}
@@ -35,8 +51,8 @@
       </div>
       {% endif %}
       {% if periods %}
-      <div class="filter-item">
-        <span class="filter-label">Período</span>
+      <div class="form-group" style="margin:0;min-width:130px;">
+        <label class="form-label">Periodo</label>
         <select name="period" class="form-control">
           <option value="">Todos</option>
           {% for p in periods %}
@@ -45,26 +61,25 @@
         </select>
       </div>
       {% endif %}
-      <div class="filter-actions">
-        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Filtrar</button>
-        {% if query or selected_classroom or selected_period %}
-        <a href="{% url 'grades:list' %}" class="btn btn-secondary btn-sm"><i class="bi bi-x"></i></a>
-        {% endif %}
-      </div>
-    </div>
-  </form>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Filtrar</button>
+      {% if query or selected_classroom or selected_period or selected_subject %}
+      <a href="{% url 'grades:list' %}" class="btn btn-secondary"><i class="bi bi-x"></i> Limpiar</a>
+      {% endif %}
+    </form>
+  </div>
 </div>
 
 {% if grades %}
 <div class="card">
-  <div class="table-wrapper">
-    <table>
+  <div style="overflow-x:auto;">
+    <table class="table">
       <thead>
         <tr>
           <th>Estudiante</th>
+          <th>Materia</th>
           <th>Actividad</th>
           <th>Tipo</th>
-          <th>Período</th>
+          <th>Periodo</th>
           <th>Nota</th>
           <th>Fecha</th>
           <th style="text-align:right;">Acciones</th>
@@ -73,32 +88,78 @@
       <tbody>
         {% for grade in grades %}
         <tr>
+          <!-- Estudiante -->
           <td>
             <div style="display:flex;align-items:center;gap:9px;">
               <div class="avatar avatar-sm">{{ grade.student.initials }}</div>
               <div>
                 <div style="font-weight:700;font-size:13px;">{{ grade.student.get_full_name }}</div>
-                {% if grade.student.classroom %}<div style="font-size:11px;color:var(--gray-500);">{{ grade.student.classroom.name }}</div>{% endif %}
+                {% if grade.student.classroom %}
+                <div style="font-size:11px;color:var(--gray-400);">{{ grade.student.classroom.name }}</div>
+                {% endif %}
               </div>
             </div>
           </td>
-          <td style="font-weight:600;color:var(--gray-900);">{{ grade.activity_name }}</td>
-          <td><span class="badge badge-blue">{{ grade.get_grade_type_display }}</span></td>
-          <td style="font-size:13px;color:var(--gray-500);">{{ grade.period|default:"—" }}</td>
+          <!-- Materia -->
           <td>
-            <span class="grade-pill {% if grade.score >= 4 %}grade-a{% elif grade.score >= 3 %}grade-b{% elif grade.score >= 2.5 %}grade-c{% else %}grade-d{% endif %}">
-              {{ grade.score }}
+            {% if grade.subject %}
+            <span style="background:var(--primary-light);color:var(--primary);font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;white-space:nowrap;">
+              {{ grade.subject.name }}
             </span>
-            <span style="font-size:11px;color:var(--gray-400);">/{{ grade.max_score }}</span>
+            {% elif grade.subject_text %}
+            <span style="background:var(--gray-100);color:var(--gray-600);font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;">
+              {{ grade.subject_text }}
+            </span>
+            {% else %}
+            <span style="color:var(--gray-300);font-size:12px;">—</span>
+            {% endif %}
           </td>
-          <td style="font-size:13px;color:var(--gray-500);">{{ grade.date|date:"d/m/Y" }}</td>
+          <td style="font-size:13px;color:var(--gray-900);">{{ grade.activity_name }}</td>
           <td>
-            <div style="display:flex;gap:6px;justify-content:flex-end;">
-              <a href="{% url 'grades:edit' grade.pk %}" class="btn btn-secondary btn-sm"><i class="bi bi-pencil"></i></a>
-              <form method="post" action="{% url 'grades:delete' grade.pk %}" style="display:inline;" onsubmit="return confirm('¿Eliminar esta nota?')">
-                {% csrf_token %}<button type="submit" class="btn btn-danger btn-sm"><i class="bi bi-trash"></i></button>
+            <span class="badge badge-info" style="font-size:10px;">{{ grade.get_grade_type_display }}</span>
+          </td>
+          <td style="font-size:12px;color:var(--gray-500);">{{ grade.period|default:"—" }}</td>
+          <td>
+            {% with s=grade.score|floatformat:2 %}
+            <span class="grade-pill
+              {% if grade.score >= 4.6 %}grade-a
+              {% elif grade.score >= 4.0 %}grade-b
+              {% elif grade.score >= 3.0 %}grade-c
+              {% else %}grade-d{% endif %}"
+              style="font-size:14px;font-weight:800;">{{ s }}</span>
+            {% endwith %}
+          </td>
+          <td style="font-size:12px;color:var(--gray-400);">{{ grade.date|date:"d/m/Y" }}</td>
+          <!-- Acciones -->
+          <td style="text-align:right;white-space:nowrap;">
+            {% if is_coord %}
+              <a href="{% url 'grades:edit' grade.pk %}" class="btn btn-secondary" style="font-size:11px;padding:4px 9px;">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form method="post" action="{% url 'grades:delete' grade.pk %}" style="display:inline;"
+                onsubmit="return confirm('¿Eliminar esta nota?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary" style="font-size:11px;padding:4px 9px;color:#EF4444;border-color:#FCA5A5;">
+                  <i class="bi bi-trash"></i>
+                </button>
               </form>
-            </div>
+            {% else %}
+              {% if not grade.subject %}
+                <a href="{% url 'grades:edit' grade.pk %}" class="btn btn-secondary" style="font-size:11px;padding:4px 9px;"><i class="bi bi-pencil"></i></a>
+              {% else %}
+                {% for ms in my_subjects %}{% if ms.pk == grade.subject.pk %}
+                  <a href="{% url 'grades:edit' grade.pk %}" class="btn btn-secondary" style="font-size:11px;padding:4px 9px;"><i class="bi bi-pencil"></i></a>
+                  <form method="post" action="{% url 'grades:delete' grade.pk %}" style="display:inline;"
+                    onsubmit="return confirm('¿Eliminar esta nota?')">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-secondary" style="font-size:11px;padding:4px 9px;color:#EF4444;border-color:#FCA5A5;"><i class="bi bi-trash"></i></button>
+                  </form>
+                {% endif %}{% endfor %}
+                {% with subj_ids=my_subjects|dictsortreversed:"pk" %}
+                  {% comment %}fallback solo lectura si no es su materia{% endcomment %}
+                {% endwith %}
+              {% endif %}
+            {% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -106,13 +167,16 @@
     </table>
   </div>
 </div>
+
 {% else %}
 <div class="card">
-  <div class="empty-state">
-    <span class="empty-icon">📊</span>
+  <div class="empty-state" style="padding:52px;">
+    <span class="empty-icon" style="font-size:48px;">📊</span>
     <h3>Sin notas registradas</h3>
-    <p>{% if query or selected_classroom or selected_period %}Intenta con otros filtros{% else %}Comienza registrando la primera nota{% endif %}</p>
-    {% if not query %}<a href="{% url 'grades:create' %}" class="btn btn-primary" style="margin-top:14px;"><i class="bi bi-plus-circle-fill"></i> Registrar nota</a>{% endif %}
+    <p>{% if query or selected_subject %}No hay notas con esos filtros.{% else %}Empieza registrando la primera nota.{% endif %}</p>
+    <a href="{% url 'grades:create' %}" class="btn btn-primary" style="margin-top:14px;">
+      <i class="bi bi-plus-circle-fill"></i> Registrar nota
+    </a>
   </div>
 </div>
 {% endif %}

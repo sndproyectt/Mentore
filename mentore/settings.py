@@ -1,37 +1,21 @@
 import os
 from pathlib import Path
-
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except:
-    pass
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ============================================================
-# SEGURIDAD
-# ============================================================
-
-SECRET_KEY = os.getenv(
+SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     'django-insecure-mentore-change-this-in-production-2024'
 )
 
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv(
-    'ALLOWED_HOSTS',
-    '127.0.0.1,localhost,.onrender.com'
-).split(',')
-
-CSRF_TRUSTED_ORIGINS = [
-    'https://*.onrender.com',
+ALLOWED_HOSTS = [
+    '.onrender.com',
+    '127.0.0.1',
+    'localhost',
 ]
-
-# ============================================================
-# APPS
-# ============================================================
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -50,24 +34,12 @@ INSTALLED_APPS = [
     'coordinator',
 ]
 
-# ============================================================
-# MIDDLEWARE
-# ============================================================
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-]
 
-try:
-    import whitenoise
+    # WhiteNoise
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 
-    MIDDLEWARE += [
-        'whitenoise.middleware.WhiteNoiseMiddleware',
-    ]
-except:
-    pass
-
-MIDDLEWARE += [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -77,10 +49,6 @@ MIDDLEWARE += [
 ]
 
 ROOT_URLCONF = 'mentore.urls'
-
-# ============================================================
-# TEMPLATES
-# ============================================================
 
 TEMPLATES = [
     {
@@ -101,14 +69,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'mentore.wsgi.application'
 
 # ============================================================
-# BASE DE DATOS
+# DATABASE
 # ============================================================
 
-import dj_database_url
-
 DATABASES = {
-    'default': dj_database_url.parse(
-        os.getenv('DATABASE_URL')
+    'default': dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+        ssl_require=False
     )
 }
 
@@ -118,61 +86,44 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'
     },
 ]
 
 # ============================================================
-# LOCALIZACIÓN
+# LANGUAGE
 # ============================================================
 
 LANGUAGE_CODE = 'es-co'
-
 TIME_ZONE = 'America/Bogota'
-
 USE_I18N = True
-
 USE_TZ = True
 
 # ============================================================
-# STATIC FILES
+# STATIC / MEDIA
 # ============================================================
 
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
+    BASE_DIR / 'static'
 ]
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-try:
-    import whitenoise
-
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-except:
-    pass
-
-# ============================================================
-# MEDIA FILES
-# ============================================================
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
-
 MEDIA_ROOT = BASE_DIR / 'media'
-
-# ============================================================
-# DEFAULT FIELD
-# ============================================================
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -181,31 +132,39 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ============================================================
 
 LOGIN_URL = '/accounts/login/'
-
 LOGIN_REDIRECT_URL = '/dashboard/'
-
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # ============================================================
-# IA
+# APIs
 # ============================================================
 
-ANTHROPIC_API_KEY = os.getenv('ANTHROPIC_API_KEY', '')
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
 
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY', '')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 
 # ============================================================
 # GOOGLE OAUTH
 # ============================================================
 
-GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
 
-GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET', '')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
 
 # ============================================================
 # APPLE LOGIN
 # ============================================================
 
-APPLE_CLIENT_ID = os.getenv('APPLE_CLIENT_ID', '')
+APPLE_CLIENT_ID = os.environ.get('APPLE_CLIENT_ID', '')
 
-APPLE_CLIENT_SECRET = os.getenv('APPLE_CLIENT_SECRET', '')
+APPLE_CLIENT_SECRET = os.environ.get('APPLE_CLIENT_SECRET', '')
+
+# ============================================================
+# SECURITY (Render)
+# ============================================================
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.onrender.com',
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

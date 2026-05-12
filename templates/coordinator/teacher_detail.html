@@ -65,6 +65,9 @@
       <a href="{% url 'coordinator:classroom_list' %}?teacher={{ teacher.pk }}" class="btn btn-secondary" style="justify-content:flex-start;gap:10px;">
         <i class="bi bi-building"></i> Ver salones de este profe
       </a>
+      <a href="{% url 'coordinator:teacher_subjects' teacher.pk %}" class="btn btn-secondary" style="justify-content:flex-start;gap:10px;">
+        <i class="bi bi-book"></i> Gestionar materias
+      </a>
       <a href="{% url 'coordinator:teacher_change_role' teacher.pk %}" class="btn btn-secondary" style="justify-content:flex-start;gap:10px;">
         <i class="bi bi-arrow-left-right"></i> Cambiar rol
       </a>

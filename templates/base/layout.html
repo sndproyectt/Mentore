@@ -162,6 +162,11 @@
       </a>
     </li>
     <li>
+      <a href="{% url 'coordinator:subject_list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'coordinator' and 'subject' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+        <i class="bi bi-book nav-icon"></i> Materias
+      </a>
+    </li>
+    <li>
       <a href="{% url 'coordinator:announcement_list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'coordinator' and 'announcement' in request.resolver_match.url_name|default:'' %}active{% endif %}">
         <i class="bi bi-megaphone nav-icon"></i> Comunicados globales
       </a>

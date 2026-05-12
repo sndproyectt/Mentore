@@ -1,0 +1,31 @@
+{% extends 'base/layout.html' %}
+{% block title %}{{ action }} Materia — Coordinación{% endblock %}
+{% block page_title %}{{ action }} Materia{% endblock %}
+{% block content %}
+<div style="max-width:520px;margin:0 auto;">
+  <div class="card">
+    <div class="card-header"><span class="card-title">📚 {{ action }} materia</span></div>
+    <div style="padding:24px;">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="form-label">Nombre de la materia *</label>
+          <input type="text" name="name" class="form-control" placeholder="Ej: Fraternos y espirituales" required value="{{ subject.name|default:'' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Código <span style="font-weight:400;color:var(--gray-400);">(opcional)</span></label>
+          <input type="text" name="code" class="form-control" placeholder="Ej: MAT, ESP…" value="{{ subject.code|default:'' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Descripción <span style="font-weight:400;color:var(--gray-400);">(opcional)</span></label>
+          <textarea name="description" class="form-control" rows="2" placeholder="Descripción breve de la materia…">{{ subject.description|default:'' }}</textarea>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> {{ action }} materia</button>
+          <a href="{% url 'coordinator:subject_list' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

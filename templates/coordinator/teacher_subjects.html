@@ -1,0 +1,71 @@
+{% extends 'base/layout.html' %}
+{% block title %}Materias de {{ teacher.get_full_name }}{% endblock %}
+{% block page_title %}Materias del Docente{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:13px;color:var(--gray-500);">
+  <a href="{% url 'coordinator:teacher_list' %}" style="color:var(--primary);font-weight:700;text-decoration:none;">Docentes</a>
+  <i class="bi bi-chevron-right"></i>
+  <a href="{% url 'coordinator:teacher_detail' teacher.pk %}" style="color:var(--primary);font-weight:700;text-decoration:none;">{{ teacher.get_full_name }}</a>
+  <i class="bi bi-chevron-right"></i>
+  <span>Materias</span>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;">
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">📚 Materias asignadas ({{ assigned|length }})</span></div>
+    {% if assigned %}
+    {% for subj in assigned %}
+    <div style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--gray-100);">
+      <div style="width:38px;height:38px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">📚</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:14px;color:var(--gray-900);">{{ subj.name }}</div>
+        {% if subj.code %}<div style="font-size:11px;color:var(--gray-400);">{{ subj.code }}</div>{% endif %}
+      </div>
+      <form method="post" onsubmit="return confirm('¿Quitar la materia «{{ subj.name }}»?')">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="remove">
+        <input type="hidden" name="subject_id" value="{{ subj.pk }}">
+        <button type="submit" class="btn btn-secondary" style="font-size:11px;padding:5px 10px;color:#EF4444;border-color:#FCA5A5;">
+          <i class="bi bi-x-lg"></i> Quitar
+        </button>
+      </form>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="padding:28px;text-align:center;color:var(--gray-400);font-size:13px;">Sin materias asignadas.</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-header"><span class="card-title">➕ Asignar materia</span></div>
+    <div style="padding:16px;">
+      {% if available %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add">
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label">Seleccionar materia</label>
+          <select name="subject_id" class="form-control" required>
+            <option value="">— Elegir —</option>
+            {% for subj in available %}
+            <option value="{{ subj.pk }}">{{ subj.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">
+          <i class="bi bi-plus-circle-fill"></i> Asignar materia
+        </button>
+      </form>
+      {% else %}
+      <div style="text-align:center;color:var(--gray-400);font-size:13px;padding:12px;">Ya tiene todas las materias disponibles.</div>
+      {% endif %}
+      <a href="{% url 'coordinator:teacher_detail' teacher.pk %}" class="btn btn-secondary" style="width:100%;margin-top:10px;justify-content:center;">
+        <i class="bi bi-arrow-left"></i> Volver al docente
+      </a>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

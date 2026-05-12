@@ -26,4 +26,9 @@ urlpatterns = [
 
     # Estudiantes (vista global)
     path('students/',                               views.student_list,          name='student_list'),
+    # Materias
+    path('subjects/',                               views.subject_list,      name='subject_list'),
+    path('subjects/new/',                           views.subject_create,    name='subject_create'),
+    path('subjects/<int:subject_id>/assign/',       views.subject_assign,    name='subject_assign'),
+    path('teachers/<int:teacher_id>/subjects/',     views.teacher_subjects,  name='teacher_subjects'),
 ]
