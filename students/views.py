@@ -440,6 +440,8 @@ def parent_portal(request):
     grades   = []
     msgs     = []
     attendances = []
+    subjects_data = []
+    general_avg = None
 
     # Accept both POST (from login page) and GET (legacy direct URL)
     if request.method == 'POST':

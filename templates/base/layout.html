@@ -105,7 +105,8 @@
 </head>
 <body>
 
-<aside class="sidebar">
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<aside class="sidebar" id="mainSidebar">
   <!-- Logo -->
   <a href="{% url 'students:dashboard' %}" class="sidebar-brand">
     <div class="sidebar-brand-icon" style="background:none;padding:0;overflow:hidden;">
@@ -253,7 +254,18 @@
 
 <div class="main-content">
   <header class="topbar">
-    <h1 class="topbar-title">{% block page_title %}Dashboard{% endblock %}</h1>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="hamburger" id="hamburgerBtn"
+        onclick="toggleSidebar()"
+        aria-label="Abrir menu"
+        aria-expanded="false"
+        aria-controls="mainSidebar">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <h1 class="topbar-title" style="margin:0;">{% block page_title %}Dashboard{% endblock %}</h1>
+    </div>
     <div class="topbar-right">
       {% if user.is_authenticated and user.teacher_profile.role == 'coordinator' %}
       <span style="font-size:11px;font-weight:700;padding:3px 10px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border-radius:20px;">⭐ Coordinador</span>
@@ -275,5 +287,45 @@
 </div>
 
 {% block extra_js %}{% endblock %}
+<script>
+(function() {
+  var sidebar  = document.getElementById('mainSidebar');
+  var overlay  = document.getElementById('sidebarOverlay');
+  var btn      = document.getElementById('hamburgerBtn');
+
+  function openSidebar() {
+    sidebar.classList.add('is-open');
+    overlay.classList.add('visible');
+    btn.classList.add('is-open');
+    btn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('is-open');
+    overlay.classList.remove('visible');
+    btn.classList.remove('is-open');
+    btn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  window.toggleSidebar = function() {
+    sidebar.classList.contains('is-open') ? closeSidebar() : openSidebar();
+  };
+  window.closeSidebar = closeSidebar;
+
+  // Cerrar con Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeSidebar();
+  });
+
+  // Cerrar al hacer click en un link del sidebar (en mobile)
+  sidebar.querySelectorAll('.sidebar-link, .sidebar-logout, .sidebar-ai-chip').forEach(function(link) {
+    link.addEventListener('click', function() {
+      if (window.innerWidth <= 768) closeSidebar();
+    });
+  });
+})();
+</script>
 </body>
 </html>
