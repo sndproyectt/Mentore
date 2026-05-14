@@ -1,0 +1,75 @@
+{% extends 'base/layout.html' %}
+{% block title %}Conversación — {{ root.subject }}{% endblock %}
+{% block page_title %}Conversación{% endblock %}
+{% block extra_css %}
+<style>
+.chat-bubble{display:flex;gap:10px;padding:12px 20px;align-items:flex-start;border-bottom:1px solid var(--gray-50);}
+.chat-bubble.mine{flex-direction:row-reverse;}
+.bubble-avatar{width:36px;height:36px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;}
+.bubble-theirs{background:linear-gradient(135deg,var(--primary),var(--secondary));}
+.bubble-mine{background:linear-gradient(135deg,#059669,#34D399);}
+.bubble-content{max-width:72%;}
+.bubble-text{padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.65;color:var(--gray-700);white-space:pre-line;}
+.chat-bubble:not(.mine) .bubble-text{background:var(--gray-50);border:1px solid var(--gray-100);border-top-left-radius:4px;}
+.chat-bubble.mine .bubble-text{background:var(--primary-light);border-top-right-radius:4px;}
+.bubble-info{font-size:11px;color:var(--gray-400);margin-top:3px;}
+.chat-bubble.mine .bubble-info{text-align:right;}
+.reply-box{padding:16px 20px;background:var(--gray-50);border-top:2px solid var(--gray-100);display:flex;gap:10px;align-items:flex-end;}
+.reply-input{flex:1;border:1.5px solid var(--gray-200);border-radius:10px;padding:10px 14px;font-size:13px;resize:none;font-family:inherit;background:#fff;transition:border-color .15s;min-height:44px;line-height:1.5;}
+.reply-input:focus{outline:none;border-color:var(--primary);}
+.send-btn{width:44px;height:44px;border-radius:11px;border:none;cursor:pointer;background:var(--primary);color:#fff;font-size:19px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.send-btn:hover{background:var(--secondary);}
+</style>
+{% endblock %}
+{% block content %}
+
+<div style="max-width:740px;margin:0 auto;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+    <a href="{% url 'students:message_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Mensajes</a>
+    <div>
+      <div style="font-size:17px;font-weight:800;color:var(--gray-900);">{{ root.subject }}</div>
+      <div style="font-size:12px;color:var(--gray-400);">
+        Estudiante: <strong>{{ root.student.get_full_name }}</strong>
+        {% if root.student.parent_name %} · Acudiente: <strong>{{ root.student.parent_name }}</strong>{% endif %}
+        {% if root.student.parent_email %} · {{ root.student.parent_email }}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="overflow:hidden;">
+    {% for msg in thread %}
+    <div class="chat-bubble {% if msg.teacher == request.user %}mine{% endif %}">
+      <div class="bubble-avatar {% if msg.teacher == request.user %}bubble-mine{% else %}bubble-theirs{% endif %}">
+        {{ msg.teacher.first_name|first|upper }}{{ msg.teacher.last_name|first|upper }}
+      </div>
+      <div class="bubble-content">
+        <div class="bubble-text">{{ msg.body }}</div>
+        <div class="bubble-info">
+          {% if msg.sender_label %}{{ msg.sender_label }}{% else %}{{ msg.teacher.get_full_name }}{% endif %}
+          · {{ msg.sent_at|date:"d/m/Y H:i" }}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <div class="reply-box">
+      <form method="post" style="display:contents;">
+        {% csrf_token %}
+        <textarea class="reply-input" name="body" rows="1" placeholder="Escribe tu respuesta… (Enter para enviar)"
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.closest('form').submit();}"
+          oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <button type="submit" class="send-btn" title="Enviar"><i class="bi bi-send-fill"></i></button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const card = document.querySelector('.card');
+  card.scrollTop = card.scrollHeight;
+  document.querySelector('.reply-input')?.focus();
+});
+</script>
+{% endblock %}

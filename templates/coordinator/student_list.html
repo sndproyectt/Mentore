@@ -37,7 +37,7 @@
 
 <div class="card">
   <div class="card-header">
-    <span class="card-title">👧 Estudiantes activos ({{ students|length }})</span>
+    <span class="card-title">👧 Estudiantes ({{ students|length }})</span>
   </div>
   <div style="overflow-x:auto;">
     <table class="table">
@@ -48,6 +48,8 @@
           <th>Profesor</th>
           <th>Correo padre/madre</th>
           <th>Promedio</th>
+          <th>Estado</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -82,10 +84,28 @@
             {% endif %}
             {% endwith %}
           </td>
+          <td>
+            {% if s.active %}<span class="badge badge-success">Activo</span>{% else %}<span class="badge badge-gray">Inactivo</span>{% endif %}
+          </td>
+          <td>
+            <div style="display:flex;gap:5px;">
+              <a href="{% url 'coordinator:student_detail' s.pk %}" class="btn btn-secondary" style="font-size:11px;padding:4px 8px;" title="Ver">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{% url 'coordinator:student_edit' s.pk %}" class="btn btn-secondary" style="font-size:11px;padding:4px 8px;" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+              {% if s.parent_email %}
+              <a href="{% url 'coordinator:student_message' s.pk %}" class="btn btn-primary" style="font-size:11px;padding:4px 8px;" title="Mensaje a padres">
+                <i class="bi bi-envelope"></i>
+              </a>
+              {% endif %}
+            </div>
+          </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5" style="text-align:center;color:var(--gray-400);padding:32px;">No se encontraron estudiantes con esos filtros.</td>
+          <td colspan="7" style="text-align:center;color:var(--gray-400);padding:32px;">No se encontraron estudiantes con esos filtros.</td>
         </tr>
         {% endfor %}
       </tbody>

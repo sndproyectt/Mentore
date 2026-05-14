@@ -478,35 +478,18 @@
       <a href="/padres/" class="btn-cambiar"><i class="bi bi-arrow-left"></i> Salir</a>
     </div>
 
-    <!-- STATS -->
-    <div class="stat-row">
-      <div class="stat-pill">
-        <span class="stat-icon">📊</span>
-        <div><div class="stat-val">{{ student.average_grade|default:"—" }}</div><div class="stat-lbl">Promedio</div></div>
-      </div>
-      <div class="stat-pill">
-        <span class="stat-icon">📝</span>
-        <div><div class="stat-val">{{ grades.count }}</div><div class="stat-lbl">Notas</div></div>
-      </div>
-      <div class="stat-pill">
-        <span class="stat-icon">🖼️</span>
-        <div><div class="stat-val">{{ works.count }}</div><div class="stat-lbl">Trabajos</div></div>
-      </div>
-      <div class="stat-pill">
-        <span class="stat-icon">✉️</span>
-        <div><div class="stat-val">{{ msgs.count }}</div><div class="stat-lbl">Mensajes</div></div>
-      </div>
-    </div>
+
 
     <!-- TABS -->
     <div class="tab-strip">
-      <button class="tab-btn active" onclick="showTab('t-grades',this)"><i class="bi bi-bar-chart-fill"></i> Notas</button>
-      <button class="tab-btn" onclick="showTab('t-gallery',this)"><i class="bi bi-images"></i> Galería</button>
-      <button class="tab-btn" onclick="showTab('t-attendance',this)"><i class="bi bi-calendar-check"></i> Asistencia</button>
-      <button class="tab-btn" onclick="showTab('t-messages',this)">
+      <button class="tab-btn active" id="ptab-t-grades" onclick="showTab('t-grades',this)"><i class="bi bi-bar-chart-fill"></i> Notas</button>
+      <button class="tab-btn" id="ptab-t-gallery" onclick="showTab('t-gallery',this)"><i class="bi bi-images"></i> Galería</button>
+      <button class="tab-btn" id="ptab-t-attendance" onclick="showTab('t-attendance',this)"><i class="bi bi-calendar-check"></i> Asistencia</button>
+      <button class="tab-btn" id="ptab-t-messages" onclick="showTab('t-messages',this)">
         <i class="bi bi-envelope-fill"></i> Mensajes
         {% if msgs %}<span class="tab-badge">{{ msgs.count }}</span>{% endif %}
       </button>
+      <button class="tab-btn" id="ptab-t-send" onclick="showTab('t-send',this)"><i class="bi bi-send"></i> Enviar mensaje</button>
     </div>
   </div>
 </div>
@@ -518,65 +501,71 @@
 
   <!-- NOTAS -->
   <div id="t-grades" class="p-section">
+    {% if subjects_data %}
+    <!-- Promedio general + filtro por materia -->
+    <div style="display:flex;align-items:stretch;gap:16px;margin-bottom:18px;flex-wrap:wrap;">
 
-    <!-- RESUMEN GENERAL + CHIPS POR MATERIA -->
-    <div style="display:flex;align-items:stretch;gap:12px;margin-bottom:18px;flex-wrap:wrap;">
-      <div class="avg-card" style="min-width:150px;flex-shrink:0;padding:20px 18px;">
+      <!-- Bolita original con giro -->
+      <div class="avg-card" style="min-width:160px;flex-shrink:0;padding:22px 20px;">
         <div class="avg-label">Promedio general</div>
         <div class="avg-ring"><div class="avg-num">{{ general_avg|default:"—" }}</div></div>
         <div class="avg-emoji">{% if general_avg %}{% if general_avg >= 4 %}🌟{% elif general_avg >= 3 %}👍{% elif general_avg >= 2.5 %}📚{% else %}💪{% endif %}{% endif %}</div>
         <div class="avg-text">{% if general_avg %}{% if general_avg >= 4 %}Excelente{% elif general_avg >= 3 %}Buen desempeño{% elif general_avg >= 2.5 %}En proceso{% else %}Necesita apoyo{% endif %}{% endif %}</div>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:10px;align-content:flex-start;flex:1;">
-        {% for data in subjects_data %}
-        <div style="background:#fff;border:1.5px solid #D8EAF5;border-radius:12px;padding:12px 16px;min-width:130px;flex:1;max-width:190px;">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#5588AA;margin-bottom:4px;">{{ data.name }}</div>
-          <div style="font-size:24px;font-weight:900;color:{% if data.avg >= 4 %}#065F46{% elif data.avg >= 3 %}#1E40AF{% elif data.avg >= 2.5 %}#92400E{% else %}#991B1B{% endif %};">{{ data.avg|default:"—" }}</div>
-          <div style="font-size:10px;color:#9DB8CC;margin-top:2px;">{{ data.grades|length }} actividade{{ data.grades|length|pluralize:",s" }}</div>
+
+      <!-- Filtro por materias -->
+      <div style="flex:1;background:linear-gradient(135deg,#0E3A5C,#1570A6);border-radius:16px;padding:18px 20px;display:flex;flex-direction:column;justify-content:center;gap:10px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:rgba(255,255,255,.55);">Ver por materia</div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;">
+          <button onclick="filterSubject('__all__', this)" id="btn-all"
+            style="padding:7px 14px;border-radius:999px;border:1.5px solid #F9C32A;background:#F9C32A;color:#0A1F35;font-size:12px;font-weight:700;cursor:pointer;"
+            class="subj-btn">
+            Todas
+          </button>
+          {% for data in subjects_data %}
+          <button onclick="filterSubject('{{ data.name|escapejs }}', this)"
+            style="padding:7px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;backdrop-filter:blur(4px);"
+            class="subj-btn">
+            {{ data.name }}
+            <span style="background:rgba(255,255,255,.2);border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px;{% if data.avg %}color:{% if data.avg >= 4 %}#6EE7B7{% elif data.avg >= 3 %}#93C5FD{% elif data.avg >= 2.5 %}#FCD34D{% else %}#FCA5A5{% endif %}{% endif %}">{{ data.avg|default:"?" }}</span>
+          </button>
+          {% endfor %}
         </div>
-        {% empty %}
-        <div style="font-size:13px;color:#9DB8CC;padding:12px;align-self:center;">Sin materias aún.</div>
-        {% endfor %}
       </div>
     </div>
 
-    <!-- NOTAS AGRUPADAS POR MATERIA -->
-    {% if subjects_data %}
-      {% for data in subjects_data %}
-      <div class="card" style="margin-bottom:14px;overflow:hidden;">
-        <div style="background:#E8F5FD;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #D8EAF5;">
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span style="font-size:17px;">📚</span>
-            <span style="font-weight:800;font-size:14px;color:#0D2D42;">{{ data.name }}</span>
-            <span style="font-size:11px;color:#5588AA;">{{ data.grades|length }} actividade{{ data.grades|length|pluralize:",s" }}</span>
-          </div>
-          {% if data.avg %}
-          <span style="font-size:20px;font-weight:900;color:{% if data.avg >= 4 %}#065F46{% elif data.avg >= 3 %}#1E40AF{% elif data.avg >= 2.5 %}#92400E{% else %}#991B1B{% endif %};">{{ data.avg }}</span>
-          {% endif %}
+    <!-- Secciones por materia -->
+    {% for data in subjects_data %}
+    <div class="card subj-section" data-subject="{{ data.name }}" style="margin-bottom:14px;overflow:hidden;">
+      <div style="background:#E8F5FD;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #D8EAF5;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:17px;">📚</span>
+          <span style="font-weight:800;font-size:14px;color:#0D2D42;">{{ data.name }}</span>
+          <span style="font-size:11px;color:#5588AA;">{{ data.grades|length }} actividade{{ data.grades|length|pluralize:",s" }}</span>
         </div>
-        {% for grade in data.grades %}
-        <div class="grade-row">
-          <div class="grade-left">
-            <div class="grade-name">{{ grade.activity_name }}</div>
-            <div class="grade-meta">
-              <span class="grade-tag {% if grade.grade_type == 'exam' %}tag-examen{% elif grade.grade_type == 'quiz' %}tag-quiz{% else %}tag-default{% endif %}">{{ grade.get_grade_type_display }}</span>
-              {% if grade.period %}<span class="grade-date">{{ grade.period }}</span>{% endif %}
-              <span class="grade-date"><i class="bi bi-calendar3"></i> {{ grade.date|date:"d/m/Y" }}</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div class="grade-bar-bg"><div class="grade-bar-fill" style="width:{{ grade.percentage }}%;background:{% if grade.score >= 4 %}#10B981{% elif grade.score >= 3 %}#1570A6{% elif grade.score >= 2.5 %}#F9C32A{% else %}#EF4444{% endif %};"></div></div>
-            </div>
+        {% if data.avg %}<span style="font-size:20px;font-weight:900;color:{% if data.avg >= 4 %}#065F46{% elif data.avg >= 3 %}#1E40AF{% elif data.avg >= 2.5 %}#92400E{% else %}#991B1B{% endif %};">{{ data.avg }}</span>{% endif %}
+      </div>
+      {% for grade in data.grades %}
+      <div class="grade-row">
+        <div class="grade-left">
+          <div class="grade-name">{{ grade.activity_name }}</div>
+          <div class="grade-meta">
+            <span class="grade-tag {% if grade.grade_type == 'exam' %}tag-examen{% elif grade.grade_type == 'quiz' %}tag-quiz{% else %}tag-default{% endif %}">{{ grade.get_grade_type_display }}</span>
+            {% if grade.period %}<span class="grade-date">{{ grade.period }}</span>{% endif %}
+            <span class="grade-date"><i class="bi bi-calendar3"></i> {{ grade.date|date:"d/m/Y" }}</span>
           </div>
-          <div class="score-badge">
-            <span class="score-num {% if grade.score >= 4 %}score-green{% elif grade.score >= 3 %}score-blue{% elif grade.score >= 2.5 %}score-amber{% else %}score-red{% endif %}">{{ grade.score }}</span>
-            <span class="score-max">/ {{ grade.max_score }}</span>
-          </div>
+          <div class="grade-bar-bg"><div class="grade-bar-fill" style="width:{{ grade.percentage }}%;background:{% if grade.score >= 4 %}#10B981{% elif grade.score >= 3 %}#1570A6{% elif grade.score >= 2.5 %}#F9C32A{% else %}#EF4444{% endif %};"></div></div>
         </div>
-        {% endfor %}
+        <div class="score-badge">
+          <span class="score-num {% if grade.score >= 4 %}score-green{% elif grade.score >= 3 %}score-blue{% elif grade.score >= 2.5 %}score-amber{% else %}score-red{% endif %}">{{ grade.score }}</span>
+          <span class="score-max">/ {{ grade.max_score }}</span>
+        </div>
       </div>
       {% endfor %}
+    </div>
+    {% endfor %}
     {% else %}
-      <div class="empty-state"><span class="empty-icon">📊</span><div class="empty-title">Sin notas aún</div><div class="empty-sub">El profesor registrará las notas aquí</div></div>
+    <div class="empty-state"><span class="empty-icon">📊</span><div class="empty-title">Sin notas aún</div><div class="empty-sub">El profesor registrará las notas aquí</div></div>
     {% endif %}
   </div>
 
@@ -645,30 +634,135 @@
     {% endif %}
   </div>
 
-  <!-- MENSAJES -->
+  <!-- MENSAJES RECIBIDOS -->
   <div id="t-messages" class="p-section" style="display:none;">
     {% if msgs %}
-    <div class="card">
-      <div class="card-head">
-        <span class="card-title">✉️ Mensajes del profesor</span>
-        <span class="card-badge">{{ msgs.count }} mensaje{{ msgs.count|pluralize:",s" }}</span>
-      </div>
-      {% for msg in msgs %}
-      <div class="msg-row">
-        <div class="msg-avatar">✉️</div>
+    {% regroup msgs by subject as msg_threads %}
+    {% for thread in msg_threads %}
+    <div style="background:#fff;border:1px solid #E0EAF2;border-radius:16px;overflow:hidden;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05);">
+      <!-- Thread header -->
+      <div onclick="togglePChat('pc{{ forloop.counter }}')" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;border-bottom:1px solid #EEF4FA;" id="pchdr-{{ forloop.counter }}">
+        <div style="width:42px;height:42px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#1570A6,#0D8FAB);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15);">
+          {{ thread.list.0.teacher.first_name|first|upper }}{{ thread.list.0.teacher.last_name|first|upper }}
+        </div>
         <div style="flex:1;min-width:0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
-            <span class="msg-subj">{{ msg.subject }}</span>
-            <span class="msg-time"><i class="bi bi-clock"></i> {{ msg.sent_at|date:"d/m/Y H:i" }}</span>
+          <div style="font-weight:700;font-size:14px;color:#111;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ thread.grouper }}</div>
+          <div style="font-size:12px;color:#8A9BAC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ thread.list.0.teacher.get_full_name }}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+          <span style="font-size:11px;color:#B0BEC5;">{{ thread.list.0.sent_at|date:"d/m H:i" }}</span>
+          {% if thread.list|length > 1 %}<span style="background:#25D366;color:#fff;font-size:10px;font-weight:800;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;">{{ thread.list|length }}</span>{% endif %}
+        </div>
+        <i class="bi bi-chevron-down" style="color:#B0BEC5;font-size:12px;margin-left:4px;transition:transform .2s;" id="pcchv-{{ forloop.counter }}"></i>
+      </div>
+      <!-- Chat window -->
+      <div id="pc{{ forloop.counter }}" style="display:none;flex-direction:column;">
+        <div class="pp-chat-msgs" id="pcmsgs-{{ forloop.counter }}">
+          {% for msg in thread.list %}
+          {% if msg.sender_label == 'padre' %}
+          <!-- Bubble enviada por el padre (derecha) -->
+          <div style="display:flex;align-items:flex-end;gap:6px;flex-direction:row-reverse;margin-bottom:4px;">
+            <div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#059669,#34D399);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;">Yo</div>
+            <div style="max-width:72%;display:flex;flex-direction:column;align-items:flex-end;">
+              <div style="background:#DCF8C6;color:#111;padding:9px 13px;border-radius:14px 0 14px 14px;font-size:13px;line-height:1.55;white-space:pre-line;box-shadow:0 1px 2px rgba(0,0,0,.08);">{{ msg.body }}</div>
+              <div style="font-size:10px;color:#8A9BAC;margin-top:2px;display:flex;align-items:center;gap:3px;">{{ msg.sent_at|date:"H:i" }} <i class="bi bi-check2-all" style="color:#4FC3F7;"></i></div>
+            </div>
           </div>
-          <div class="msg-body">{{ msg.body }}</div>
+          {% else %}
+          <!-- Bubble recibida del docente/coordinador (izquierda) -->
+          <div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:4px;">
+            <div style="width:28px;height:28px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#1570A6,#0D8FAB);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;">{{ msg.teacher.first_name|first|upper }}{{ msg.teacher.last_name|first|upper }}</div>
+            <div style="max-width:72%;display:flex;flex-direction:column;">
+              <div style="font-size:10px;font-weight:700;color:#6B8FA6;margin-bottom:2px;padding-left:2px;">{{ msg.teacher.get_full_name }}</div>
+              <div style="background:#fff;color:#111;padding:9px 13px;border-radius:0 14px 14px 14px;font-size:13px;line-height:1.55;white-space:pre-line;border:1px solid #E0EAF2;box-shadow:0 1px 2px rgba(0,0,0,.06);">{{ msg.body }}</div>
+              <div style="font-size:10px;color:#8A9BAC;margin-top:2px;padding-left:2px;">{{ msg.sent_at|date:"H:i" }}</div>
+            </div>
+          </div>
+          {% endif %}
+          {% endfor %}
+        </div>
+        <!-- Reply bar (padre responde) -->
+        <div style="display:flex;align-items:flex-end;gap:8px;padding:10px 14px;background:#F0F4F8;border-top:1px solid #DDE5EC;">
+          <form method="post" action="/padres/mensaje/" style="display:contents;">
+            {% csrf_token %}
+            <input type="hidden" name="email" value="{{ email }}">
+            <input type="hidden" name="recipient_id" value="{{ thread.list.0.teacher.pk }}">
+            <input type="hidden" name="subject" value="Re: {{ thread.grouper }}">
+            <textarea name="body" rows="1" placeholder="Escribe tu respuesta…"
+              style="flex:1;border:none;border-radius:22px;padding:9px 16px;font-size:13px;resize:none;font-family:inherit;background:#fff;line-height:1.45;min-height:40px;max-height:120px;box-shadow:0 1px 3px rgba(0,0,0,.08);outline:none;overflow-y:auto;"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.closest('form').submit();}"
+              oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,120)+'px'"></textarea>
+            <button type="submit" style="width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;background:#25D366;color:#fff;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(37,211,102,.3);">
+              <i class="bi bi-send-fill"></i>
+            </button>
+          </form>
         </div>
       </div>
-      {% endfor %}
     </div>
+    {% endfor %}
     {% else %}
-    <div class="card"><div class="empty-state"><span class="empty-icon">✉️</span><div class="empty-title">Sin mensajes aún</div><div class="empty-sub">El profesor te enviará mensajes aquí</div></div></div>
+    <div class="card"><div class="empty-state" style="padding:40px;">
+      <span class="empty-icon" style="font-size:48px;">✉️</span>
+      <div class="empty-title">Sin mensajes aún</div>
+      <div class="empty-sub">Los mensajes del colegio aparecerán aquí</div>
+    </div></div>
     {% endif %}
+  </div>
+
+  <!-- ENVIAR MENSAJE -->
+  <div id="t-send" class="p-section" style="display:none;">
+    <div class="card" style="overflow:hidden;">
+      <div class="card-head" style="padding:16px 22px;border-bottom:1px solid #EEF4FA;">
+        <span class="card-title">📤 Enviar mensaje al colegio</span>
+      </div>
+      <div style="padding:22px;">
+        <form method="post" action="/padres/mensaje/" id="parentMsgForm">
+          {% csrf_token %}
+          <input type="hidden" name="email" value="{{ email }}">
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:700;color:#3A6B8A;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">¿A quién le escribes?</label>
+            <div style="display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;border:1.5px solid #D8EAF5;border-radius:10px;padding:8px;background:#FAFCFF;">
+              {% for staff in all_staff %}
+              <label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:background .15s;" onmouseover="this.style.background='#E8F5FD'" onmouseout="this.style.background='transparent'">
+                <input type="radio" name="recipient_id" value="{{ staff.pk }}" required
+                  {% if staff == student.teacher %}checked{% endif %}
+                  style="width:16px;height:16px;accent-color:#1570A6;flex-shrink:0;">
+                <div style="width:34px;height:34px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;
+                  background:{% if staff.teacher_profile.role == 'coordinator' %}linear-gradient(135deg,#7C3AED,#A78BFA){% else %}linear-gradient(135deg,#1570A6,#0D8FAB){% endif %};">
+                  {{ staff.first_name|first|upper }}{{ staff.last_name|first|upper }}
+                </div>
+                <div>
+                  <div style="font-weight:700;font-size:13px;color:#0A1F35;">{{ staff.get_full_name }}</div>
+                  <div style="font-size:11px;color:#9DB8CC;">
+                    {% if staff.teacher_profile.role == 'coordinator' %}🏫 Coordinador{% else %}📚 {% if staff.teacher_profile.subject %}{{ staff.teacher_profile.subject }}{% else %}Docente{% endif %}{% endif %}
+                    {% if staff == student.teacher %} · <span style="color:#059669;font-weight:700;">Docente de {{ student.first_name }}</span>{% endif %}
+                  </div>
+                </div>
+              </label>
+              {% empty %}
+              <div style="padding:12px;color:#9DB8CC;font-size:13px;text-align:center;">Sin personal disponible.</div>
+              {% endfor %}
+            </div>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label style="display:block;font-size:12px;font-weight:700;color:#3A6B8A;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Asunto</label>
+            <input type="text" name="subject" required placeholder="¿Sobre qué quieres hablar?" style="width:100%;padding:10px 14px;border:1.5px solid #D8EAF5;border-radius:10px;font-size:14px;background:#FAFCFF;color:#0A1F35;font-family:inherit;box-sizing:border-box;">
+          </div>
+          <div style="margin-bottom:18px;">
+            <label style="display:block;font-size:12px;font-weight:700;color:#3A6B8A;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Mensaje</label>
+            <textarea name="body" rows="5" required placeholder="Escribe aquí tu mensaje…" style="width:100%;padding:10px 14px;border:1.5px solid #D8EAF5;border-radius:10px;font-size:14px;background:#FAFCFF;color:#0A1F35;font-family:inherit;resize:vertical;box-sizing:border-box;line-height:1.6;"></textarea>
+          </div>
+          <button type="submit" style="width:100%;padding:13px;background:linear-gradient(135deg,#1570A6,#0D8FAB);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+            <i class="bi bi-send-fill"></i> Enviar mensaje
+          </button>
+        </form>
+        {% if send_success %}
+        <div style="margin-top:14px;padding:12px 16px;background:#D1FAE5;border:1px solid #6EE7B7;border-radius:10px;font-size:14px;color:#065F46;font-weight:700;display:flex;align-items:center;gap:8px;">
+          <i class="bi bi-check-circle-fill"></i> Mensaje enviado correctamente.
+        </div>
+        {% endif %}
+      </div>
+    </div>
   </div>
 
 </div>
@@ -677,10 +771,43 @@
 <script>
 function showTab(id,btn){
   document.querySelectorAll('.p-section').forEach(s=>s.style.display='none');
-  document.querySelectorAll('.p-stab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.remove('active'));
   document.getElementById(id).style.display='';
   btn.classList.add('active');
 }
+function togglePChat(id){
+  const win=document.getElementById(id);
+  const num=id.replace('pc','');
+  const chv=document.getElementById('pcchv-'+num);
+  const open=win.style.display==='flex';
+  win.style.display=open?'none':'flex';
+  win.style.flexDirection='column';
+  chv.style.transform=open?'':'rotate(180deg)';
+  if(!open){
+    const msgs=document.getElementById('pcmsgs-'+num);
+    if(msgs) setTimeout(()=>{msgs.scrollTop=msgs.scrollHeight;},80);
+    setTimeout(()=>win.querySelector('textarea')?.focus(),120);
+  }
+}
+function filterSubject(name, btn){
+  document.querySelectorAll('.subj-btn').forEach(b=>{
+    b.style.background='rgba(255,255,255,.1)';
+    b.style.borderColor='rgba(255,255,255,.25)';
+    b.style.color='#fff';
+  });
+  btn.style.background='#F9C32A';
+  btn.style.borderColor='#F9C32A';
+  btn.style.color='#0A1F35';
+  document.querySelectorAll('.subj-section').forEach(sec=>{
+    sec.style.display=(name==='__all__'||sec.dataset.subject===name)?'':'none';
+  });
+}
+document.addEventListener('DOMContentLoaded', function(){
+  {% if open_tab %}
+  var openBtn = document.getElementById('ptab-{{ open_tab }}');
+  if(openBtn) showTab('{{ open_tab }}', openBtn);
+  {% endif %}
+});
 </script>
 </body>
 </html>

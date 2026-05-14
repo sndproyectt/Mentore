@@ -1,0 +1,131 @@
+{% extends 'base/layout.html' %}
+{% block title %}Editar {{ student.get_full_name }}{% endblock %}
+{% block page_title %}Editar Estudiante{% endblock %}
+{% block content %}
+
+<div style="max-width:760px;margin:0 auto;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+    <a href="{% url 'coordinator:student_detail' student.pk %}" class="btn btn-secondary">
+      <i class="bi bi-arrow-left"></i> Volver
+    </a>
+    <h2 style="margin:0;font-size:18px;font-weight:800;color:var(--gray-900);">
+      ✏️ Editar: {{ student.get_full_name }}
+    </h2>
+  </div>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <div class="card" style="padding:24px;margin-bottom:16px;">
+      <h3 style="font-size:14px;font-weight:800;color:var(--gray-700);margin:0 0 16px;border-bottom:1px solid var(--gray-100);padding-bottom:10px;">
+        👧 Datos del estudiante
+      </h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Nombre *</label>
+          <input type="text" name="first_name" class="form-control" value="{{ student.first_name }}" required>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Apellido *</label>
+          <input type="text" name="last_name" class="form-control" value="{{ student.last_name }}" required>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Documento</label>
+          <input type="text" name="document_id" class="form-control" value="{{ student.document_id }}">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Género</label>
+          <select name="gender" class="form-control">
+            <option value="">— Sin especificar —</option>
+            <option value="M" {% if student.gender == 'M' %}selected{% endif %}>Masculino</option>
+            <option value="F" {% if student.gender == 'F' %}selected{% endif %}>Femenino</option>
+            <option value="O" {% if student.gender == 'O' %}selected{% endif %}>Otro</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Fecha de nacimiento</label>
+          <input type="date" name="date_of_birth" class="form-control" value="{{ student.date_of_birth|date:'Y-m-d' }}">
+        </div>
+        <div class="form-group" style="margin:0;">
+          <label class="form-label">Correo del estudiante</label>
+          <input type="email" name="email" class="form-control" value="{{ student.email }}">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;margin:0;">
+          <label class="form-label">Salón</label>
+          <select name="classroom" class="form-control">
+            <option value="">— Sin salón —</option>
+            {% for cr in classrooms %}
+            <option value="{{ cr.pk }}" {% if student.classroom_id == cr.pk %}selected{% endif %}>{{ cr.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group" style="grid-column:1/-1;margin:0;">
+          <label class="form-label">Foto</label>
+          <input type="file" name="photo" class="form-control" accept="image/*">
+          {% if student.photo %}<div style="font-size:11px;color:var(--gray-400);margin-top:4px;">Foto actual: {{ student.photo.name }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:24px;margin-bottom:16px;">
+      <h3 style="font-size:14px;font-weight:800;color:var(--gray-700);margin:0 0 4px;padding-bottom:10px;border-bottom:1px solid var(--gray-100);">
+        👨‍👩‍👧 Acudientes
+      </h3>
+      <p style="font-size:12px;color:var(--gray-400);margin:0 0 18px;">Obligatorio: 1 acudiente principal. Opcional: hasta 2 adicionales. El correo del acudiente principal habilita el acceso al portal de padres.</p>
+
+      {% for slot in "123" %}
+      {% with idx=forloop.counter g=guardians|slice:forloop.counter0|first %}
+      <div style="border:{% if forloop.first %}2px solid var(--primary){% else %}1.5px solid var(--gray-200){% endif %};border-radius:12px;padding:18px;margin-bottom:12px;{% if not forloop.first %}opacity:.85;{% endif %}" id="guardian-slot-{{ idx }}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <div style="width:26px;height:26px;border-radius:50%;background:{% if forloop.first %}var(--primary){% else %}var(--gray-300){% endif %};color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;">{{ idx }}</div>
+          <span style="font-size:13px;font-weight:700;color:{% if forloop.first %}var(--primary){% else %}var(--gray-500){% endif %};">
+            {% if forloop.first %}Acudiente principal *{% else %}Acudiente adicional {{ forloop.counter0 }} <span style="font-size:11px;font-weight:400;">(opcional)</span>{% endif %}
+          </span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="form-group" style="margin:0;grid-column:1/-1;">
+            <label class="form-label">Nombre completo {% if forloop.first %}*{% endif %}</label>
+            <input type="text" name="guardian_name_{{ idx }}" class="form-control"
+              value="{% if forloop.first %}{{ guardians.0.name|default:student.parent_name }}{% elif forloop.counter == 2 %}{{ guardians.1.name }}{% else %}{{ guardians.2.name }}{% endif %}"
+              {% if forloop.first %}required{% endif %} placeholder="Nombre del acudiente">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Correo {% if forloop.first %}<span style="font-size:10px;color:var(--gray-400);">(acceso portal)</span>{% endif %}</label>
+            <input type="email" name="guardian_email_{{ idx }}" class="form-control"
+              value="{% if forloop.first %}{{ guardians.0.email|default:student.parent_email }}{% elif forloop.counter == 2 %}{{ guardians.1.email }}{% else %}{{ guardians.2.email }}{% endif %}"
+              placeholder="correo@ejemplo.com">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Teléfono</label>
+            <input type="text" name="guardian_phone_{{ idx }}" class="form-control"
+              value="{% if forloop.first %}{{ guardians.0.phone|default:student.parent_phone }}{% elif forloop.counter == 2 %}{{ guardians.1.phone }}{% else %}{{ guardians.2.phone }}{% endif %}"
+              placeholder="Cel / fijo">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Parentesco</label>
+            <input type="text" name="guardian_rel_{{ idx }}" class="form-control"
+              value="{% if forloop.first %}{{ guardians.0.relationship }}{% elif forloop.counter == 2 %}{{ guardians.1.relationship }}{% else %}{{ guardians.2.relationship }}{% endif %}"
+              placeholder="Ej: Madre, Padre, Abuelo…">
+          </div>
+        </div>
+      </div>
+      {% endwith %}
+      {% endfor %}
+    </div>
+
+    <div class="card" style="padding:24px;margin-bottom:16px;">
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">📝 Observaciones</label>
+        <textarea name="notes" class="form-control" rows="3" placeholder="Notas internas sobre el estudiante…">{{ student.notes }}</textarea>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;">
+      <button type="submit" class="btn btn-primary" style="padding:12px 28px;">
+        <i class="bi bi-check-lg"></i> Guardar cambios
+      </button>
+      <a href="{% url 'coordinator:student_detail' student.pk %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

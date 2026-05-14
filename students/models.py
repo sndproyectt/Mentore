@@ -135,6 +135,7 @@ class DirectMessage(models.Model):
     body      = models.TextField(verbose_name='Mensaje')
     is_read   = models.BooleanField(default=False)
     sent_at   = models.DateTimeField(auto_now_add=True)
+    reply_to  = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='replies')
 
     class Meta:
         ordering = ['-sent_at']
@@ -169,12 +170,14 @@ class Attendance(models.Model):
 
 
 class Message(models.Model):
-    teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='messages_sent')
-    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='messages')
-    subject = models.CharField(max_length=200, verbose_name='Asunto')
-    body    = models.TextField(verbose_name='Mensaje')
-    sent_at = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
+    teacher      = models.ForeignKey(User, on_delete=models.CASCADE, related_name='messages_sent')
+    student      = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='messages')
+    subject      = models.CharField(max_length=200, verbose_name='Asunto')
+    body         = models.TextField(verbose_name='Mensaje')
+    sent_at      = models.DateTimeField(auto_now_add=True)
+    is_read      = models.BooleanField(default=False)
+    sender_label = models.CharField(max_length=60, blank=True, default='', verbose_name='Enviado por')
+    reply_to     = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='replies')
 
     class Meta:
         ordering = ['-sent_at']
@@ -183,3 +186,22 @@ class Message(models.Model):
 
     def __str__(self):
         return f"Para {self.student} — {self.subject}"
+
+
+class Guardian(models.Model):
+    """Acudiente de un estudiante. Uno obligatorio, hasta 2 opcionales (max 3)."""
+    student     = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='guardians')
+    name        = models.CharField(max_length=120, verbose_name='Nombre')
+    email       = models.EmailField(blank=True,    verbose_name='Correo')
+    phone       = models.CharField(max_length=30,  blank=True, verbose_name='Teléfono')
+    relationship = models.CharField(max_length=60, blank=True, verbose_name='Parentesco')
+    is_primary  = models.BooleanField(default=False, verbose_name='Principal')
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-is_primary', 'name']
+        verbose_name = 'Acudiente'
+        verbose_name_plural = 'Acudientes'
+
+    def __str__(self):
+        return f"{self.name} ({self.student})"

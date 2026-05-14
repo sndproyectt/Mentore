@@ -1,48 +1,130 @@
 {% extends 'base/layout.html' %}
 {% block title %}Bandeja de entrada{% endblock %}
 {% block page_title %}Bandeja de entrada{% endblock %}
+{% block extra_css %}
+<style>
+/* ── Thread card ── */
+.thread-card{background:#fff;border:1px solid var(--gray-100);border-radius:16px;overflow:hidden;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:box-shadow .15s;}
+.thread-card:hover{box-shadow:0 3px 14px rgba(21,112,166,.12);}
+.thread-header{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;}
+.thread-header.open{border-bottom:1px solid #F0F4F8;}
+.t-avatar{width:44px;height:44px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,.15);}
+.t-meta{flex:1;min-width:0;}
+.t-subject{font-weight:700;font-size:14px;color:#111;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t-preview{font-size:12px;color:#8A9BAC;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;}
+.t-time{font-size:11px;color:#B0BEC5;}
+.t-count{background:#25D366;color:#fff;font-size:10px;font-weight:800;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+
+/* ── Chat window ── */
+.chat-window{
+  display:none;
+  flex-direction:column;
+  background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231570A6' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  background-color:#F0F4F8;
+}
+.chat-window.open{display:flex;}
+
+/* ── Messages area ── */
+.chat-messages{
+  flex:1;overflow-y:auto;
+  padding:16px 14px 8px;
+  display:flex;flex-direction:column;gap:4px;
+  max-height:360px;
+  min-height:120px;
+  scroll-behavior:smooth;
+}
+
+/* ── Bubble ── */
+.bubble-row{display:flex;align-items:flex-end;gap:6px;margin-bottom:2px;}
+.bubble-row.mine{flex-direction:row-reverse;}
+.b-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#fff;margin-bottom:2px;}
+.b-col{display:flex;flex-direction:column;max-width:70%;}
+.bubble-row.mine .b-col{align-items:flex-end;}
+.b-name{font-size:10px;font-weight:700;color:#6B8FA6;margin-bottom:2px;padding-left:2px;}
+.bubble-row.mine .b-name{padding-left:0;padding-right:2px;text-align:right;}
+.b-bubble{
+  padding:8px 12px;font-size:13px;line-height:1.55;
+  white-space:pre-line;word-break:break-word;
+  box-shadow:0 1px 2px rgba(0,0,0,.1);
+  position:relative;
+}
+/* theirs */
+.bubble-row:not(.mine) .b-bubble{
+  background:#fff;color:#111;
+  border-radius:0 14px 14px 14px;
+}
+/* mine */
+.bubble-row.mine .b-bubble{
+  background:#DCF8C6;color:#111;
+  border-radius:14px 0 14px 14px;
+}
+.b-time{font-size:10px;color:#8A9BAC;margin-top:2px;padding:0 2px;display:flex;align-items:center;gap:3px;}
+.bubble-row.mine .b-time{justify-content:flex-end;}
+/* double check */
+.b-check{color:#4FC3F7;font-size:12px;}
+
+/* ── Reply bar ── */
+.reply-bar{
+  display:flex;align-items:flex-end;gap:8px;
+  padding:10px 14px;
+  background:#F0F4F8;
+  border-top:1px solid #DDE5EC;
+}
+.reply-ta{
+  flex:1;border:none;border-radius:22px;padding:9px 16px;
+  font-size:13px;resize:none;font-family:inherit;
+  background:#fff;line-height:1.45;min-height:40px;max-height:120px;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);
+  transition:box-shadow .15s;outline:none;overflow-y:auto;
+}
+.reply-ta:focus{box-shadow:0 1px 6px rgba(21,112,166,.2);}
+.send-btn{
+  width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;
+  background:#25D366;color:#fff;font-size:18px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;box-shadow:0 2px 8px rgba(37,211,102,.3);
+  transition:transform .15s,background .15s;
+}
+.send-btn:hover{transform:scale(1.08);background:#1DA851;}
+
+/* ── Date divider ── */
+.date-divider{text-align:center;margin:8px 0;}
+.date-divider span{background:rgba(255,255,255,.7);color:#6B8FA6;font-size:11px;font-weight:600;padding:3px 12px;border-radius:999px;box-shadow:0 1px 2px rgba(0,0,0,.08);}
+</style>
+{% endblock %}
 {% block content %}
 
-<!-- TABS -->
 <div style="display:flex;gap:0;border:2px solid var(--gray-200);border-radius:12px;overflow:hidden;margin-bottom:20px;background:var(--gray-50);">
-  <button onclick="showTab('comunicados',this)"
-    id="tab-comunicados"
+  <button onclick="showTab('comunicados',this)" id="tab-comunicados"
     style="flex:1;padding:13px;border:none;background:var(--primary);color:#fff;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-    <i class="bi bi-megaphone-fill"></i> Comunicados recibidos
-    {% if received_announcements %}
-    <span style="background:rgba(255,255,255,.3);border-radius:20px;padding:1px 8px;font-size:12px;">{{ received_announcements|length }}</span>
-    {% endif %}
+    <i class="bi bi-megaphone-fill"></i> Comunicados
+    {% if received_announcements %}<span style="background:rgba(255,255,255,.3);border-radius:20px;padding:1px 8px;font-size:12px;">{{ received_announcements|length }}</span>{% endif %}
   </button>
-  <button onclick="showTab('mensajes',this)"
-    id="tab-mensajes"
+  <button onclick="showTab('mensajes',this)" id="tab-mensajes"
     style="flex:1;padding:13px;border:none;background:transparent;color:var(--gray-600);font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-    <i class="bi bi-envelope"></i> Mensajes de docentes
-    {% if received_messages %}
-    <span style="background:var(--gray-200);border-radius:20px;padding:1px 8px;font-size:12px;color:var(--gray-700);">{{ received_messages|length }}</span>
-    {% endif %}
+    <i class="bi bi-chat-dots"></i> Conversaciones
+    {% if received_messages %}<span style="background:var(--gray-200);border-radius:20px;padding:1px 8px;font-size:12px;color:var(--gray-700);">{{ received_messages|length }}</span>{% endif %}
   </button>
 </div>
 
-<!-- PANEL COMUNICADOS -->
 <div id="panel-comunicados">
   {% if received_announcements %}
   <div style="display:flex;flex-direction:column;gap:10px;">
     {% for ann in received_announcements %}
     <div style="background:#fff;border:1px solid var(--gray-100);border-radius:12px;overflow:hidden;border-left:4px solid {% if ann.priority == 'high' %}#EF4444{% elif ann.priority == 'medium' %}#F9C32A{% else %}var(--primary){% endif %};">
       <div style="padding:16px 20px;">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
           <div style="flex:1;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
               <span style="font-size:18px;">{% if ann.priority == 'high' %}🚨{% elif ann.priority == 'medium' %}⚠️{% else %}📋{% endif %}</span>
               <span style="font-weight:800;font-size:16px;color:var(--gray-900);">{{ ann.title }}</span>
-              <span class="badge {% if ann.priority == 'high' %}badge-danger{% elif ann.priority == 'medium' %}badge-warning{% else %}badge-info{% endif %}" style="font-size:10px;">
-                {{ ann.get_priority_display }}
-              </span>
+              <span class="badge {% if ann.priority == 'high' %}badge-danger{% elif ann.priority == 'medium' %}badge-warning{% else %}badge-info{% endif %}" style="font-size:10px;">{{ ann.get_priority_display }}</span>
             </div>
             <p style="font-size:14px;color:var(--gray-600);line-height:1.6;margin:0 0 10px;white-space:pre-wrap;">{{ ann.content }}</p>
-            <div style="font-size:12px;color:var(--gray-400);display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-              <span><i class="bi bi-person-circle"></i> Enviado por <strong>{{ ann.teacher.get_full_name }}</strong></span>
-              <span><i class="bi bi-calendar3"></i> {{ ann.created_at|date:"d/m/Y H:i" }}</span>
+            <div style="font-size:12px;color:var(--gray-400);">
+              <i class="bi bi-person-circle"></i> {{ ann.teacher.get_full_name }} &nbsp;·&nbsp;
+              <i class="bi bi-calendar3"></i> {{ ann.created_at|date:"d/m/Y H:i" }}
             </div>
           </div>
         </div>
@@ -51,63 +133,176 @@
     {% endfor %}
   </div>
   {% else %}
-  <div class="card">
-    <div class="empty-state" style="padding:52px;">
-      <span class="empty-icon" style="font-size:48px;">📢</span>
-      <h3>Sin comunicados recibidos</h3>
-      <p>Cuando un coordinador o docente te envíe un comunicado, aparecerá aquí.</p>
-    </div>
-  </div>
+  <div class="card"><div class="empty-state" style="padding:52px;">
+    <span class="empty-icon" style="font-size:48px;">📢</span>
+    <h3>Sin comunicados recibidos</h3>
+    <p>Cuando un coordinador o docente te envíe un comunicado, aparecerá aquí.</p>
+  </div></div>
   {% endif %}
 </div>
 
-<!-- PANEL MENSAJES DOCENTES -->
 <div id="panel-mensajes" style="display:none;">
-  {% if received_messages %}
-  <div style="display:flex;flex-direction:column;gap:8px;">
-    {% for msg in received_messages %}
-    <div style="background:#fff;border:1px solid var(--gray-100);border-radius:12px;padding:16px 20px;display:flex;gap:14px;align-items:flex-start;">
-      <div style="width:44px;height:44px;border-radius:11px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:16px;flex-shrink:0;">
-        {{ msg.sender.first_name|first|upper }}{{ msg.sender.last_name|first|upper }}
+  {% if received_direct or parent_messages %}
+
+  {% if parent_messages %}
+  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-400);margin-bottom:8px;padding-left:4px;">👨‍👩‍👧 Mensajes de padres</div>
+  {% for msg in parent_messages %}
+  {% with rc=msg.replies.count preview=msg.body|truncatechars:40 %}
+  <div class="thread-card">
+    <div class="thread-header" onclick="toggleThread('pm{{ msg.pk }}',this)" id="hdr-pm{{ msg.pk }}">
+      <div class="t-avatar" style="background:linear-gradient(135deg,#059669,#34D399);font-size:18px;">👨‍👩‍👧</div>
+      <div class="t-meta">
+        <div class="t-subject">{{ msg.student.parent_name|default:"Acudiente" }} — {{ msg.subject }}</div>
+        <div class="t-preview">{{ preview }}</div>
       </div>
-      <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
-          <span style="font-weight:800;font-size:15px;color:var(--gray-900);">{{ msg.subject }}</span>
+      <div class="t-right">
+        <span class="t-time">{{ msg.sent_at|date:"d/m H:i" }}</span>
+        {% if rc %}<span class="t-count">{{ rc }}</span>{% endif %}
+      </div>
+      <i class="bi bi-chevron-down" style="color:#B0BEC5;font-size:12px;margin-left:6px;transition:transform .2s;" id="chv-pm{{ msg.pk }}"></i>
+    </div>
+    <div class="chat-window" id="pm{{ msg.pk }}">
+      <div class="chat-messages" id="msgs-pm{{ msg.pk }}">
+        <!-- Root message (oldest = first) -->
+        <div class="bubble-row">
+          <div class="b-avatar" style="background:linear-gradient(135deg,#059669,#34D399);">👨‍👩‍👧</div>
+          <div class="b-col">
+            <div class="b-name">{{ msg.student.parent_name|default:"Acudiente" }}</div>
+            <div class="b-bubble">{{ msg.body }}</div>
+            <div class="b-time">{{ msg.sent_at|date:"H:i" }}</div>
+          </div>
         </div>
-        <div style="font-size:12px;color:var(--gray-400);margin-bottom:8px;">
-          <strong>{{ msg.sender.get_full_name }}</strong>
-          {% if msg.sender.teacher_profile.subject %} · {{ msg.sender.teacher_profile.subject }}{% endif %}
-          · {{ msg.sent_at|date:"d/m/Y H:i" }}
+        <!-- Replies in order -->
+        {% for reply in msg.replies.all %}
+        <div class="bubble-row mine">
+          <div class="b-avatar" style="background:linear-gradient(135deg,var(--primary),var(--secondary));">{{ reply.teacher.first_name|first|upper }}{{ reply.teacher.last_name|first|upper }}</div>
+          <div class="b-col">
+            <div class="b-name">{{ reply.teacher.get_full_name }}</div>
+            <div class="b-bubble">{{ reply.body }}</div>
+            <div class="b-time">{{ reply.sent_at|date:"H:i" }} <i class="bi bi-check2-all b-check"></i></div>
+          </div>
         </div>
-        <p style="font-size:14px;color:var(--gray-600);line-height:1.6;margin:0;white-space:pre-wrap;">{{ msg.body }}</p>
+        {% endfor %}
+      </div>
+      <div class="reply-bar">
+        <form method="post" action="{% url 'students:message_thread' msg.pk %}" style="display:contents;">
+          {% csrf_token %}
+          <input type="hidden" name="next" value="inbox">
+          <textarea class="reply-ta" name="body" rows="1" placeholder="Escribe un mensaje…"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.closest('form').submit();}"
+            oninput="autoResize(this)"></textarea>
+          <button type="submit" class="send-btn" title="Enviar"><i class="bi bi-send-fill"></i></button>
+        </form>
       </div>
     </div>
-    {% endfor %}
   </div>
+  {% endwith %}
+  {% endfor %}
+  {% endif %}
+
+  {% if received_direct %}
+  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-400);margin-bottom:8px;{% if parent_messages %}margin-top:16px;{% endif %}padding-left:4px;">👩‍🏫 Mensajes de docentes</div>
+  {% for msg in received_direct %}
+  {% with rc=msg.replies.count preview=msg.body|truncatechars:40 %}
+  <div class="thread-card">
+    <div class="thread-header" onclick="toggleThread('dm{{ msg.pk }}',this)" id="hdr-dm{{ msg.pk }}">
+      <div class="t-avatar" style="background:linear-gradient(135deg,var(--primary),var(--secondary));">{{ msg.sender.first_name|first|upper }}{{ msg.sender.last_name|first|upper }}</div>
+      <div class="t-meta">
+        <div class="t-subject">{{ msg.sender.get_full_name }}</div>
+        <div class="t-preview">{{ msg.subject }} · {{ preview }}</div>
+      </div>
+      <div class="t-right">
+        <span class="t-time">{{ msg.sent_at|date:"d/m H:i" }}</span>
+        {% if rc %}<span class="t-count">{{ rc }}</span>{% endif %}
+      </div>
+      <i class="bi bi-chevron-down" style="color:#B0BEC5;font-size:12px;margin-left:6px;transition:transform .2s;" id="chv-dm{{ msg.pk }}"></i>
+    </div>
+    <div class="chat-window" id="dm{{ msg.pk }}">
+      <div class="chat-messages" id="msgs-dm{{ msg.pk }}">
+        <div class="bubble-row">
+          <div class="b-avatar" style="background:linear-gradient(135deg,var(--primary),var(--secondary));">{{ msg.sender.first_name|first|upper }}{{ msg.sender.last_name|first|upper }}</div>
+          <div class="b-col">
+            <div class="b-name">{{ msg.sender.get_full_name }}{% if msg.sender.teacher_profile.subject %} · {{ msg.sender.teacher_profile.subject }}{% endif %}</div>
+            <div class="b-bubble">{{ msg.body }}</div>
+            <div class="b-time">{{ msg.sent_at|date:"H:i" }}</div>
+          </div>
+        </div>
+        {% for reply in msg.replies_asc %}
+        {% if reply.sender == request.user %}
+        <div class="bubble-row mine">
+          <div class="b-avatar" style="background:linear-gradient(135deg,#059669,#34D399);">{{ reply.sender.first_name|first|upper }}{{ reply.sender.last_name|first|upper }}</div>
+          <div class="b-col">
+            <div class="b-bubble">{{ reply.body }}</div>
+            <div class="b-time">{{ reply.sent_at|date:"H:i" }} <i class="bi bi-check2-all b-check"></i></div>
+          </div>
+        </div>
+        {% else %}
+        <div class="bubble-row">
+          <div class="b-avatar" style="background:linear-gradient(135deg,var(--primary),var(--secondary));">{{ reply.sender.first_name|first|upper }}{{ reply.sender.last_name|first|upper }}</div>
+          <div class="b-col">
+            <div class="b-name">{{ reply.sender.get_full_name }}</div>
+            <div class="b-bubble">{{ reply.body }}</div>
+            <div class="b-time">{{ reply.sent_at|date:"H:i" }}</div>
+          </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+      </div>
+      <div class="reply-bar">
+        <form method="post" action="{% url 'students:direct_message_reply' msg.pk %}" style="display:contents;">
+          {% csrf_token %}
+          <textarea class="reply-ta" name="body" rows="1" placeholder="Escribe un mensaje…"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.closest('form').submit();}"
+            oninput="autoResize(this)"></textarea>
+          <button type="submit" class="send-btn" title="Enviar"><i class="bi bi-send-fill"></i></button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endwith %}
+  {% endfor %}
+  {% endif %}
+
   {% else %}
-  <div class="card">
-    <div class="empty-state" style="padding:52px;">
-      <span class="empty-icon" style="font-size:48px;">✉️</span>
-      <h3>Sin mensajes recibidos</h3>
-      <p>Cuando un compañero docente te envíe un mensaje, aparecerá aquí.</p>
-    </div>
-  </div>
+  <div class="card"><div class="empty-state" style="padding:52px;">
+    <span class="empty-icon" style="font-size:48px;">💬</span>
+    <h3>Sin conversaciones</h3>
+    <p>Los mensajes de padres y docentes aparecerán aquí.</p>
+  </div></div>
   {% endif %}
 </div>
 
 {% endblock %}
-
 {% block extra_js %}
 <script>
-function showTab(name, btn) {
-  ['comunicados','mensajes'].forEach(t => {
-    const panel = document.getElementById('panel-' + t);
-    const tabBtn = document.getElementById('tab-' + t);
-    const isActive = t === name;
-    panel.style.display = isActive ? '' : 'none';
-    tabBtn.style.background = isActive ? 'var(--primary)' : 'transparent';
-    tabBtn.style.color = isActive ? '#fff' : 'var(--gray-600)';
+function showTab(name,btn){
+  ['comunicados','mensajes'].forEach(t=>{
+    document.getElementById('panel-'+t).style.display=t===name?'':'none';
+    const b=document.getElementById('tab-'+t);
+    b.style.background=t===name?'var(--primary)':' transparent';
+    b.style.color=t===name?'#fff':'var(--gray-600)';
   });
 }
+function toggleThread(id, hdr){
+  const win = document.getElementById(id);
+  const chv = document.getElementById('chv-'+id);
+  const open = win.classList.toggle('open');
+  hdr.classList.toggle('open', open);
+  chv.style.transform = open ? 'rotate(180deg)' : '';
+  if(open){
+    // Scroll to bottom of messages
+    const msgs = win.querySelector('.chat-messages');
+    if(msgs) setTimeout(()=>{ msgs.scrollTop = msgs.scrollHeight; }, 80);
+    setTimeout(()=>win.querySelector('.reply-ta')?.focus(), 120);
+  }
+}
+function autoResize(ta){
+  ta.style.height='auto';
+  ta.style.height=Math.min(ta.scrollHeight, 120)+'px';
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const first=document.querySelector('.thread-header');
+  if(first) first.click();
+});
 </script>
 {% endblock %}

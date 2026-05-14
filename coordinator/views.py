@@ -437,7 +437,7 @@ def student_list(request):
     classroom_id   = request.GET.get('classroom', '')
     teacher_filter = request.GET.get('teacher', '')
 
-    students = Student.objects.filter(active=True).select_related('teacher', 'classroom')
+    students = Student.objects.select_related('teacher', 'classroom')
     if q:
         students = students.filter(
             Q(first_name__icontains=q) | Q(last_name__icontains=q) |
@@ -562,4 +562,168 @@ def teacher_subjects(request, teacher_id):
         'profile':   profile,
         'assigned':  assigned,
         'available': available,
+    })
+
+
+# ── Estudiantes – detalle, editar, eliminar, mensajes ──────────
+
+@coordinator_required
+def student_detail(request, pk):
+    """Detalle completo de cualquier estudiante (acceso total)."""
+    student     = get_object_or_404(Student, pk=pk)
+    grades      = student.grades.select_related('subject').order_by('subject__name', '-date')
+    all_att     = student.attendances.order_by('-date')
+    present     = all_att.filter(status='present').count()
+    absent      = all_att.filter(status='absent').count()
+    attendances = all_att[:30]
+    messages_sent = student.messages.order_by('-sent_at')[:10]
+    return render(request, 'coordinator/student_detail.html', {
+        'student':       student,
+        'grades':        grades,
+        'attendances':   attendances,
+        'present':       present,
+        'absent':        absent,
+        'messages_sent': messages_sent,
+    })
+
+
+@coordinator_required
+def student_edit(request, pk):
+    """Editar cualquier estudiante (acceso total)."""
+    student    = get_object_or_404(Student, pk=pk)
+    classrooms = Classroom.objects.order_by('name')
+    if request.method == 'POST':
+        p = request.POST
+        student.first_name   = p.get('first_name',   student.first_name)
+        student.last_name    = p.get('last_name',     student.last_name)
+        student.document_id  = p.get('document_id',  student.document_id)
+        student.email        = p.get('email',         student.email)
+        student.parent_email = p.get('parent_email',  student.parent_email)
+        student.parent_name  = p.get('parent_name',   student.parent_name)
+        student.parent_phone = p.get('parent_phone',  student.parent_phone)
+        student.gender       = p.get('gender',        student.gender)
+        student.notes        = p.get('notes',         student.notes)
+        student.classroom_id = p.get('classroom') or None
+        if p.get('date_of_birth'):
+            student.date_of_birth = p.get('date_of_birth')
+        if request.FILES.get('photo'):
+            student.photo = request.FILES['photo']
+        student.save()
+
+        # ── Save guardians (1 primary + up to 2 optional) ──
+        p = request.POST
+        student.guardians.all().delete()
+        for i in range(1, 4):
+            g_name  = p.get(f'guardian_name_{i}', '').strip()
+            g_email = p.get(f'guardian_email_{i}', '').strip()
+            g_phone = p.get(f'guardian_phone_{i}', '').strip()
+            g_rel   = p.get(f'guardian_rel_{i}', '').strip()
+            if g_name:
+                Guardian.objects.create(
+                    student=student,
+                    name=g_name, email=g_email,
+                    phone=g_phone, relationship=g_rel,
+                    is_primary=(i == 1),
+                )
+        messages.success(request, f'{student.get_full_name()} actualizado.')
+        return redirect('coordinator:student_detail', pk=student.pk)
+    guardians = list(student.guardians.all())
+    return render(request, 'coordinator/student_edit.html', {
+        'classrooms': classrooms,
+        'student':    student,
+        'action':     'Editar',
+        'guardians':  guardians,
+    })
+
+
+@coordinator_required
+def student_message_send(request, student_pk):
+    """Enviar mensaje a los padres de cualquier estudiante."""
+    student = get_object_or_404(Student, pk=student_pk)
+    if request.method == 'POST':
+        p       = request.POST
+        subject = p.get('subject', '').strip()
+        body    = p.get('body', '').strip()
+        if not subject or not body:
+            messages.error(request, 'El asunto y el mensaje son obligatorios.')
+        else:
+            Message.objects.create(
+                teacher=request.user,
+                student=student,
+                subject=subject,
+                body=body,
+            )
+            messages.success(
+                request,
+                f'Mensaje enviado a los padres de {student.get_full_name()}.'
+            )
+            return redirect('coordinator:student_detail', pk=student.pk)
+    return render(request, 'coordinator/student_message.html', {
+        'student': student,
+    })
+
+
+@coordinator_required
+def parent_message_list(request):
+    """Lista de todos los estudiantes con email de padre para mensajería masiva."""
+    q            = request.GET.get('q', '')
+    classroom_id = request.GET.get('classroom', '')
+    students_qs  = Student.objects.filter(active=True).exclude(parent_email='')                       .select_related('teacher', 'classroom')
+    if q:
+        students_qs = students_qs.filter(
+            Q(first_name__icontains=q) | Q(last_name__icontains=q) |
+            Q(parent_name__icontains=q)
+        )
+    if classroom_id:
+        students_qs = students_qs.filter(classroom_id=classroom_id)
+    classrooms  = Classroom.objects.order_by('name')
+    all_teachers = _all_teachers()
+    return render(request, 'coordinator/parent_message_list.html', {
+        'students':   students_qs,
+        'classrooms': classrooms,
+        'teachers':   all_teachers,
+        'q':          q,
+        'classroom_id': classroom_id,
+    })
+
+
+@coordinator_required
+def parent_message_create(request):
+    """Enviar mensaje masivo a padres (coordinador ve TODOS los padres)."""
+    all_teachers        = _all_teachers()
+    students_with_parent = Student.objects.filter(active=True)        .exclude(parent_email='')        .select_related('classroom', 'teacher')        .order_by('last_name')
+    classrooms = Classroom.objects.order_by('name')
+
+    if request.method == 'POST':
+        p           = request.POST
+        title       = p.get('title', '').strip()
+        content_txt = p.get('content', '').strip()
+        priority    = p.get('priority', 'low')
+        t_ids       = p.getlist('teacher_recipients')
+        s_ids       = p.getlist('parent_recipients')
+
+        if not title or not content_txt:
+            messages.error(request, 'El título y el contenido son obligatorios.')
+        elif not t_ids and not s_ids:
+            messages.error(request, 'Selecciona al menos un destinatario.')
+        else:
+            ann = Announcement.objects.create(
+                teacher=request.user,
+                title=title,
+                content=content_txt,
+                priority=priority,
+            )
+            if t_ids:
+                ann.teacher_recipients.set(t_ids)
+            if s_ids:
+                ann.student_recipients.set(s_ids)
+            total = len(t_ids) + len(s_ids)
+            messages.success(request, f'Mensaje enviado a {total} destinatario(s).')
+            return redirect('coordinator:parent_message_list')
+
+    return render(request, 'coordinator/parent_message_create.html', {
+        'all_teachers':          all_teachers,
+        'students_with_parent':  students_with_parent,
+        'classrooms':            classrooms,
+        'priority_choices':      Announcement.PRIORITY_CHOICES,
     })

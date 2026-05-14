@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
-from students.views import parent_portal, parent_portal_auto
+from students.views import parent_portal, parent_portal_auto, parent_message_send
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -19,4 +19,5 @@ urlpatterns = [
     # Portal público para padres
     path('padres/', parent_portal, name='parent_portal'),
     path('padres/auto/', parent_portal_auto, name='parent_portal_auto'),
+    path('padres/mensaje/', parent_message_send, name='parent_message_send'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

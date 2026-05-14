@@ -132,9 +132,15 @@
   <ul class="sidebar-nav">
     <li class="sidebar-section-label">Principal</li>
     <li>
+      {% if user.is_authenticated and user.teacher_profile.role == 'coordinator' %}
+      <a href="{% url 'coordinator:dashboard' %}" class="sidebar-link {% if request.resolver_match.namespace == 'coordinator' and request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-house nav-icon"></i> Inicio
+      </a>
+      {% else %}
       <a href="{% url 'students:dashboard' %}" class="sidebar-link {% if request.resolver_match.url_name == 'dashboard' and request.resolver_match.namespace == 'students' %}active{% endif %}">
         <i class="bi bi-house nav-icon"></i> Inicio
       </a>
+      {% endif %}
     </li>
 
     {% if user.is_authenticated %}
@@ -172,12 +178,17 @@
         <i class="bi bi-megaphone nav-icon"></i> Comunicados globales
       </a>
     </li>
-    <li class="sidebar-section-label">Mi gestión</li>
+    <li>
+      <a href="{% url 'coordinator:parent_message_list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'coordinator' and 'parent_message' in request.resolver_match.url_name|default:'' %}active{% endif %}">
+        <i class="bi bi-people nav-icon"></i> Padres de familia
+      </a>
+    </li>
     {% else %}
     <!-- ── MENÚ PROFESOR ── -->
     <li class="sidebar-section-label">Gestión Académica</li>
     {% endif %}
 
+    {% if user.teacher_profile.role != 'coordinator' %}
     <li>
       <a href="{% url 'students:classrooms' %}" class="sidebar-link {% if request.resolver_match.namespace == 'students' and 'classroom' in request.resolver_match.url_name|default:'' %}active{% endif %}">
         <i class="bi bi-building nav-icon"></i> Mis Grupos
@@ -198,6 +209,7 @@
         <i class="bi bi-check2-square nav-icon"></i> Asistencia
       </a>
     </li>
+    {% endif %}
 
     <li class="sidebar-section-label">Familias</li>
     <li>

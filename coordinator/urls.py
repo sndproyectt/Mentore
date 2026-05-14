@@ -24,8 +24,14 @@ urlpatterns = [
     path('announcements/new/',                      views.announcement_create,   name='announcement_create'),
     path('announcements/<int:pk>/delete/',          views.announcement_delete,   name='announcement_delete'),
 
-    # Estudiantes (vista global)
-    path('students/',                               views.student_list,          name='student_list'),
+    # Estudiantes (acceso total)
+    path('students/',                                        views.student_list,            name='student_list'),
+    path('students/<int:pk>/',                               views.student_detail,          name='student_detail'),
+    path('students/<int:pk>/edit/',                          views.student_edit,            name='student_edit'),
+    path('students/<int:student_pk>/message/',               views.student_message_send,    name='student_message'),
+    # Padres de familia
+    path('parents/',                                         views.parent_message_list,     name='parent_message_list'),
+    path('parents/message/',                                 views.parent_message_create,   name='parent_message_create'),
     # Materias
     path('subjects/',                               views.subject_list,      name='subject_list'),
     path('subjects/new/',                           views.subject_create,    name='subject_create'),

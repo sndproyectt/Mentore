@@ -1,0 +1,133 @@
+{% extends 'base/layout.html' %}
+{% block title %}{{ student.get_full_name }} — Coordinación{% endblock %}
+{% block page_title %}Detalle del Estudiante{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;">
+  <a href="{% url 'coordinator:student_list' %}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left"></i> Volver
+  </a>
+  <a href="{% url 'coordinator:student_edit' student.pk %}" class="btn btn-primary">
+    <i class="bi bi-pencil"></i> Editar estudiante
+  </a>
+  {% if student.parent_email or student.guardians.exists %}
+  <a href="{% url 'coordinator:student_message' student.pk %}" class="btn btn-secondary">
+    <i class="bi bi-envelope"></i> Mensaje a padres
+  </a>
+  {% endif %}
+</div>
+
+<div style="display:grid;grid-template-columns:300px 1fr;gap:20px;align-items:start;">
+
+  <!-- PERFIL -->
+  <div class="card" style="padding:24px;text-align:center;">
+    <div style="width:72px;height:72px;border-radius:16px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;font-weight:800;font-size:26px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+      {% if student.photo %}<img src="{{ student.photo.url }}" style="width:72px;height:72px;border-radius:16px;object-fit:cover;">{% else %}{{ student.initials }}{% endif %}
+    </div>
+    <div style="font-size:18px;font-weight:800;color:var(--gray-900);">{{ student.get_full_name }}</div>
+    <div style="font-size:13px;color:var(--gray-500);margin-top:4px;">{{ student.document_id|default:"Sin documento" }}</div>
+    {% if student.classroom %}
+    <span class="badge badge-info" style="margin-top:8px;">{{ student.classroom.name }}</span>
+    {% endif %}
+    <div style="margin-top:16px;text-align:left;display:flex;flex-direction:column;gap:8px;">
+      {% if student.email %}
+      <div style="font-size:12px;"><strong>✉️ Email:</strong> {{ student.email }}</div>
+      {% endif %}
+      {% for g in student.guardians.all %}
+      <div style="background:{% if g.is_primary %}var(--primary-light){% else %}var(--gray-50){% endif %};border-radius:8px;padding:8px 10px;margin-bottom:4px;">
+        <div style="font-size:12px;font-weight:700;">{% if g.is_primary %}👨‍👩‍👧{% else %}👤{% endif %} {{ g.name }} {% if g.relationship %}<span style="font-weight:400;color:var(--gray-400);">· {{ g.relationship }}</span>{% endif %}</div>
+        {% if g.email %}<div style="font-size:11px;color:var(--gray-500);">📧 {{ g.email }}</div>{% endif %}
+        {% if g.phone %}<div style="font-size:11px;color:var(--gray-500);">📞 {{ g.phone }}</div>{% endif %}
+      </div>
+      {% empty %}
+      {% if student.parent_name %}
+      <div style="font-size:12px;"><strong>👨‍👩‍👧 Acudiente:</strong> {{ student.parent_name }}</div>
+      {% endif %}
+      {% if student.parent_email %}<div style="font-size:12px;"><strong>📧</strong> {{ student.parent_email }}</div>{% endif %}
+      {% if student.parent_phone %}<div style="font-size:12px;"><strong>📞</strong> {{ student.parent_phone }}</div>{% endif %}
+      {% endfor %}
+      {% if student.date_of_birth %}
+      <div style="font-size:12px;"><strong>🎂 Nacimiento:</strong> {{ student.date_of_birth|date:"d/m/Y" }}</div>
+      {% endif %}
+      <div style="font-size:12px;"><strong>👩‍🏫 Docente:</strong> {{ student.teacher.get_full_name }}</div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <div style="flex:1;background:var(--primary-light);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:20px;font-weight:800;color:var(--primary);">{{ present }}</div>
+        <div style="font-size:11px;color:var(--gray-500);">Presencias</div>
+      </div>
+      <div style="flex:1;background:#FEE2E2;border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:20px;font-weight:800;color:#EF4444;">{{ absent }}</div>
+        <div style="font-size:11px;color:var(--gray-500);">Ausencias</div>
+      </div>
+    </div>
+    {% if student.notes %}
+    <div style="margin-top:14px;padding:10px;background:var(--gray-50);border-radius:8px;text-align:left;font-size:12px;color:var(--gray-700);">
+      <strong>📝 Notas:</strong><br>{{ student.notes }}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- NOTAS Y MENSAJES -->
+  <div style="display:flex;flex-direction:column;gap:20px;">
+
+    <!-- NOTAS -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">📊 Notas</span>
+      </div>
+      {% if grades %}
+      <div style="overflow-x:auto;">
+        <table class="table">
+          <thead><tr><th>Materia</th><th>Nota</th><th>Fecha</th><th>Descripción</th></tr></thead>
+          <tbody>
+            {% for g in grades %}
+            <tr>
+              <td>{{ g.subject.name|default:g.subject_text|default:"—" }}</td>
+              <td>
+                <span class="grade-pill {% if g.score >= 4 %}grade-a{% elif g.score >= 3 %}grade-b{% elif g.score >= 2.5 %}grade-c{% else %}grade-d{% endif %}">
+                  {{ g.score }}
+                </span>
+              </td>
+              <td style="font-size:12px;color:var(--gray-500);">{{ g.date|date:"d/m/Y" }}</td>
+              <td style="font-size:12px;color:var(--gray-600);">{{ g.description|default:"—" }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div style="padding:24px;text-align:center;color:var(--gray-400);">Sin notas registradas.</div>
+      {% endif %}
+    </div>
+
+    <!-- MENSAJES ENVIADOS A PADRES -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">✉️ Mensajes a padres</span>
+        {% if student.parent_email %}
+        <a href="{% url 'coordinator:student_message' student.pk %}" class="btn btn-primary" style="font-size:12px;padding:5px 12px;">
+          <i class="bi bi-plus-lg"></i> Nuevo
+        </a>
+        {% endif %}
+      </div>
+      {% if messages_sent %}
+      <div style="display:flex;flex-direction:column;gap:0;">
+        {% for msg in messages_sent %}
+        <div style="padding:12px 18px;border-bottom:1px solid var(--gray-100);">
+          <div style="font-weight:700;font-size:13px;color:var(--gray-900);">{{ msg.subject }}</div>
+          <div style="font-size:12px;color:var(--gray-500);margin-top:2px;">{{ msg.sent_at|date:"d/m/Y H:i" }} · {{ msg.teacher.get_full_name }}</div>
+          <div style="font-size:12px;color:var(--gray-600);margin-top:4px;">{{ msg.body|truncatechars:120 }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="padding:24px;text-align:center;color:var(--gray-400);">
+        {% if not student.parent_email %}Sin correo de acudiente registrado.{% else %}Sin mensajes enviados aún.{% endif %}
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

@@ -27,4 +27,10 @@ urlpatterns = [
     path('messages/<int:pk>/delete/', views.message_delete, name='message_delete'),
     # Bandeja de entrada del docente
     path('inbox/', views.inbox_view, name='inbox'),
+    # Replies
+    path('messages/<int:pk>/reply/', views.direct_message_reply, name='direct_message_reply'),
+    path('messages/<int:pk>/thread/', views.message_thread, name='message_thread'),
 ]
+
+# Portal de padres: URL para envío de mensajes
+# (defined in main urls.py as path('padres/mensaje/', ...))

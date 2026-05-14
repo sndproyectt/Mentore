@@ -3,6 +3,12 @@
 {% block page_title %}Inicio{% endblock %}
 {% block content %}
 
+{% if request.user.teacher_profile.role == 'coordinator' %}
+<script>window.location.replace("{% url 'coordinator:dashboard' %}");</script>
+<meta http-equiv="refresh" content="0;url={% url 'coordinator:dashboard' %}">
+<p style="text-align:center;padding:40px;color:var(--gray-400);">Redirigiendo al panel de coordinación...</p>
+{% else %}
+
 <!-- BIENVENIDA -->
 <div style="background:var(--hero-gradient, linear-gradient(135deg,#0A2A40 0%,#1570A6 55%,#2196C9 100%));border-radius:14px;padding:24px 28px;color:white;margin-bottom:24px;position:relative;overflow:hidden;">
   <div style="position:absolute;width:280px;height:280px;border-radius:50%;background:rgba(255,255,255,.05);top:-100px;right:-60px;"></div>
@@ -188,4 +194,5 @@
     </div>
   </div>
 </div>
+{% endif %}
 {% endblock %}

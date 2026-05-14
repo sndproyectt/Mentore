@@ -1,0 +1,79 @@
+{% extends 'base/layout.html' %}
+{% block title %}Mensaje a padres — {{ student.get_full_name }}{% endblock %}
+{% block page_title %}Mensaje a Padres{% endblock %}
+{% block content %}
+
+<div style="max-width:680px;margin:0 auto;">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+    <a href="{% url 'coordinator:student_detail' student.pk %}" class="btn btn-secondary">
+      <i class="bi bi-arrow-left"></i> Volver
+    </a>
+    <h2 style="margin:0;font-size:18px;font-weight:800;color:var(--gray-900);">
+      ✉️ Mensaje a padres de {{ student.get_full_name }}
+    </h2>
+  </div>
+
+  <!-- Acudientes -->
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+    {% for g in student.guardians.all %}
+    <div style="background:{% if g.is_primary %}var(--primary-light){% else %}var(--gray-50){% endif %};border:1px solid {% if g.is_primary %}var(--primary){% else %}var(--gray-200){% endif %};border-radius:12px;padding:14px 18px;display:flex;gap:14px;align-items:center;">
+      <div style="font-size:24px;">{% if g.is_primary %}👨‍👩‍👧{% else %}👤{% endif %}</div>
+      <div style="flex:1;">
+        <div style="font-weight:700;font-size:14px;color:var(--gray-900);">{{ g.name }}{% if g.relationship %} <span style="font-size:12px;font-weight:400;color:var(--gray-400);">· {{ g.relationship }}</span>{% endif %}</div>
+        {% if g.email %}<div style="font-size:13px;color:var(--gray-600);">📧 {{ g.email }}</div>{% endif %}
+        {% if g.phone %}<div style="font-size:12px;color:var(--gray-500);">📞 {{ g.phone }}</div>{% endif %}
+      </div>
+      {% if not g.is_primary %}<span style="font-size:10px;background:var(--gray-200);color:var(--gray-500);padding:2px 8px;border-radius:20px;">Adicional</span>{% endif %}
+    </div>
+    {% empty %}
+    <div style="background:var(--primary-light);border:1px solid var(--primary);border-radius:12px;padding:14px 18px;display:flex;gap:14px;align-items:center;">
+      <div style="font-size:24px;">👨‍👩‍👧</div>
+      <div>
+        <div style="font-weight:700;font-size:14px;color:var(--gray-900);">{{ student.parent_name|default:"Acudiente" }}</div>
+        {% if student.parent_email %}<div style="font-size:13px;color:var(--gray-600);">📧 {{ student.parent_email }}</div>{% endif %}
+        {% if student.parent_phone %}<div style="font-size:12px;color:var(--gray-500);">📞 {{ student.parent_phone }}</div>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="card" style="padding:24px;margin-bottom:16px;">
+      <div class="form-group">
+        <label class="form-label">📌 Asunto *</label>
+        <input type="text" name="subject" class="form-control" placeholder="Ej: Reunión de padres, Tarea pendiente…" required>
+      </div>
+      <div class="form-group" style="margin-bottom:0;">
+        <label class="form-label">📝 Mensaje *</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+          <button type="button" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="addGreeting('Buen día, paz y bien.\n\n')">🌅 Buen día</button>
+          <button type="button" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="addGreeting('Buenas tardes, paz y bien.\n\n')">🌤️ Buenas tardes</button>
+          <button type="button" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="addGreeting('Cordial saludo.\n\n')">🙏 Cordial saludo</button>
+        </div>
+        <textarea name="body" id="bodyTxt" class="form-control" rows="6" placeholder="Escribe tu mensaje aquí…" required></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button type="submit" class="btn btn-primary" style="padding:12px 28px;">
+        <i class="bi bi-send-fill"></i> Enviar mensaje
+      </button>
+      <a href="{% url 'coordinator:student_detail' student.pk %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}
+{% block extra_js %}
+<script>
+function addGreeting(g) {
+  const ta = document.getElementById('bodyTxt');
+  const cur = ta.value.replace(/^(Buen día|Buenas tardes|Cordial saludo)[^\n]*\n\n?/, '');
+  ta.value = g + cur;
+  ta.focus();
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('bodyTxt').value = 'Buen día, paz y bien.\n\n';
+});
+</script>
+{% endblock %}

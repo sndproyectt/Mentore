@@ -336,9 +336,13 @@ def announcement_create(request):
     all_teachers         = User.objects.exclude(pk=request.user.pk).filter(
         teacher_profile__isnull=False
     ).order_by('last_name', 'first_name').select_related('teacher_profile')
-    students_with_parent = Student.objects.filter(
-        teacher=request.user, active=True
-    ).exclude(parent_email='').select_related('classroom').order_by('last_name')
+    _role = getattr(getattr(request.user, 'teacher_profile', None), 'role', 'teacher')
+    if _role == 'coordinator':
+        students_with_parent = Student.objects.filter(active=True)            .exclude(parent_email='').select_related('classroom').order_by('last_name')
+    else:
+        students_with_parent = Student.objects.filter(
+            teacher=request.user, active=True
+        ).exclude(parent_email='').select_related('classroom').order_by('last_name')
 
     if request.method == 'POST':
         p             = request.POST
@@ -491,6 +495,12 @@ def parent_portal(request):
             subjects_data = []
             general_avg   = None
 
+    from django.contrib.auth.models import User as AuthUser
+    all_staff = AuthUser.objects.filter(
+        teacher_profile__isnull=False
+    ).order_by('teacher_profile__role', 'last_name').select_related('teacher_profile')
+    guardians = student.guardians.all() if student else []
+
     return render(request, 'students/parent_portal.html', {
         'email':         email,
         'student':       student,
@@ -500,6 +510,8 @@ def parent_portal(request):
         'attendances':   attendances,
         'subjects_data': subjects_data,
         'general_avg':   general_avg,
+        'all_staff':     all_staff,
+        'guardians':     guardians,
     })
 
 
@@ -513,9 +525,13 @@ def message_create(request):
     all_teachers         = User.objects.exclude(pk=request.user.pk).filter(
         teacher_profile__isnull=False
     ).order_by('last_name', 'first_name').select_related('teacher_profile')
-    students_with_parent = Student.objects.filter(
-        teacher=request.user, active=True
-    ).exclude(parent_email='').select_related('classroom').order_by('last_name')
+    _role = getattr(getattr(request.user, 'teacher_profile', None), 'role', 'teacher')
+    if _role == 'coordinator':
+        students_with_parent = Student.objects.filter(active=True)            .exclude(parent_email='').select_related('classroom').order_by('last_name')
+    else:
+        students_with_parent = Student.objects.filter(
+            teacher=request.user, active=True
+        ).exclude(parent_email='').select_related('classroom').order_by('last_name')
 
     if request.method == 'POST':
         p             = request.POST
@@ -627,26 +643,215 @@ def parent_portal_auto(request):
 
 @login_required
 def inbox_view(request):
-    """Bandeja de entrada del docente: comunicados + mensajes directos recibidos."""
-    # Comunicados donde este docente es destinatario
+    """Bandeja de entrada: comunicados + DirectMessages + mensajes de padres."""
     received_announcements = Announcement.objects.filter(
         teacher_recipients=request.user
     ).select_related('teacher').order_by('-created_at')
 
-    # Mensajes directos recibidos de otros docentes
-    received_messages = DirectMessage.objects.filter(
-        recipient=request.user
-    ).select_related('sender').order_by('-sent_at')
+    from django.db.models import Prefetch as _Prefetch, Q as _Q
 
-    # Marcar mensajes directos como leídos al abrir la bandeja
-    received_messages.filter(is_read=False).update(is_read=True)
+    # DirectMessages de docente a docente (hilos, solo raíz)
+    _dm_replies_qs = DirectMessage.objects.select_related('sender').order_by('sent_at')
+    received_direct = DirectMessage.objects.filter(
+        recipient=request.user,
+        reply_to__isnull=True,
+    ).select_related('sender').prefetch_related(
+        _Prefetch('replies', queryset=_dm_replies_qs, to_attr='replies_asc')
+    ).order_by('-sent_at')
 
-    unread_count = DirectMessage.objects.filter(
-        recipient=request.user, is_read=False
-    ).count()
+    # Mensajes raíz donde este usuario es el teacher,
+    # O donde este usuario tiene al menos una respuesta en el hilo
+    root_ids_as_teacher = Message.objects.filter(
+        teacher=request.user, reply_to__isnull=True
+    ).values_list('pk', flat=True)
+    root_ids_via_reply = Message.objects.filter(
+        teacher=request.user, reply_to__isnull=False
+    ).values_list('reply_to_id', flat=True)
+    all_root_ids = set(root_ids_as_teacher) | set(root_ids_via_reply)
+    _replies_qs = Message.objects.select_related('teacher').order_by('sent_at')
+    parent_messages = Message.objects.filter(
+        pk__in=all_root_ids,
+    ).select_related('student').prefetch_related(
+        _Prefetch('replies', queryset=_replies_qs)
+    ).order_by('-sent_at')
+
+    DirectMessage.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
+    Message.objects.filter(teacher=request.user, is_read=False).update(is_read=True)
+
+    unread_count = (
+        DirectMessage.objects.filter(recipient=request.user, is_read=False).count() +
+        Message.objects.filter(teacher=request.user, is_read=False, sender_label='padre').count()
+    )
 
     return render(request, 'students/inbox.html', {
         'received_announcements': received_announcements,
-        'received_messages':      received_messages,
+        'received_direct':        received_direct,
+        'parent_messages':        parent_messages,
         'unread_count':           unread_count,
+    })
+
+
+@login_required
+def direct_message_reply(request, pk):
+    """Responder a un DirectMessage (hilo tipo chat)."""
+    original = get_object_or_404(DirectMessage, pk=pk)
+    # Only sender or recipient can reply
+    if request.user not in (original.sender, original.recipient):
+        messages.error(request, 'Sin acceso a este hilo.')
+        return redirect('students:inbox')
+    if request.method == 'POST':
+        body = request.POST.get('body', '').strip()
+        if not body:
+            messages.error(request, 'El mensaje no puede estar vacío.')
+        else:
+            # Reply goes to the other person
+            recipient = original.recipient if request.user == original.sender else original.sender
+            DirectMessage.objects.create(
+                sender=request.user,
+                recipient=recipient,
+                subject=f'Re: {original.subject}',
+                body=body,
+                reply_to=original,
+            )
+            messages.success(request, 'Respuesta enviada.')
+    return redirect('students:inbox')
+
+@login_required
+def message_thread(request, pk):
+    """Hilo de un mensaje con historial + opción de reply (docente/coordinador)."""
+    msg = get_object_or_404(Message, pk=pk)
+    # Walk up to root
+    root = msg
+    while root.reply_to_id:
+        root = root.reply_to
+    # Security: teacher of root must be request.user (or any reply teacher)
+    all_teachers_in_thread = set(
+        Message.objects.filter(
+            Q(pk=root.pk) | Q(reply_to=root)
+        ).values_list('teacher_id', flat=True)
+    )
+    if request.user.pk not in all_teachers_in_thread:
+        messages.error(request, 'Sin acceso.')
+        return redirect('students:message_list')
+    # Full thread ordered oldest→newest
+    thread = [root] + list(root.replies.order_by('sent_at'))
+    if request.method == 'POST':
+        body = request.POST.get('body', '').strip()
+        if body:
+            Message.objects.create(
+                teacher=request.user,
+                student=msg.student,
+                subject=f'Re: {msg.subject}',
+                body=body,
+                reply_to=msg,
+                sender_label=request.user.get_full_name() or request.user.username,
+            )
+            messages.success(request, 'Respuesta enviada.')
+        # Redirect back to inbox if came from there, else message_thread
+        next_url = request.POST.get('next', '')
+        if next_url == 'inbox':
+            return redirect('students:inbox')
+        return redirect('students:message_thread', pk=msg.pk)
+    return render(request, 'students/message_thread.html', {
+        'root': msg, 'thread': thread,
+    })
+
+
+def parent_message_send(request):
+    """Padre envía mensaje a un docente/coordinador específico desde el portal."""
+    from django.contrib.auth.models import User as AuthUser
+    send_success = False
+    email        = request.POST.get('email', '').strip().lower() or request.GET.get('email', '').strip().lower()
+    subject_val  = request.POST.get('subject', '').strip()
+    body_val     = request.POST.get('body', '').strip()
+    recipient_id = request.POST.get('recipient_id', '').strip()
+
+    student = None
+    if email:
+        try:
+            student = Student.objects.select_related('teacher', 'classroom').get(parent_email__iexact=email, active=True)
+        except Student.DoesNotExist:
+            student = None
+
+    if request.method == 'POST' and student and subject_val and body_val and recipient_id:
+        try:
+            recipient = AuthUser.objects.get(pk=recipient_id)
+            # Check if this is a reply to an existing thread
+            # A reply subject looks like "Re: <original>" — find the root
+            root_msg  = None
+            clean_subj = subject_val
+            if subject_val.startswith('Re: '):
+                original_subj = subject_val[4:]
+                # Find root (reply_to=None) message in this student's history with that subject
+                root_msg = Message.objects.filter(
+                    student=student,
+                    subject=original_subj,
+                    reply_to__isnull=True,
+                ).order_by('sent_at').first()
+                clean_subj = original_subj
+
+            if root_msg:
+                Message.objects.create(
+                    teacher=recipient,
+                    student=student,
+                    subject=f'Re: {clean_subj}',
+                    body=body_val,
+                    sender_label='padre',
+                    reply_to=root_msg,
+                )
+            else:
+                Message.objects.create(
+                    teacher=recipient,
+                    student=student,
+                    subject=clean_subj,
+                    body=body_val,
+                    sender_label='padre',
+                )
+            send_success = True
+        except AuthUser.DoesNotExist:
+            pass
+
+    # Re-render portal with success flag
+    works = grades = msgs = attendances = []
+    subjects_data = []
+    general_avg   = None
+    if student:
+        from gallery.models import StudentWork
+        from accounts.models import TeacherProfile
+        TeacherProfile.objects.get_or_create(user=student.teacher)
+        works       = StudentWork.objects.filter(student=student, is_public=True).order_by('-created_at')
+        grades      = list(student.grades.select_related('subject').order_by('subject__name', '-date'))
+        msgs        = student.messages.order_by('-sent_at')
+        attendances = student.attendances.order_by('-date')
+        _sd = {}
+        for g in grades:
+            key  = g.subject_id if g.subject else f'txt_{g.subject_text}'
+            name = g.subject.name if g.subject else (g.subject_text or 'Sin materia')
+            if key not in _sd:
+                _sd[key] = {'name': name, 'grades': [], 'avg': None}
+            _sd[key]['grades'].append(g)
+        for key, data in _sd.items():
+            sc = [float(g.score) for g in data['grades']]
+            data['avg'] = round(sum(sc)/len(sc), 2) if sc else None
+        subjects_data = list(_sd.values())
+        all_sc = [float(g.score) for g in grades]
+        general_avg   = round(sum(all_sc)/len(all_sc), 2) if all_sc else None
+
+    from django.contrib.auth.models import User as AuthUser
+    all_staff = AuthUser.objects.filter(
+        teacher_profile__isnull=False
+    ).order_by('teacher_profile__role', 'last_name').select_related('teacher_profile')
+
+    return render(request, 'students/parent_portal.html', {
+        'email':         email,
+        'student':       student,
+        'works':         works,
+        'grades':        grades,
+        'msgs':          msgs,
+        'attendances':   attendances,
+        'subjects_data': subjects_data,
+        'general_avg':   general_avg,
+        'send_success':  send_success,
+        'open_tab':      't-send',
+        'all_staff':     all_staff,
     })

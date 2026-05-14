@@ -1,0 +1,96 @@
+{% extends 'base/layout.html' %}
+{% block title %}Padres de Familia — Coordinación{% endblock %}
+{% block page_title %}Padres de Familia{% endblock %}
+{% block content %}
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+  <div>
+    <h2 style="margin:0;font-size:18px;font-weight:800;color:var(--gray-900);">👨‍👩‍👧 Padres de familia registrados</h2>
+    <p style="margin:4px 0 0;font-size:13px;color:var(--gray-500);">Estudiantes con correo de acudiente activo</p>
+  </div>
+  <a href="{% url 'coordinator:parent_message_create' %}" class="btn btn-primary">
+    <i class="bi bi-envelope-plus"></i> Nuevo mensaje masivo
+  </a>
+</div>
+
+<!-- FILTROS -->
+<div class="card" style="margin-bottom:20px;">
+  <div style="padding:16px;">
+    <form method="get" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="form-group" style="margin:0;flex:1;min-width:160px;">
+        <label class="form-label">Buscar</label>
+        <input type="text" name="q" class="form-control" placeholder="Nombre estudiante o acudiente…" value="{{ q }}">
+      </div>
+      <div class="form-group" style="margin:0;min-width:160px;">
+        <label class="form-label">Salón</label>
+        <select name="classroom" class="form-control">
+          <option value="">Todos los salones</option>
+          {% for cr in classrooms %}
+          <option value="{{ cr.pk }}" {% if classroom_id == cr.pk|stringformat:"s" %}selected{% endif %}>{{ cr.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Filtrar</button>
+      <a href="{% url 'coordinator:parent_message_list' %}" class="btn btn-secondary">Limpiar</a>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">👨‍👩‍👧 Acudientes ({{ students|length }})</span>
+  </div>
+  <div style="overflow-x:auto;">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Estudiante</th>
+          <th>Salón</th>
+          <th>Acudiente</th>
+          <th>Correo acudiente</th>
+          <th>Teléfono</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div class="avatar avatar-sm">{{ s.initials }}</div>
+              <div>
+                <div style="font-weight:700;font-size:14px;color:var(--gray-900);">{{ s.get_full_name }}</div>
+                <div style="font-size:12px;color:var(--gray-400);">{{ s.document_id|default:"Sin doc." }}</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            {% if s.classroom %}<span class="badge badge-info">{{ s.classroom.name }}</span>
+            {% else %}<span class="badge badge-gray">Sin salón</span>{% endif %}
+          </td>
+          <td style="font-size:13px;">{{ s.parent_name|default:"—" }}</td>
+          <td style="font-size:12px;color:var(--gray-600);">{{ s.parent_email }}</td>
+          <td style="font-size:12px;color:var(--gray-500);">{{ s.parent_phone|default:"—" }}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <a href="{% url 'coordinator:student_detail' s.pk %}" class="btn btn-secondary" style="font-size:11px;padding:4px 9px;" title="Ver estudiante">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{% url 'coordinator:student_message' s.pk %}" class="btn btn-primary" style="font-size:11px;padding:4px 9px;" title="Enviar mensaje">
+                <i class="bi bi-envelope"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align:center;color:var(--gray-400);padding:32px;">
+            No se encontraron acudientes con esos filtros.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
