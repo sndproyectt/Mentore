@@ -1,183 +1,176 @@
+"""
+Vistas de Django para el módulo de Asistente IA.
+
+Responsabilidades EXCLUSIVAS:
+- Manejo de HTTP requests/responses
+- Validación básica de entrada
+- Autenticación de usuario
+- Persistencia en base de datos
+- NO contiene lógica de IA (delegada a services/)
+"""
 import json
-import requests
+import logging
+
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, StreamingHttpResponse
 from django.views.decorators.http import require_POST
-from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
+
 from .models import ChatHistory
+from .services import ai_service
 
-SYSTEM_PROMPT = """Eres Mentore IA, un asistente pedagógico especializado en educación primaria colombiana (grados 1° a 5°).
+logger = logging.getLogger(__name__)
 
-Tu misión es ayudar a los profesores de primaria con:
-- Diseño de actividades creativas y lúdicas adaptadas por grado
-- Creación de evaluaciones, quizzes, talleres y rúbricas
-- Ideas para dinámicas de clase, juegos educativos y proyectos de aula
-- Estrategias pedagógicas inclusivas y motivadoras
-- Comunicados y mensajes para padres de familia
-- Recursos para Matemáticas, Lenguaje, Ciencias, Sociales y Arte
+# Límites de validación
+MAX_MESSAGE_LENGTH = 2000
+MAX_HISTORY_DISPLAY = 30
 
-Siempre responde en español colombiano, de manera cálida, práctica y entusiasta.
-Adapta el contenido al contexto colombiano cuando sea relevante.
-Cuando generes actividades incluye: objetivo, materiales, pasos, duración y evaluación."""
-
-
-# =========================
-# SELECTOR DE IA
-# =========================
-def call_ai(prompt, history):
-    gemini_key = getattr(settings, 'GEMINI_API_KEY', '')
-    anthropic_key = getattr(settings, 'ANTHROPIC_API_KEY', '')
-
-    if anthropic_key and anthropic_key not in ('TU_API_KEY_DE_ANTHROPIC_AQUI', ''):
-        return call_claude(prompt, history, anthropic_key)
-
-    if gemini_key and gemini_key not in ('TU_API_KEY_DE_GEMINI_AQUI', ''):
-        return call_gemini(prompt, history, gemini_key)
-
-    return ("⚠️ **API de IA no configurada.**\n\n"
-            "Edita `settings.py` y agrega tu clave:\n\n"
-            "GEMINI_API_KEY = 'tu-clave'\n"
-            "o\n"
-            "ANTHROPIC_API_KEY = 'tu-clave'")
-
-
-# =========================
-# CLAUDE (opcional)
-# =========================
-def call_claude(prompt, history, api_key):
-    messages = []
-
-    for h in history.order_by('-created_at')[:6][::-1]:
-        messages.append({"role": "user", "content": h.user_message})
-        messages.append({"role": "assistant", "content": h.ai_response})
-
-    messages.append({"role": "user", "content": prompt})
-
-    try:
-        resp = requests.post(
-            "https://api.anthropic.com/v1/messages",
-            json={
-                "model": "claude-haiku-4-5-20251001",
-                "max_tokens": 1500,
-                "system": SYSTEM_PROMPT,
-                "messages": messages
-            },
-            headers={
-                "x-api-key": api_key,
-                "anthropic-version": "2023-06-01",
-                "content-type": "application/json"
-            },
-            timeout=30
-        )
-
-        resp.raise_for_status()
-        data = resp.json()
-
-        if "content" in data and data["content"]:
-            return data["content"][0]["text"]
-
-        return "⚠️ Claude no respondió correctamente."
-
-    except Exception as e:
-        return f"Error con Claude: {str(e)}"
-
-
-# =========================
-# GEMINI (MEJORADO)
-# =========================
-def call_gemini(prompt, history, api_key):
-    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
-
-    contents = []
-
-    # Historial (últimos 6 mensajes, en orden correcto)
-    for h in history.order_by('-created_at')[:6][::-1]:
-        contents.append({
-            "role": "user",
-            "parts": [{"text": h.user_message}]
-        })
-        contents.append({
-            "role": "model",
-            "parts": [{"text": h.ai_response}]
-        })
-
-    # Mensaje actual
-    contents.append({
-        "role": "user",
-        "parts": [{"text": prompt}]
-    })
-
-    try:
-        resp = requests.post(
-            url,
-            json={
-                "contents": contents,
-                "system_instruction": {
-                    "parts": [{"text": SYSTEM_PROMPT}]
-                },
-                "generationConfig": {
-                    "temperature": 0.8,
-                    "maxOutputTokens": 1500
-                }
-            },
-            timeout=30
-        )
-
-        resp.raise_for_status()
-        data = resp.json()
-
-        # Validación segura de respuesta
-        if "candidates" in data and data["candidates"]:
-            return data["candidates"][0]["content"]["parts"][0]["text"]
-
-        return "⚠️ No se pudo generar respuesta con Gemini."
-
-    except Exception as e:
-        return f"Error con Gemini: {str(e)}"
-
-
-# =========================
-# VISTAS DJANGO
-# =========================
 
 @login_required
 def chat_view(request):
-    history = ChatHistory.objects.filter(user=request.user).order_by('created_at')[:20]
+    """Vista principal del chat — renderiza la interfaz."""
+    history = (
+        ChatHistory.objects
+        .filter(user=request.user)
+        .order_by('created_at')[:MAX_HISTORY_DISPLAY]
+    )
+    logger.info("Chat view cargada para %s (%d mensajes)",
+                request.user.username, history.count() if hasattr(history, 'count') else len(history))
     return render(request, 'ai_assistant/chat.html', {'history': history})
 
 
 @login_required
 @require_POST
 def send_message(request):
+    """
+    Endpoint sincrónico: recibe mensaje, llama a la IA y devuelve respuesta JSON.
+    Usado como fallback cuando el streaming no está disponible.
+    """
+    # Parsear input
+    user_message = _extract_message(request)
+    if user_message is None:
+        return JsonResponse({'error': 'No se pudo leer el mensaje'}, status=400)
+
+    # Validar
+    validation_error = _validate_message(user_message)
+    if validation_error:
+        return JsonResponse({'error': validation_error}, status=400)
+
+    logger.info("send_message de %s: '%s...'",
+                request.user.username, user_message[:50])
+
+    # Delegar a servicio de IA
     try:
-        data = json.loads(request.body)
-        user_message = data.get('message', '').strip()
-    except Exception:
-        user_message = request.POST.get('message', '').strip()
+        ai_response = ai_service.chat(request.user, user_message)
+    except Exception as e:
+        logger.error("Error inesperado en send_message: %s", str(e))
+        ai_response = "😔 Ocurrió un error inesperado. Por favor intenta de nuevo."
 
-    # Validaciones
-    if not user_message:
-        return JsonResponse({'error': 'Mensaje vacío'}, status=400)
-
-    if len(user_message) > 1000:
-        return JsonResponse({'error': 'Mensaje demasiado largo'}, status=400)
-
-    history = ChatHistory.objects.filter(user=request.user)
-
-    ai_response = call_ai(user_message, history)
-
-    ChatHistory.objects.create(
-        user=request.user,
-        user_message=user_message,
-        ai_response=ai_response
-    )
+    # Persistir en base de datos
+    try:
+        ChatHistory.objects.create(
+            user=request.user,
+            user_message=user_message,
+            ai_response=ai_response,
+        )
+    except Exception as e:
+        logger.error("Error guardando historial: %s", str(e))
 
     return JsonResponse({'response': ai_response})
 
 
 @login_required
+@require_POST
+def stream_message(request):
+    """
+    Endpoint de streaming SSE: transmite tokens progresivamente.
+    El frontend se conecta con EventSource para renderizado incremental.
+    """
+    # Parsear input
+    user_message = _extract_message(request)
+    if user_message is None:
+        return JsonResponse({'error': 'No se pudo leer el mensaje'}, status=400)
+
+    # Validar
+    validation_error = _validate_message(user_message)
+    if validation_error:
+        return JsonResponse({'error': validation_error}, status=400)
+
+    logger.info("stream_message de %s: '%s...'",
+                request.user.username, user_message[:50])
+
+    def event_stream():
+        """Generador SSE que emite chunks de la IA."""
+        full_response = []
+        try:
+            for chunk in ai_service.chat_stream(request.user, user_message):
+                full_response.append(chunk)
+                # Formato SSE: data: <contenido>\n\n
+                yield f"data: {json.dumps({'chunk': chunk})}\n\n"
+
+            # Señal de fin
+            yield f"data: {json.dumps({'done': True})}\n\n"
+
+            # Persistir respuesta completa
+            complete_text = "".join(full_response)
+            try:
+                ChatHistory.objects.create(
+                    user=request.user,
+                    user_message=user_message,
+                    ai_response=complete_text,
+                )
+            except Exception as e:
+                logger.error("Error guardando historial (stream): %s", str(e))
+
+        except Exception as e:
+            logger.error("Error en streaming para %s: %s",
+                         request.user.username, str(e))
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+    response = StreamingHttpResponse(
+        event_stream(),
+        content_type='text/event-stream; charset=utf-8',
+    )
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'
+    return response
+
+
+@login_required
 def clear_history(request):
+    """Limpia todo el historial de chat del usuario."""
     if request.method == 'POST':
+        count = ChatHistory.objects.filter(user=request.user).count()
         ChatHistory.objects.filter(user=request.user).delete()
+        logger.info("Historial limpiado para %s (%d mensajes eliminados)",
+                     request.user.username, count)
     return redirect('ai_assistant:chat')
+
+
+# ============================================================
+# HELPERS PRIVADOS
+# ============================================================
+
+def _extract_message(request):
+    """Extrae el mensaje del request (JSON o form-data)."""
+    try:
+        data = json.loads(request.body)
+        return data.get('message', '').strip()
+    except (json.JSONDecodeError, ValueError):
+        return request.POST.get('message', '').strip()
+    except Exception as e:
+        logger.error("Error extrayendo mensaje: %s", str(e))
+        return None
+
+
+def _validate_message(message):
+    """
+    Valida el mensaje del usuario.
+    Returns: str con error o None si es válido.
+    """
+    if not message:
+        return 'El mensaje está vacío'
+    if len(message) > MAX_MESSAGE_LENGTH:
+        return f'El mensaje es demasiado largo (máximo {MAX_MESSAGE_LENGTH} caracteres)'
+    return None

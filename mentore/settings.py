@@ -1,15 +1,21 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Carga variables desde un archivo .env en el directorio base del proyecto
+load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     'django-insecure-mentore-change-this-in-production-2024'
 )
 
-DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+# En desarrollo local, habilita DEBUG por defecto si no está en .env
+# En producción asegúrate de definir DEBUG=False en las variables de entorno.
+DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = [
     '.onrender.com',
@@ -141,6 +147,8 @@ ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
 
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+
 # ============================================================
 # GOOGLE OAUTH
 # ============================================================
@@ -166,3 +174,45 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# ============================================================
+# LOGGING
+# ============================================================
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {name}: {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'mentore.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'ai_assistant': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django': {
+            'handlers': ['console'],
+            'level': 'WARNING',
+            'propagate': True,
+        },
+    },
+}

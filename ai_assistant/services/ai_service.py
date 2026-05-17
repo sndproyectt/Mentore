@@ -1,0 +1,233 @@
+"""
+Servicio principal de IA para Mentore — Orquestador.
+
+Responsabilidades:
+- Seleccionar proveedor de IA (con fallback automático)
+- Construir contexto completo (prompt + memoria)
+- Ejecutar llamadas sincrónicas y streaming
+- Gestionar resúmenes y memoria persistente de forma asíncrona
+"""
+import logging
+from django.conf import settings
+
+from .prompts import build_system_prompt, SUMMARY_PROMPT, MEMORY_EXTRACTION_PROMPT
+from .memory import (
+    build_full_context,
+    should_generate_summary,
+    get_messages_for_summary,
+    save_summary,
+    update_persistent_memory,
+)
+from .providers.base import ProviderError
+from .providers.groq import GroqProvider
+from .providers.claude import ClaudeProvider
+from .providers.gemini import GeminiProvider
+
+logger = logging.getLogger(__name__)
+
+
+def _get_providers():
+    """
+    Retorna la lista ordenada de proveedores configurados.
+    Groq es el principal; Claude y Gemini son fallback.
+
+    Returns:
+        list[BaseProvider]: Proveedores configurados y disponibles
+    """
+    providers = []
+
+    groq_key = getattr(settings, 'GROQ_API_KEY', '')
+    claude_key = getattr(settings, 'ANTHROPIC_API_KEY', '')
+    gemini_key = getattr(settings, 'GEMINI_API_KEY', '')
+
+    groq = GroqProvider(groq_key)
+    if groq.is_configured():
+        providers.append(groq)
+
+    claude = ClaudeProvider(claude_key)
+    if claude.is_configured():
+        providers.append(claude)
+
+    gemini = GeminiProvider(gemini_key)
+    if gemini.is_configured():
+        providers.append(gemini)
+
+    return providers
+
+
+def _get_no_provider_message():
+    """Mensaje cuando no hay proveedores configurados."""
+    return (
+        "⚠️ **API de IA no configurada.**\n\n"
+        "Configura al menos una clave de API en el archivo `.env`:\n\n"
+        "```\n"
+        "GROQ_API_KEY=tu-clave-aquí\n"
+        "# o\n"
+        "ANTHROPIC_API_KEY=tu-clave-aquí\n"
+        "# o\n"
+        "GEMINI_API_KEY=tu-clave-aquí\n"
+        "```"
+    )
+
+
+def chat(user, user_message):
+    """
+    Procesa un mensaje del usuario de forma sincrónica.
+    Construye contexto completo, llama al proveedor con fallback,
+    y gestiona memoria en segundo plano.
+
+    Args:
+        user: Usuario Django autenticado
+        user_message: Texto del mensaje del usuario
+
+    Returns:
+        str: Respuesta de la IA
+    """
+    providers = _get_providers()
+    if not providers:
+        return _get_no_provider_message()
+
+    # Construir contexto de memoria
+    context = build_full_context(user)
+    system_prompt = build_system_prompt(
+        user_profile_context=context["user_profile"],
+        conversation_summary=context["conversation_summary"],
+    )
+
+    # Agregar mensaje actual al historial de short-term
+    messages = context["messages"] + [{"role": "user", "content": user_message}]
+
+    logger.info("Chat request de %s: %d mensajes en contexto", user.username, len(messages))
+
+    # Intentar con cada proveedor (fallback automático)
+    last_error = None
+    for provider in providers:
+        try:
+            logger.info("Intentando con proveedor: %s", provider.name)
+            response = provider.chat(system_prompt, messages)
+            logger.info("Respuesta exitosa de %s", provider.name)
+
+            # Gestionar memoria en background (sin bloquear respuesta)
+            _post_response_memory_tasks(user, provider)
+
+            return response
+
+        except ProviderError as e:
+            logger.warning("Proveedor %s falló: %s", provider.name, str(e))
+            last_error = e
+            continue
+
+    # Todos los proveedores fallaron
+    error_msg = str(last_error) if last_error else "Error desconocido"
+    logger.error("Todos los proveedores fallaron para %s. Último error: %s",
+                 user.username, error_msg)
+    return (
+        "😔 Lo siento, no pude procesar tu solicitud en este momento. "
+        "Por favor intenta de nuevo en unos segundos.\n\n"
+        f"_Detalle técnico: {error_msg}_"
+    )
+
+
+def chat_stream(user, user_message):
+    """
+    Procesa un mensaje del usuario con streaming.
+    Genera tokens progresivamente para transmisión SSE.
+
+    Args:
+        user: Usuario Django autenticado
+        user_message: Texto del mensaje del usuario
+
+    Yields:
+        str: Fragmentos de texto conforme se generan
+    """
+    providers = _get_providers()
+    if not providers:
+        yield _get_no_provider_message()
+        return
+
+    # Construir contexto de memoria
+    context = build_full_context(user)
+    system_prompt = build_system_prompt(
+        user_profile_context=context["user_profile"],
+        conversation_summary=context["conversation_summary"],
+    )
+
+    messages = context["messages"] + [{"role": "user", "content": user_message}]
+
+    logger.info("Stream request de %s: %d mensajes en contexto", user.username, len(messages))
+
+    last_error = None
+    for provider in providers:
+        try:
+            logger.info("Stream intentando con: %s", provider.name)
+            for chunk in provider.chat_stream(system_prompt, messages):
+                yield chunk
+
+            # Si llegamos aquí, el stream fue exitoso
+            logger.info("Stream completado exitosamente con %s", provider.name)
+            _post_response_memory_tasks(user, provider)
+            return
+
+        except ProviderError as e:
+            logger.warning("Stream: proveedor %s falló: %s", provider.name, str(e))
+            last_error = e
+            continue
+
+    error_msg = str(last_error) if last_error else "Error desconocido"
+    logger.error("Stream: todos los proveedores fallaron para %s", user.username)
+    yield (
+        "😔 Lo siento, no pude procesar tu solicitud. "
+        f"Intenta de nuevo. _({error_msg})_"
+    )
+
+
+def _post_response_memory_tasks(user, provider):
+    """
+    Tareas de memoria post-respuesta:
+    1. Verificar si toca generar resumen (medium-term memory)
+    2. Extraer información de perfil (persistent memory)
+
+    Estas tareas usan el proveedor más rápido disponible y no bloquean.
+    """
+    try:
+        if should_generate_summary(user):
+            _generate_conversation_summary(user, provider)
+    except Exception as e:
+        logger.error("Error en tareas post-respuesta para %s: %s", user.username, str(e))
+
+
+def _generate_conversation_summary(user, provider):
+    """
+    Genera un resumen de los mensajes no resumidos y extrae
+    información de perfil del usuario.
+    """
+    conversation_text, total_messages = get_messages_for_summary(user)
+
+    if not conversation_text.strip():
+        return
+
+    logger.info("Generando resumen para %s (%d mensajes totales)", user.username, total_messages)
+
+    try:
+        # 1. Generar resumen de conversación
+        summary_messages = [{"role": "user", "content": conversation_text}]
+        summary = provider.chat(SUMMARY_PROMPT, summary_messages, max_tokens=300, temperature=0.3)
+
+        if summary and not summary.startswith("⚠️"):
+            save_summary(user, summary, total_messages)
+            logger.info("Resumen generado exitosamente para %s", user.username)
+
+        # 2. Extraer info de perfil
+        memory_messages = [{"role": "user", "content": conversation_text}]
+        extracted = provider.chat(
+            MEMORY_EXTRACTION_PROMPT, memory_messages,
+            max_tokens=150, temperature=0.2
+        )
+
+        if extracted and not extracted.startswith("⚠️"):
+            update_persistent_memory(user, extracted)
+
+    except ProviderError as e:
+        logger.warning("No se pudo generar resumen/memoria: %s", str(e))
+    except Exception as e:
+        logger.error("Error generando resumen para %s: %s", user.username, str(e))

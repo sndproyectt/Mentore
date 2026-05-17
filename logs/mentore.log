@@ -1,0 +1,64 @@
+[2026-05-16 12:59:33,820] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-16 12:59:33,820] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-16 13:16:21,310] INFO ai_assistant.views Chat view cargada para cristi (1 mensajes)
+[2026-05-16 13:16:29,298] INFO ai_assistant.views stream_message de cristi: 'hola...'
+[2026-05-16 13:16:29,300] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-16 13:16:29,303] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-16 13:16:29,811] INFO ai_assistant.services.ai_service Stream request de cristi: 3 mensajes en contexto
+[2026-05-16 13:16:29,813] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-16 13:16:29,815] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=4
+[2026-05-16 13:16:32,134] INFO ai_assistant.services.providers.groq Groq stream completado
+[2026-05-16 13:16:32,136] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq
+[2026-05-16 13:17:27,053] INFO ai_assistant.views stream_message de cristi: 'okey...'
+[2026-05-16 13:17:27,055] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-16 13:17:27,057] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-16 13:17:27,665] INFO ai_assistant.services.ai_service Stream request de cristi: 5 mensajes en contexto
+[2026-05-16 13:17:27,666] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-16 13:17:27,668] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=6
+[2026-05-16 13:17:29,756] INFO ai_assistant.services.providers.groq Groq stream completado
+[2026-05-16 13:17:29,758] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq
+[2026-05-16 13:17:42,400] INFO ai_assistant.views stream_message de cristi: 'hola...'
+[2026-05-16 13:17:42,401] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-16 13:17:42,406] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-16 13:17:43,026] INFO ai_assistant.services.ai_service Stream request de cristi: 7 mensajes en contexto
+[2026-05-16 13:17:43,027] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-16 13:17:43,030] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=8
+[2026-05-16 13:17:44,732] INFO ai_assistant.services.providers.groq Groq stream completado
+[2026-05-16 13:17:44,734] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq
+[2026-05-16 13:29:52,291] INFO ai_assistant.views Chat view cargada para cristi (4 mensajes)
+[2026-05-16 13:29:57,386] INFO ai_assistant.views stream_message de cristi: 'hola...'
+[2026-05-16 13:29:57,388] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-16 13:29:57,391] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-16 13:29:57,955] INFO ai_assistant.services.ai_service Stream request de cristi: 9 mensajes en contexto
+[2026-05-16 13:29:57,955] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-16 13:29:57,957] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=10
+[2026-05-16 13:30:00,432] INFO ai_assistant.services.providers.groq Groq stream completado
+[2026-05-16 13:30:00,434] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq
+[2026-05-16 13:30:29,495] INFO ai_assistant.views stream_message de cristi: 'me gusta...'
+[2026-05-16 13:30:29,496] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-16 13:30:29,498] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-16 13:30:30,109] INFO ai_assistant.services.ai_service Stream request de cristi: 11 mensajes en contexto
+[2026-05-16 13:30:30,110] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-16 13:30:30,113] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=12
+[2026-05-16 13:30:32,123] INFO ai_assistant.services.providers.groq Groq stream completado
+[2026-05-16 13:30:32,127] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq
+[2026-05-16 13:33:30,640] INFO ai_assistant.views Chat view cargada para cristi (6 mensajes)
+[2026-05-16 13:33:38,935] INFO ai_assistant.views Historial limpiado para cristi (6 mensajes eliminados)
+[2026-05-16 13:33:40,412] INFO ai_assistant.views Chat view cargada para cristi (0 mensajes)
+[2026-05-16 13:33:47,686] INFO ai_assistant.views stream_message de cristi: 'hola...'
+[2026-05-16 13:33:47,688] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-16 13:33:47,690] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-16 13:33:48,254] INFO ai_assistant.services.ai_service Stream request de cristi: 1 mensajes en contexto
+[2026-05-16 13:33:48,255] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-16 13:33:48,258] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=2
+[2026-05-16 13:33:49,633] INFO ai_assistant.services.providers.groq Groq stream completado
+[2026-05-16 13:33:49,634] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq
+[2026-05-17 13:50:48,975] INFO ai_assistant.views Chat view cargada para cristi (1 mensajes)
+[2026-05-17 13:50:53,788] INFO ai_assistant.views stream_message de cristi: 'hola...'
+[2026-05-17 13:50:53,789] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-17 13:50:53,789] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-17 13:50:54,300] INFO ai_assistant.services.ai_service Stream request de cristi: 3 mensajes en contexto
+[2026-05-17 13:50:54,301] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-17 13:50:54,302] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=4
+[2026-05-17 13:50:57,522] INFO ai_assistant.services.providers.groq Groq stream completado
+[2026-05-17 13:50:57,526] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq
