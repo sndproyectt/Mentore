@@ -62,3 +62,28 @@
 [2026-05-17 13:50:54,302] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=4
 [2026-05-17 13:50:57,522] INFO ai_assistant.services.providers.groq Groq stream completado
 [2026-05-17 13:50:57,526] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq
+[2026-05-18 16:19:29,913] INFO ai_assistant.views Chat view cargada para cristi (5 mensajes)
+[2026-05-18 16:23:02,109] INFO ai_assistant.views Chat view cargada para cristi (5 mensajes)
+[2026-05-18 16:23:28,009] INFO ai_assistant.views Chat view cargada para cristi (5 mensajes)
+[2026-05-18 16:24:10,737] INFO ai_assistant.views Chat view cargada para cristi (5 mensajes)
+[2026-05-18 16:25:15,195] INFO ai_assistant.views Chat view cargada para cristi (5 mensajes)
+[2026-05-18 16:25:24,456] INFO ai_assistant.views Documento subido: BP_ Análisis Profundo y Controversias.pdf por cristi
+[2026-05-18 16:25:37,743] INFO ai_assistant.views stream_message de cristi: 'analiza este documento...'
+[2026-05-18 16:25:38,027] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-18 16:25:38,028] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-18 16:25:38,447] INFO ai_assistant.services.ai_service Stream request de cristi: 11 mensajes en contexto
+[2026-05-18 16:25:38,449] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-18 16:25:38,452] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=12
+[2026-05-18 16:25:39,795] ERROR ai_assistant.services.providers.groq Groq stream HTTP error: 413 Client Error: Payload Too Large for url: https://api.groq.com/openai/v1/chat/completions
+[2026-05-18 16:25:39,796] WARNING ai_assistant.services.ai_service Stream: proveedor groq falló: [groq] Error HTTP en stream: 413 Client Error: Payload Too Large for url: https://api.groq.com/openai/v1/chat/completions
+[2026-05-18 16:25:39,800] ERROR ai_assistant.services.ai_service Stream: todos los proveedores fallaron para cristi
+[2026-05-18 16:36:10,880] INFO ai_assistant.views Chat view cargada para cristi (6 mensajes)
+[2026-05-18 16:37:40,913] INFO ai_assistant.views Documento subido: 1774452367_TALLER+001+CIUDADANOS+11+3P.docx por cristi
+[2026-05-18 16:37:47,733] INFO ai_assistant.views stream_message de cristi: 'hola, analiza este documento...'
+[2026-05-18 16:37:48,024] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-18 16:37:48,025] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-18 16:37:48,455] INFO ai_assistant.services.ai_service Stream request de cristi: 5 msgs, doc_chars=4435
+[2026-05-18 16:37:48,456] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-18 16:37:48,456] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=6
+[2026-05-18 16:37:50,184] INFO ai_assistant.services.providers.groq Groq stream completado
+[2026-05-18 16:37:50,186] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq

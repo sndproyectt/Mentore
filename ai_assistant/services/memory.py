@@ -13,11 +13,28 @@ logger = logging.getLogger(__name__)
 
 # Configuración de memoria
 SHORT_TERM_LIMIT = 8          # Mensajes recientes a incluir
+SHORT_TERM_WITH_DOCS = 2    # Menos historial si hay documentos (evita 413)
+MAX_MESSAGE_CHARS = 2000    # Recorte por mensaje en historial
 SUMMARY_TRIGGER_COUNT = 10    # Cada cuántos mensajes generar resumen
 MAX_SUMMARIES_KEPT = 5        # Máximo de resúmenes a mantener por usuario
 
 
-def get_short_term_memory(user):
+def _trim_message_content(content):
+    """Recorta mensajes largos y quita texto de documentos del historial."""
+    if not content:
+        return ''
+    text = content.strip()
+    if '### Archivo:' in text or 'El profesor adjuntó los siguientes documentos' in text:
+        if '**Pregunta del profesor:**' in text:
+            text = text.split('**Pregunta del profesor:**', 1)[-1].strip()
+        else:
+            text = '[Consulta con documento adjunto]'
+    if len(text) > MAX_MESSAGE_CHARS:
+        text = text[:MAX_MESSAGE_CHARS] + '…'
+    return text
+
+
+def get_short_term_memory(user, limit=None):
     """
     Obtiene los últimos N mensajes como memoria a corto plazo.
     Filtra mensajes nulos o corruptos y los ordena cronológicamente (ASC).
@@ -27,10 +44,11 @@ def get_short_term_memory(user):
     """
     from ai_assistant.models import ChatHistory
 
+    msg_limit = limit if limit is not None else SHORT_TERM_LIMIT
     recent = (
         ChatHistory.objects
         .filter(user=user)
-        .order_by('-created_at')[:SHORT_TERM_LIMIT]
+        .order_by('-created_at')[:msg_limit]
     )
     # Invertir para orden cronológico ASC
     recent_list = list(recent)[::-1]
@@ -41,10 +59,12 @@ def get_short_term_memory(user):
         user_msg = h.user_message if isinstance(h.user_message, str) else ""
         ai_msg = h.ai_response if isinstance(h.ai_response, str) else ""
 
-        if user_msg.strip():
-            messages.append({"role": "user", "content": user_msg.strip()})
-        if ai_msg.strip():
-            messages.append({"role": "assistant", "content": ai_msg.strip()})
+        user_msg = _trim_message_content(user_msg)
+        ai_msg = _trim_message_content(ai_msg)
+        if user_msg:
+            messages.append({"role": "user", "content": user_msg})
+        if ai_msg:
+            messages.append({"role": "assistant", "content": ai_msg})
 
     logger.debug("Short-term memory: %d mensajes para usuario %s", len(messages), user.username)
     return messages
@@ -228,7 +248,7 @@ def update_persistent_memory(user, extracted_info):
     logger.info("Memoria persistente %s para %s", action, user.username)
 
 
-def build_full_context(user):
+def build_full_context(user, with_documents=False):
     """
     Construye el contexto completo de memoria para una solicitud.
 
@@ -239,8 +259,13 @@ def build_full_context(user):
             "user_profile": "",          # Persistent profile
         }
     """
+    limit = SHORT_TERM_WITH_DOCS if with_documents else SHORT_TERM_LIMIT
+    summary = get_medium_term_memory(user)
+    if with_documents and len(summary) > 800:
+        summary = summary[:800] + '…'
+
     return {
-        "messages": get_short_term_memory(user),
-        "conversation_summary": get_medium_term_memory(user),
+        "messages": get_short_term_memory(user, limit=limit),
+        "conversation_summary": summary,
         "user_profile": get_persistent_memory(user),
     }

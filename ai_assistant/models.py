@@ -1,5 +1,42 @@
+import os
+
 from django.db import models
 from django.contrib.auth.models import User
+
+
+def ai_document_upload_path(instance, filename):
+    safe_name = os.path.basename(filename)
+    return f'ai_documents/{instance.user_id}/{safe_name}'
+
+
+class ChatDocument(models.Model):
+    """Documento subido por el docente para consultar con la IA."""
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='chat_documents',
+    )
+    file = models.FileField(upload_to=ai_document_upload_path)
+    original_name = models.CharField(max_length=255)
+    file_type = models.CharField(max_length=20, blank=True)
+    file_size = models.PositiveIntegerField(default=0)
+    extracted_text = models.TextField(blank=True)
+    extraction_error = models.CharField(max_length=500, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Documento del chat'
+        verbose_name_plural = 'Documentos del chat'
+
+    def __str__(self):
+        return f'{self.original_name} ({self.user.username})'
+
+    @property
+    def extension(self):
+        return os.path.splitext(self.original_name)[1].lower()
+
+    @property
+    def is_ready(self):
+        return bool(self.extracted_text.strip()) and not self.extraction_error
 
 
 class ChatHistory(models.Model):

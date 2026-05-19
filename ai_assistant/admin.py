@@ -1,5 +1,14 @@
 from django.contrib import admin
-from .models import ChatHistory, ConversationSummary, UserMemory
+from .models import ChatHistory, ChatDocument, ConversationSummary, UserMemory
+
+
+@admin.register(ChatDocument)
+class ChatDocumentAdmin(admin.ModelAdmin):
+    list_display = ['original_name', 'user', 'file_type', 'file_size', 'created_at']
+    list_filter = ['file_type', 'created_at']
+    search_fields = ['original_name', 'user__username']
+    readonly_fields = ['created_at', 'extracted_text', 'extraction_error']
+    ordering = ['-created_at']
 
 
 @admin.register(ChatHistory)

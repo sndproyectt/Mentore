@@ -70,7 +70,14 @@ def _get_no_provider_message():
     )
 
 
-def chat(user, user_message):
+def _compose_user_message(user_message, document_context=''):
+    """Combina mensaje del usuario con texto extraído de documentos adjuntos."""
+    if not document_context:
+        return user_message
+    return f'{document_context}\n\n---\n\n**Pregunta del profesor:**\n{user_message}'
+
+
+def chat(user, user_message, document_context=''):
     """
     Procesa un mensaje del usuario de forma sincrónica.
     Construye contexto completo, llama al proveedor con fallback,
@@ -79,6 +86,7 @@ def chat(user, user_message):
     Args:
         user: Usuario Django autenticado
         user_message: Texto del mensaje del usuario
+        document_context: Texto extraído de documentos adjuntos (opcional)
 
     Returns:
         str: Respuesta de la IA
@@ -87,17 +95,20 @@ def chat(user, user_message):
     if not providers:
         return _get_no_provider_message()
 
-    # Construir contexto de memoria
-    context = build_full_context(user)
+    has_docs = bool(document_context and document_context.strip())
+    context = build_full_context(user, with_documents=has_docs)
     system_prompt = build_system_prompt(
         user_profile_context=context["user_profile"],
         conversation_summary=context["conversation_summary"],
     )
 
-    # Agregar mensaje actual al historial de short-term
-    messages = context["messages"] + [{"role": "user", "content": user_message}]
+    full_message = _compose_user_message(user_message, document_context)
+    messages = context["messages"] + [{"role": "user", "content": full_message}]
 
-    logger.info("Chat request de %s: %d mensajes en contexto", user.username, len(messages))
+    logger.info(
+        "Chat request de %s: %d msgs, doc_chars=%d",
+        user.username, len(messages), len(document_context or ''),
+    )
 
     # Intentar con cada proveedor (fallback automático)
     last_error = None
@@ -121,6 +132,13 @@ def chat(user, user_message):
     error_msg = str(last_error) if last_error else "Error desconocido"
     logger.error("Todos los proveedores fallaron para %s. Último error: %s",
                  user.username, error_msg)
+    if '413' in error_msg or 'Payload Too Large' in error_msg:
+        return (
+            "📄 **El documento es demasiado grande** para procesarlo de una vez con la IA.\n\n"
+            "Prueba con un PDF más corto, solo las páginas clave, o pregunta por una sección concreta "
+            "(por ejemplo: «resume las primeras 5 páginas»).\n\n"
+            f"_Detalle: {error_msg}_"
+        )
     return (
         "😔 Lo siento, no pude procesar tu solicitud en este momento. "
         "Por favor intenta de nuevo en unos segundos.\n\n"
@@ -128,7 +146,7 @@ def chat(user, user_message):
     )
 
 
-def chat_stream(user, user_message):
+def chat_stream(user, user_message, document_context=''):
     """
     Procesa un mensaje del usuario con streaming.
     Genera tokens progresivamente para transmisión SSE.
@@ -136,6 +154,7 @@ def chat_stream(user, user_message):
     Args:
         user: Usuario Django autenticado
         user_message: Texto del mensaje del usuario
+        document_context: Texto extraído de documentos adjuntos (opcional)
 
     Yields:
         str: Fragmentos de texto conforme se generan
@@ -145,16 +164,20 @@ def chat_stream(user, user_message):
         yield _get_no_provider_message()
         return
 
-    # Construir contexto de memoria
-    context = build_full_context(user)
+    has_docs = bool(document_context and document_context.strip())
+    context = build_full_context(user, with_documents=has_docs)
     system_prompt = build_system_prompt(
         user_profile_context=context["user_profile"],
         conversation_summary=context["conversation_summary"],
     )
 
-    messages = context["messages"] + [{"role": "user", "content": user_message}]
+    full_message = _compose_user_message(user_message, document_context)
+    messages = context["messages"] + [{"role": "user", "content": full_message}]
 
-    logger.info("Stream request de %s: %d mensajes en contexto", user.username, len(messages))
+    logger.info(
+        "Stream request de %s: %d msgs, doc_chars=%d",
+        user.username, len(messages), len(document_context or ''),
+    )
 
     last_error = None
     for provider in providers:
@@ -175,6 +198,12 @@ def chat_stream(user, user_message):
 
     error_msg = str(last_error) if last_error else "Error desconocido"
     logger.error("Stream: todos los proveedores fallaron para %s", user.username)
+    if '413' in error_msg or 'Payload Too Large' in error_msg:
+        yield (
+            "📄 **El documento es demasiado grande** para la IA en un solo envío. "
+            "Prueba con un archivo más corto o pregunta por una parte concreta del PDF."
+        )
+        return
     yield (
         "😔 Lo siento, no pude procesar tu solicitud. "
         f"Intenta de nuevo. _({error_msg})_"
