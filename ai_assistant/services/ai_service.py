@@ -18,7 +18,8 @@ from .memory import (
     save_summary,
     update_persistent_memory,
 )
-from .providers.base import ProviderError
+from .providers.base import ProviderError, ProviderRateLimitError
+from .rate_limit import RATE_LIMIT_USER_MESSAGE
 from .providers.groq import GroqProvider
 from .providers.claude import ClaudeProvider
 from .providers.gemini import GeminiProvider
@@ -123,15 +124,22 @@ def chat(user, user_message, document_context=''):
 
             return response
 
+        except ProviderRateLimitError:
+            logger.warning("Proveedor %s: límite 429", provider.name)
+            raise
         except ProviderError as e:
             logger.warning("Proveedor %s falló: %s", provider.name, str(e))
             last_error = e
             continue
 
-    # Todos los proveedores fallaron
     error_msg = str(last_error) if last_error else "Error desconocido"
     logger.error("Todos los proveedores fallaron para %s. Último error: %s",
                  user.username, error_msg)
+    if isinstance(last_error, ProviderRateLimitError):
+        raise ProviderRateLimitError(
+            last_error.provider_name,
+            RATE_LIMIT_USER_MESSAGE,
+        )
     if '413' in error_msg or 'Payload Too Large' in error_msg:
         return (
             "📄 **El documento es demasiado grande** para procesarlo de una vez con la IA.\n\n"
@@ -191,6 +199,9 @@ def chat_stream(user, user_message, document_context=''):
             _post_response_memory_tasks(user, provider)
             return
 
+        except ProviderRateLimitError:
+            logger.warning("Stream: proveedor %s límite 429", provider.name)
+            raise
         except ProviderError as e:
             logger.warning("Stream: proveedor %s falló: %s", provider.name, str(e))
             last_error = e
@@ -198,6 +209,11 @@ def chat_stream(user, user_message, document_context=''):
 
     error_msg = str(last_error) if last_error else "Error desconocido"
     logger.error("Stream: todos los proveedores fallaron para %s", user.username)
+    if isinstance(last_error, ProviderRateLimitError):
+        raise ProviderRateLimitError(
+            last_error.provider_name,
+            RATE_LIMIT_USER_MESSAGE,
+        )
     if '413' in error_msg or 'Payload Too Large' in error_msg:
         yield (
             "📄 **El documento es demasiado grande** para la IA en un solo envío. "

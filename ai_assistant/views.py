@@ -23,6 +23,15 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import ChatHistory, ChatDocument
 from .services import ai_service
+from .services.providers.base import ProviderRateLimitError
+from .services.rate_limit import (
+    BUSY_USER_MESSAGE,
+    RATE_LIMIT_USER_MESSAGE,
+    ChatRateLimited,
+    ChatRequestBusy,
+    begin_chat_request,
+    release_chat_request,
+)
 from .services.documents import (
     ALLOWED_EXTENSIONS,
     EXTENSION_LABELS,
@@ -83,26 +92,36 @@ def send_message(request):
 
     document_context = _get_document_context(request.user, document_ids)
 
-    # Delegar a servicio de IA
     try:
-        ai_response = ai_service.chat(
-            request.user, user_message, document_context=document_context,
-        )
-    except Exception as e:
-        logger.error("Error inesperado en send_message: %s", str(e))
-        ai_response = "😔 Ocurrió un error inesperado. Por favor intenta de nuevo."
+        begin_chat_request(request.user)
+    except ChatRequestBusy:
+        return JsonResponse({'error': BUSY_USER_MESSAGE}, status=409)
+    except ChatRateLimited as exc:
+        return _rate_limit_response(exc.retry_after)
 
-    # Persistir en base de datos
     try:
-        ChatHistory.objects.create(
-            user=request.user,
-            user_message=user_message,
-            ai_response=ai_response,
-        )
-    except Exception as e:
-        logger.error("Error guardando historial: %s", str(e))
+        try:
+            ai_response = ai_service.chat(
+                request.user, user_message, document_context=document_context,
+            )
+        except ProviderRateLimitError:
+            return _rate_limit_response()
+        except Exception as e:
+            logger.error("Error inesperado en send_message: %s", str(e))
+            ai_response = "😔 Ocurrió un error inesperado. Por favor intenta de nuevo."
 
-    return JsonResponse({'response': ai_response})
+        try:
+            ChatHistory.objects.create(
+                user=request.user,
+                user_message=user_message,
+                ai_response=ai_response,
+            )
+        except Exception as e:
+            logger.error("Error guardando historial: %s", str(e))
+
+        return JsonResponse({'response': ai_response})
+    finally:
+        release_chat_request(request.user.pk)
 
 
 @login_required
@@ -132,35 +151,46 @@ def stream_message(request):
 
     document_context = _get_document_context(request.user, document_ids)
 
+    try:
+        begin_chat_request(request.user)
+    except ChatRequestBusy:
+        return JsonResponse({'error': BUSY_USER_MESSAGE}, status=409)
+    except ChatRateLimited as exc:
+        return _rate_limit_response(exc.retry_after)
+
+    user_id = request.user.pk
+
     def event_stream():
         """Generador SSE que emite chunks de la IA."""
         full_response = []
         try:
-            for chunk in ai_service.chat_stream(
-                request.user, user_message, document_context=document_context,
-            ):
-                full_response.append(chunk)
-                # Formato SSE: data: <contenido>\n\n
-                yield f"data: {json.dumps({'chunk': chunk})}\n\n"
-
-            # Señal de fin
-            yield f"data: {json.dumps({'done': True})}\n\n"
-
-            # Persistir respuesta completa
-            complete_text = "".join(full_response)
             try:
-                ChatHistory.objects.create(
-                    user=request.user,
-                    user_message=user_message,
-                    ai_response=complete_text,
-                )
-            except Exception as e:
-                logger.error("Error guardando historial (stream): %s", str(e))
+                for chunk in ai_service.chat_stream(
+                    request.user, user_message, document_context=document_context,
+                ):
+                    full_response.append(chunk)
+                    yield f"data: {json.dumps({'chunk': chunk})}\n\n"
 
-        except Exception as e:
-            logger.error("Error en streaming para %s: %s",
-                         request.user.username, str(e))
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+                yield f"data: {json.dumps({'done': True})}\n\n"
+
+                complete_text = "".join(full_response)
+                try:
+                    ChatHistory.objects.create(
+                        user=request.user,
+                        user_message=user_message,
+                        ai_response=complete_text,
+                    )
+                except Exception as e:
+                    logger.error("Error guardando historial (stream): %s", str(e))
+
+            except ProviderRateLimitError:
+                yield f"data: {json.dumps({'error': RATE_LIMIT_USER_MESSAGE})}\n\n"
+            except Exception as e:
+                logger.error("Error en streaming para %s: %s",
+                             request.user.username, str(e))
+                yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        finally:
+            release_chat_request(user_id)
 
     response = StreamingHttpResponse(
         event_stream(),
@@ -272,6 +302,16 @@ def clear_history(request):
 # ============================================================
 # HELPERS PRIVADOS
 # ============================================================
+
+def _rate_limit_response(retry_after=None):
+    response = JsonResponse(
+        {'error': RATE_LIMIT_USER_MESSAGE},
+        status=429,
+    )
+    if retry_after:
+        response['Retry-After'] = str(retry_after)
+    return response
+
 
 def _extract_message(request):
     """Extrae el mensaje del request (JSON o form-data)."""

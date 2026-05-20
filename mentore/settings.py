@@ -132,6 +132,21 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ============================================================
+# CACHE (límites del chat IA, bloqueo anti-spam)
+# ============================================================
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'mentore-default',
+    }
+}
+
+AI_CHAT_MAX_REQUESTS_PER_MINUTE = 8
+AI_CHAT_RATE_WINDOW_SEC = 60
+AI_CHAT_IN_FLIGHT_TTL = 180
+
+# ============================================================
 # AUTH
 # ============================================================
 

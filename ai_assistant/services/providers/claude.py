@@ -4,7 +4,7 @@ Proveedor Claude (Anthropic) — Fallback para Mentore IA.
 import json
 import logging
 import requests
-from .base import BaseProvider, ProviderError
+from .base import BaseProvider, ProviderError, ProviderRateLimitError
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ class ClaudeProvider(BaseProvider):
                 headers=self._build_headers(),
                 timeout=60,
             )
-            resp.raise_for_status()
+            self.raise_for_http_status(resp)
             data = resp.json()
 
             if "content" in data and data["content"]:
@@ -73,6 +73,8 @@ class ClaudeProvider(BaseProvider):
         except requests.exceptions.Timeout:
             logger.error("Claude timeout")
             raise ProviderError(self.name, "La solicitud tardó demasiado")
+        except ProviderRateLimitError:
+            raise
         except requests.exceptions.HTTPError as e:
             logger.error("Claude HTTP error: %s", str(e))
             raise ProviderError(self.name, f"Error HTTP: {e}", original_error=e)
@@ -104,7 +106,7 @@ class ClaudeProvider(BaseProvider):
                 timeout=120,
                 stream=True,
             )
-            resp.raise_for_status()
+            self.raise_for_http_status(resp)
             resp.encoding = 'utf-8'
 
             for line in resp.iter_lines():
@@ -130,6 +132,8 @@ class ClaudeProvider(BaseProvider):
         except requests.exceptions.Timeout:
             logger.error("Claude stream timeout")
             raise ProviderError(self.name, "Streaming tardó demasiado")
+        except ProviderRateLimitError:
+            raise
         except ProviderError:
             raise
         except Exception as e:

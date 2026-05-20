@@ -4,7 +4,7 @@ Proveedor Gemini (Google) — Fallback para Mentore IA.
 import json
 import logging
 import requests
-from .base import BaseProvider, ProviderError
+from .base import BaseProvider, ProviderError, ProviderRateLimitError
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +55,7 @@ class GeminiProvider(BaseProvider):
 
         try:
             resp = requests.post(url, json=payload, timeout=60)
-            resp.raise_for_status()
+            self.raise_for_http_status(resp)
             data = resp.json()
 
             if "candidates" in data and data["candidates"]:
@@ -73,6 +73,8 @@ class GeminiProvider(BaseProvider):
         except requests.exceptions.Timeout:
             logger.error("Gemini timeout")
             raise ProviderError(self.name, "La solicitud tardó demasiado")
+        except ProviderRateLimitError:
+            raise
         except requests.exceptions.HTTPError as e:
             logger.error("Gemini HTTP error: %s", str(e))
             raise ProviderError(self.name, f"Error HTTP: {e}", original_error=e)
@@ -102,7 +104,7 @@ class GeminiProvider(BaseProvider):
 
         try:
             resp = requests.post(url, json=payload, timeout=120, stream=True)
-            resp.raise_for_status()
+            self.raise_for_http_status(resp)
             resp.encoding = 'utf-8'
 
             for line in resp.iter_lines():
@@ -128,6 +130,8 @@ class GeminiProvider(BaseProvider):
         except requests.exceptions.Timeout:
             logger.error("Gemini stream timeout")
             raise ProviderError(self.name, "Streaming tardó demasiado")
+        except ProviderRateLimitError:
+            raise
         except ProviderError:
             raise
         except Exception as e:

@@ -64,11 +64,30 @@ class BaseProvider(ABC):
         """
         pass
 
+    def raise_for_http_status(self, response):
+        """Convierte HTTP 429 de la API en ProviderRateLimitError."""
+        if response.status_code == 429:
+            raise ProviderRateLimitError(
+                self.name,
+                'Límite de solicitudes de la API alcanzado',
+                original_error=None,
+            )
+        response.raise_for_status()
+
 
 class ProviderError(Exception):
     """Error específico de un proveedor de IA."""
 
-    def __init__(self, provider_name, message, original_error=None):
+    status_code = None
+
+    def __init__(self, provider_name, message, original_error=None, status_code=None):
         self.provider_name = provider_name
         self.original_error = original_error
+        self.status_code = status_code
         super().__init__(f"[{provider_name}] {message}")
+
+
+class ProviderRateLimitError(ProviderError):
+    """La API del proveedor respondió 429 (demasiadas solicitudes)."""
+
+    status_code = 429

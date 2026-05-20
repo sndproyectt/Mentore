@@ -98,3 +98,46 @@
 [2026-05-19 19:03:27,861] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=16
 [2026-05-19 19:03:29,370] INFO ai_assistant.services.providers.groq Groq stream completado
 [2026-05-19 19:03:29,374] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq
+[2026-05-20 13:17:32,012] INFO ai_assistant.views Chat view cargada para cristi (8 mensajes)
+[2026-05-20 13:17:42,912] INFO ai_assistant.views stream_message de cristi: 'como estas?...'
+[2026-05-20 13:17:42,914] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-20 13:17:42,916] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-20 13:17:43,556] INFO ai_assistant.services.ai_service Stream request de cristi: 17 msgs, doc_chars=0
+[2026-05-20 13:17:43,558] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-20 13:17:43,562] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=18
+[2026-05-20 13:17:44,837] ERROR ai_assistant.services.providers.groq Groq stream error: 'GroqProvider' object has no attribute 'raise_for_http_status'
+[2026-05-20 13:17:44,838] WARNING ai_assistant.services.ai_service Stream: proveedor groq falló: [groq] Error en streaming: 'GroqProvider' object has no attribute 'raise_for_http_status'
+[2026-05-20 13:17:44,842] ERROR ai_assistant.services.ai_service Stream: todos los proveedores fallaron para cristi
+[2026-05-20 13:24:39,661] INFO ai_assistant.views Chat view cargada para cristi (9 mensajes)
+[2026-05-20 13:24:45,068] INFO ai_assistant.views stream_message de cristi: 'hola...'
+[2026-05-20 13:24:45,070] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-20 13:24:45,072] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-20 13:24:45,801] INFO ai_assistant.services.ai_service Stream request de cristi: 17 msgs, doc_chars=0
+[2026-05-20 13:24:45,802] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-20 13:24:45,806] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=18
+[2026-05-20 13:24:48,252] INFO ai_assistant.services.providers.groq Groq stream completado
+[2026-05-20 13:24:48,255] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq
+[2026-05-20 13:26:16,226] INFO ai_assistant.views stream_message de cristi: 'limite de mensajes?...'
+[2026-05-20 13:26:16,228] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-20 13:26:16,229] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-20 13:26:16,842] INFO ai_assistant.services.ai_service Stream request de cristi: 17 msgs, doc_chars=0
+[2026-05-20 13:26:16,843] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-20 13:26:16,847] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=18
+[2026-05-20 13:26:18,610] INFO ai_assistant.services.providers.groq Groq stream completado
+[2026-05-20 13:26:18,612] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq
+[2026-05-20 13:26:19,509] INFO ai_assistant.services.ai_service Generando resumen para cristi (10 mensajes totales)
+[2026-05-20 13:26:19,510] INFO ai_assistant.services.providers.groq Groq request: model=llama-3.1-8b-instant, messages=2, max_tokens=300
+[2026-05-20 13:26:20,557] WARNING ai_assistant.services.ai_service No se pudo generar resumen/memoria: [groq] Límite de solicitudes de la API alcanzado
+[2026-05-20 13:26:46,229] INFO ai_assistant.views stream_message de cristi: 'ayudame en matematicas...'
+[2026-05-20 13:26:46,232] WARNING ai_assistant.services.providers.base Proveedor claude inicializado sin API key
+[2026-05-20 13:26:46,233] WARNING ai_assistant.services.providers.base Proveedor gemini inicializado sin API key
+[2026-05-20 13:26:46,947] INFO ai_assistant.services.ai_service Stream request de cristi: 17 msgs, doc_chars=0
+[2026-05-20 13:26:46,949] INFO ai_assistant.services.ai_service Stream intentando con: groq
+[2026-05-20 13:26:46,953] INFO ai_assistant.services.providers.groq Groq stream request: model=llama-3.1-8b-instant, messages=18
+[2026-05-20 13:26:49,049] INFO ai_assistant.services.providers.groq Groq stream completado
+[2026-05-20 13:26:49,052] INFO ai_assistant.services.ai_service Stream completado exitosamente con groq
+[2026-05-20 13:26:50,048] INFO ai_assistant.services.ai_service Generando resumen para cristi (11 mensajes totales)
+[2026-05-20 13:26:50,049] INFO ai_assistant.services.providers.groq Groq request: model=llama-3.1-8b-instant, messages=2, max_tokens=300
+[2026-05-20 13:26:51,147] WARNING ai_assistant.services.ai_service No se pudo generar resumen/memoria: [groq] Límite de solicitudes de la API alcanzado
+[2026-05-20 13:27:02,058] INFO ai_assistant.views Historial limpiado para cristi (12 mensajes eliminados)
+[2026-05-20 13:27:03,798] INFO ai_assistant.views Chat view cargada para cristi (0 mensajes)

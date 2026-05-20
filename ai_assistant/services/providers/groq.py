@@ -5,7 +5,7 @@ Usa la API compatible con OpenAI.
 import json
 import logging
 import requests
-from .base import BaseProvider, ProviderError
+from .base import BaseProvider, ProviderError, ProviderRateLimitError
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class GroqProvider(BaseProvider):
                 headers=self._build_headers(),
                 timeout=60,
             )
-            resp.raise_for_status()
+            self.raise_for_http_status(resp)
             data = resp.json()
 
             if "choices" in data and data["choices"]:
@@ -81,6 +81,8 @@ class GroqProvider(BaseProvider):
         except requests.exceptions.Timeout:
             logger.error("Groq timeout después de 60s")
             raise ProviderError(self.name, "La solicitud tardó demasiado. Intenta de nuevo.")
+        except ProviderRateLimitError:
+            raise
         except requests.exceptions.HTTPError as e:
             logger.error("Groq HTTP error: %s - %s", e, resp.text[:500] if resp else "")
             raise ProviderError(self.name, f"Error HTTP: {e}", original_error=e)
@@ -113,7 +115,7 @@ class GroqProvider(BaseProvider):
                 timeout=120,
                 stream=True,
             )
-            resp.raise_for_status()
+            self.raise_for_http_status(resp)
             resp.encoding = 'utf-8'
 
             for line in resp.iter_lines():
@@ -138,6 +140,8 @@ class GroqProvider(BaseProvider):
         except requests.exceptions.Timeout:
             logger.error("Groq stream timeout")
             raise ProviderError(self.name, "Streaming tardó demasiado")
+        except ProviderRateLimitError:
+            raise
         except requests.exceptions.HTTPError as e:
             logger.error("Groq stream HTTP error: %s", str(e))
             raise ProviderError(self.name, f"Error HTTP en stream: {e}", original_error=e)
