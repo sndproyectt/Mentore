@@ -360,7 +360,7 @@ def _send_attendance_notification(teacher, student, classroom, date_str, status,
         # 3. Fecha legible
         parsed_date = parse_date(date_str)
         from django.utils.formats import date_format
-        date_display = date_format(parsed_date, 'l j \de F \de Y') if parsed_date else date_str
+        date_display = date_format(parsed_date, 'l j \\d\\e F \\d\\e Y') if parsed_date else date_str
 
         ctx = {
             'guardian_name': guardian_name,
