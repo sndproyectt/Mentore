@@ -3,14 +3,22 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
 from .models import StudentWork, WorkCategory
-from students.models import Student
+from students.models import Student, Classroom
+from django.db.models import Q
 
 
 @login_required
 def gallery_list(request):
     query = request.GET.get('q', '')
     cat_id = request.GET.get('cat', '')
-    works = StudentWork.objects.filter(teacher=request.user)
+    _role = getattr(getattr(request.user, 'teacher_profile', None), 'role', 'teacher')
+    if _role == 'coordinator':
+        works = StudentWork.objects.select_related('teacher', 'student')
+    else:
+        accessible_ids = _accessible_students(request.user).values_list('id', flat=True)
+        works = StudentWork.objects.filter(
+            Q(teacher=request.user) | Q(student_id__in=accessible_ids)
+        ).distinct()
     if query:
         works = works.filter(Q(title__icontains=query) | Q(student__first_name__icontains=query) | Q(student__last_name__icontains=query))
     if cat_id:
@@ -19,13 +27,31 @@ def gallery_list(request):
     return render(request, 'gallery/gallery_list.html', {'works': works, 'query': query, 'categories': categories})
 
 
+def _accessible_students(user):
+    """Estudiantes a los que el docente tiene acceso (propio + salones compartidos)."""
+    _role = getattr(getattr(user, 'teacher_profile', None), 'role', 'teacher')
+    if _role == 'coordinator':
+        return Student.objects.filter(active=True)
+    shared_cr_ids = Classroom.objects.filter(
+        Q(teacher=user) | Q(teachers=user)
+    ).values_list('id', flat=True)
+    return Student.objects.filter(
+        Q(teacher=user) | Q(classroom_id__in=shared_cr_ids),
+        active=True,
+    ).distinct()
+
+
 @login_required
 def work_upload(request):
-    students = Student.objects.filter(teacher=request.user, active=True)
+    students = _accessible_students(request.user).select_related('classroom').order_by('last_name')
     categories = WorkCategory.objects.filter(teacher=request.user)
     if request.method == 'POST':
         p = request.POST
-        student = get_object_or_404(Student, pk=p.get('student'), teacher=request.user)
+        # Verify the student is accessible to this user
+        student = get_object_or_404(Student, pk=p.get('student'))
+        if not _accessible_students(request.user).filter(pk=student.pk).exists():
+            messages.error(request, 'No tienes acceso a ese estudiante.')
+            return redirect('gallery:upload')
         cat_id = p.get('category') or None
         work = StudentWork(
             teacher=request.user,

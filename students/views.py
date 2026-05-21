@@ -302,19 +302,99 @@ def save_attendance(request):
         messages.error(request, 'No tienes permiso para guardar asistencia en este salón.')
         return redirect('students:attendance')
 
-    students = Student.objects.filter(classroom=classroom, active=True)
-    for student in students:
+    from django.urls import reverse as _reverse
+    students_qs = Student.objects.filter(classroom=classroom, active=True)                        .prefetch_related('guardians')
+
+    for student in students_qs:
         status = request.POST.get(f'status_{student.pk}', 'present')
         note   = request.POST.get(f'note_{student.pk}', '')
-        Attendance.objects.update_or_create(
+        att, created = Attendance.objects.update_or_create(
             student=student, date=date_str,
             defaults={'status': status, 'note': note}
         )
+        # ── Notificación Gmail para ausencia o llegada tarde ──
+        if status in ('absent', 'late'):
+            _send_attendance_notification(
+                teacher=request.user,
+                student=student,
+                classroom=classroom,
+                date_str=date_str,
+                status=status,
+                note=note,
+            )
+
     messages.success(request, f'Asistencia del {date_str} guardada correctamente.')
     return redirect(
-        f"{__import__('django.urls', fromlist=['reverse']).reverse('students:attendance')}"
+        f"{_reverse('students:attendance')}"
         f"?classroom={classroom_id}&date={date_str}"
     )
+
+
+def _send_attendance_notification(teacher, student, classroom, date_str, status, note):
+    """
+    Envía notificación por Gmail al acudiente principal del estudiante.
+    Falla silenciosamente para no interrumpir el flujo de asistencia.
+    """
+    try:
+        from gmail_service import send_gmail_message
+        from django.template.loader import render_to_string
+        from django.utils.dateparse import parse_date
+
+        # 1. Obtener acudiente principal
+        guardian = student.guardians.filter(is_primary=True, email__gt='').first()
+        if not guardian:
+            # Fallback al campo legacy parent_email
+            if not student.parent_email:
+                return
+            guardian_name  = student.parent_name or 'Acudiente'
+            guardian_email = student.parent_email
+        else:
+            guardian_name  = guardian.name
+            guardian_email = guardian.email
+
+        # 2. Datos del colegio
+        school_name = getattr(
+            getattr(teacher, 'teacher_profile', None), 'school_name', ''
+        ) or 'Colegio'
+
+        # 3. Fecha legible
+        parsed_date = parse_date(date_str)
+        from django.utils.formats import date_format
+        date_display = date_format(parsed_date, 'l j \de F \de Y') if parsed_date else date_str
+
+        ctx = {
+            'guardian_name': guardian_name,
+            'student_name':  student.get_full_name(),
+            'date':          date_display,
+            'classroom':     classroom.name,
+            'teacher_name':  teacher.get_full_name() or teacher.username,
+            'school_name':   school_name,
+            'note':          note,
+        }
+
+        # 4. Elegir template según status
+        if status == 'absent':
+            template = 'students/emails/absent_email.html'
+            subject  = f'Ausencia de {student.get_full_name()} — {date_display}'
+        else:  # late
+            template = 'students/emails/late_email.html'
+            subject  = f'Llegada tarde de {student.get_full_name()} — {date_display}'
+
+        html_body = render_to_string(template, ctx)
+
+        # 5. Enviar
+        send_gmail_message(
+            teacher_user=teacher,
+            to_email=guardian_email,
+            subject=subject,
+            html_body=html_body,
+        )
+
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).error(
+            'Error enviando notificación Gmail para %s: %s', student, exc
+        )
 
 # ── Announcements ─────────────────────────────────────────────────────────────
 

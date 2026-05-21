@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  body{margin:0;padding:0;background:#F4F6F8;font-family:'Segoe UI',Arial,sans-serif;}
+  .wrap{max-width:580px;margin:32px auto;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.08);}
+  .header{background:linear-gradient(135deg,#D97706,#F59E0B);padding:32px 36px;text-align:center;}
+  .header-icon{font-size:48px;margin-bottom:8px;}
+  .header h1{margin:0;color:#fff;font-size:22px;font-weight:800;letter-spacing:-.3px;}
+  .header p{margin:8px 0 0;color:rgba(255,255,255,.85);font-size:14px;}
+  .body{padding:32px 36px;}
+  .greeting{font-size:16px;color:#111827;margin-bottom:20px;}
+  .info-card{background:#FFFBEB;border:1.5px solid #FCD34D;border-radius:12px;padding:20px 22px;margin-bottom:24px;}
+  .info-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #FDE68A;}
+  .info-row:last-child{border-bottom:none;}
+  .info-label{font-size:12px;font-weight:700;text-transform:uppercase;color:#92400E;min-width:90px;}
+  .info-value{font-size:14px;color:#1F2937;}
+  .note-box{background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;padding:14px 16px;margin-bottom:24px;font-size:13px;color:#1E40AF;}
+  .footer{background:#F9FAFB;border-top:1px solid #E5E7EB;padding:18px 36px;text-align:center;font-size:12px;color:#6B7280;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="header-icon">⏰</div>
+    <h1>Notificación de Llegada Tarde</h1>
+    <p>{{ school_name }}</p>
+  </div>
+  <div class="body">
+    <p class="greeting">
+      Estimado/a <strong>{{ guardian_name }}</strong>,<br>
+      le informamos que el día de hoy su acudido/a llegó tarde a la institución.
+    </p>
+    <div class="info-card">
+      <div class="info-row">
+        <span class="info-label">👧 Estudiante</span>
+        <span class="info-value">{{ student_name }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">📅 Fecha</span>
+        <span class="info-value">{{ date }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">🏫 Salón</span>
+        <span class="info-value">{{ classroom }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">👩‍🏫 Docente</span>
+        <span class="info-value">{{ teacher_name }}</span>
+      </div>
+    </div>
+    {% if note %}
+    <div class="note-box">
+      📝 <strong>Observación:</strong> {{ note }}
+    </div>
+    {% endif %}
+    <p style="font-size:13px;color:#374151;line-height:1.7;">
+      Le pedimos puntualidad para no afectar el proceso de aprendizaje. Si la tardanza
+      se debió a algún inconveniente justificado, por favor infórmelo al docente.
+    </p>
+  </div>
+  <div class="footer">
+    Este mensaje fue enviado automáticamente por <strong>Mentore</strong> · {{ school_name }}<br>
+    Por favor no responda directamente a este correo automático.
+  </div>
+</div>
+</body>
+</html>

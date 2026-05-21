@@ -19,7 +19,7 @@ User = get_user_model()
 GOOGLE_AUTH_URL  = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
 GOOGLE_USERINFO  = "https://www.googleapis.com/oauth2/v3/userinfo"
-GOOGLE_SCOPE     = "openid email profile"
+GOOGLE_SCOPE     = "openid email profile https://www.googleapis.com/auth/gmail.send"
 
 APPLE_AUTH_URL   = "https://appleid.apple.com/auth/authorize"
 APPLE_TOKEN_URL  = "https://appleid.apple.com/auth/token"
@@ -148,7 +148,7 @@ def google_login(request):
         "response_type": "code",
         "scope":         GOOGLE_SCOPE,
         "access_type":   "offline",
-        "prompt":        "select_account",
+        "prompt":        "consent",   # fuerza refresh_token siempre
     }
     return redirect(GOOGLE_AUTH_URL + "?" + urllib.parse.urlencode(params))
 
@@ -190,6 +190,21 @@ def google_callback(request):
         full_name   = info.get("name", ""),
         avatar_url  = info.get("picture", ""),
     )
+
+    # ── Save / update OAuth tokens ───────────────────────────
+    from django.utils import timezone as _tz
+    refresh_token = token_data.get("refresh_token", "")
+    expires_in    = token_data.get("expires_in", 3600)
+
+    social_qs = user.social_accounts.filter(provider="google")
+    if social_qs.exists():
+        social = social_qs.first()
+        social.access_token = access_token
+        social.token_expiry = _tz.now() + _tz.timedelta(seconds=expires_in)
+        # refresh_token only comes on first consent or after prompt=consent
+        if refresh_token:
+            social.refresh_token = refresh_token
+        social.save(update_fields=["access_token", "token_expiry", "refresh_token"])
 
     login(request, user, backend='django.contrib.auth.backends.ModelBackend')
     messages.success(request, f"¡Bienvenido, {user.first_name or user.username}! Sesión iniciada con Google.")

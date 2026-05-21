@@ -16,8 +16,11 @@ class SocialAccount(models.Model):
     provider    = models.CharField(max_length=20, choices=PROVIDER_CHOICES)
     provider_id = models.CharField(max_length=255)
     email       = models.EmailField(blank=True)
-    avatar_url  = models.URLField(blank=True)
-    created_at  = models.DateTimeField(auto_now_add=True)
+    avatar_url    = models.URLField(blank=True)
+    access_token  = models.TextField(blank=True, default='', verbose_name='Access Token')
+    refresh_token = models.TextField(blank=True, default='', verbose_name='Refresh Token')
+    token_expiry  = models.DateTimeField(blank=True, null=True, verbose_name='Token Expiry')
+    created_at    = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ('provider', 'provider_id')
