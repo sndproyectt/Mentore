@@ -1,20 +1,26 @@
 import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Carga variables desde un archivo .env en el directorio base del proyecto
+# ============================================================
+# .env
+# ============================================================
+
 load_dotenv(BASE_DIR / '.env')
+
+# ============================================================
+# CORE
+# ============================================================
 
 SECRET_KEY = os.environ.get(
     'SECRET_KEY',
     'django-insecure-mentore-change-this-in-production-2024'
 )
 
-# En desarrollo local, habilita DEBUG por defecto si no está en .env
-# En producción asegúrate de definir DEBUG=False en las variables de entorno.
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = [
@@ -22,6 +28,10 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
     'localhost',
 ]
+
+# ============================================================
+# APPS
+# ============================================================
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -40,6 +50,10 @@ INSTALLED_APPS = [
     'coordinator',
 ]
 
+# ============================================================
+# MIDDLEWARE
+# ============================================================
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
 
@@ -54,7 +68,17 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# ============================================================
+# URLS / WSGI
+# ============================================================
+
 ROOT_URLCONF = 'mentore.urls'
+
+WSGI_APPLICATION = 'mentore.wsgi.application'
+
+# ============================================================
+# TEMPLATES
+# ============================================================
 
 TEMPLATES = [
     {
@@ -72,17 +96,31 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'mentore.wsgi.application'
-
 # ============================================================
 # DATABASE
 # ============================================================
+# LOCAL:
+#   usa sqlite automáticamente
+#
+# RENDER:
+#   usa DATABASE_URL automáticamente
+# ============================================================
 
-DATABASES = {
-    'default': dj_database_url.parse(
-        'postgresql://mentore_user:qqk2SRDbTg5r15ZpDup6kL4oMfYevz6Q@dpg-d7tojf8sfn5c73dq018g-a.oregon-postgres.render.com/mentore'
-    )
-}
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+if DATABASE_URL:
+    # Render / Producción
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL)
+    }
+else:
+    # Desarrollo local
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # ============================================================
 # PASSWORDS
@@ -108,8 +146,11 @@ AUTH_PASSWORD_VALIDATORS = [
 # ============================================================
 
 LANGUAGE_CODE = 'es-co'
+
 TIME_ZONE = 'America/Bogota'
+
 USE_I18N = True
+
 USE_TZ = True
 
 # ============================================================
@@ -124,15 +165,18 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = (
+    'whitenoise.storage.CompressedManifestStaticFilesStorage'
+)
 
 MEDIA_URL = '/media/'
+
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ============================================================
-# CACHE (límites del chat IA, bloqueo anti-spam)
+# CACHE
 # ============================================================
 
 CACHES = {
@@ -151,7 +195,9 @@ AI_CHAT_IN_FLIGHT_TTL = 180
 # ============================================================
 
 LOGIN_URL = '/accounts/login/'
+
 LOGIN_REDIRECT_URL = '/dashboard/'
+
 LOGOUT_REDIRECT_URL = '/accounts/login/'
 
 # ============================================================
@@ -181,7 +227,7 @@ APPLE_CLIENT_ID = os.environ.get('APPLE_CLIENT_ID', '')
 APPLE_CLIENT_SECRET = os.environ.get('APPLE_CLIENT_SECRET', '')
 
 # ============================================================
-# SECURITY (Render)
+# SECURITY
 # ============================================================
 
 CSRF_TRUSTED_ORIGINS = [
@@ -197,33 +243,39 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+
     'formatters': {
         'verbose': {
             'format': '[{asctime}] {levelname} {name} {message}',
             'style': '{',
         },
+
         'simple': {
             'format': '{levelname} {name}: {message}',
             'style': '{',
         },
     },
+
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
+
         'file': {
             'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'mentore.log',
+            'filename': BASE_DIR / 'mentore.log',
             'formatter': 'verbose',
         },
     },
+
     'loggers': {
         'ai_assistant': {
             'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': False,
         },
+
         'django': {
             'handlers': ['console'],
             'level': 'WARNING',
