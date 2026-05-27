@@ -189,24 +189,14 @@ cloudinary.config(
 )
 
 # ============================================================
-# MEDIA
+# MEDIA / CLOUDINARY
 # ============================================================
 
-# Render → Cloudinary
-if os.environ.get('RENDER'):
-    DEFAULT_FILE_STORAGE = (
-        'cloudinary_storage.storage.MediaCloudinaryStorage'
-    )
+DEFAULT_FILE_STORAGE = (
+    'cloudinary_storage.storage.MediaCloudinaryStorage'
+)
 
-    MEDIA_URL = (
-        f"https://res.cloudinary.com/"
-        f"{CLOUDINARY_STORAGE['CLOUD_NAME']}/"
-    )
-
-# Local → carpeta media normal
-else:
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
