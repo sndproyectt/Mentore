@@ -248,3 +248,29 @@ LOGGING = {
         'level': 'INFO',
     },
 }
+
+# ============================================================
+# 🔥 VARIABLES DE ENTORNO (RENDER / APIs)
+# ============================================================
+
+SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
+
+DATABASE_URL = os.environ.get('DATABASE_URL', DATABASE_URL)
+
+# APIs
+ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+
+# GOOGLE OAUTH
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+
+# APPLE LOGIN
+APPLE_CLIENT_ID = os.environ.get('APPLE_CLIENT_ID', '')
+APPLE_CLIENT_SECRET = os.environ.get('APPLE_CLIENT_SECRET', '')
+
+# CLOUDINARY (extra seguridad opcional)
+CLOUDINARY_CLOUD_NAME = os.environ.get('CLOUDINARY_CLOUD_NAME', '')
+CLOUDINARY_API_KEY = os.environ.get('CLOUDINARY_API_KEY', '')
+CLOUDINARY_API_SECRET = os.environ.get('CLOUDINARY_API_SECRET', '')
