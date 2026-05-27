@@ -4,6 +4,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 import dj_database_url
 
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ============================================================
@@ -39,7 +43,12 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+
+    'cloudinary_storage',
+
     'django.contrib.staticfiles',
+
+    'cloudinary',
 
     'accounts',
     'students',
@@ -57,7 +66,6 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
 
-    # WhiteNoise
     'whitenoise.middleware.WhiteNoiseMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -99,22 +107,16 @@ TEMPLATES = [
 # ============================================================
 # DATABASE
 # ============================================================
-# LOCAL:
-#   usa sqlite automáticamente
-#
-# RENDER:
-#   usa DATABASE_URL automáticamente
-# ============================================================
 
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 if DATABASE_URL:
-    # Render / Producción
+    # Render / producción
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL)
     }
 else:
-    # Desarrollo local
+    # Local
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -154,7 +156,7 @@ USE_I18N = True
 USE_TZ = True
 
 # ============================================================
-# STATIC / MEDIA
+# STATIC
 # ============================================================
 
 STATIC_URL = '/static/'
@@ -169,9 +171,42 @@ STATICFILES_STORAGE = (
     'whitenoise.storage.CompressedManifestStaticFilesStorage'
 )
 
-MEDIA_URL = '/media/'
+# ============================================================
+# CLOUDINARY
+# ============================================================
 
-MEDIA_ROOT = BASE_DIR / 'media'
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', ''),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', ''),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', ''),
+}
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+    secure=True,
+)
+
+# ============================================================
+# MEDIA
+# ============================================================
+
+# Render → Cloudinary
+if os.environ.get('RENDER'):
+    DEFAULT_FILE_STORAGE = (
+        'cloudinary_storage.storage.MediaCloudinaryStorage'
+    )
+
+    MEDIA_URL = (
+        f"https://res.cloudinary.com/"
+        f"{CLOUDINARY_STORAGE['CLOUD_NAME']}/"
+    )
+
+# Local → carpeta media normal
+else:
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -234,7 +269,10 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.onrender.com',
 ]
 
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER = (
+    'HTTP_X_FORWARDED_PROTO',
+    'https'
+)
 
 # ============================================================
 # LOGGING
