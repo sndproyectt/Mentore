@@ -81,13 +81,23 @@ def work_upload(request):
 
 @login_required
 def work_detail(request, pk):
-    work = get_object_or_404(StudentWork, pk=pk, teacher=request.user)
+    work = get_object_or_404(StudentWork, pk=pk)
+    _role = getattr(getattr(request.user, 'teacher_profile', None), 'role', 'teacher')
+    if work.teacher != request.user and _role != 'coordinator':
+        if not _accessible_students(request.user).filter(pk=work.student_id).exists():
+            from django.http import Http404
+            raise Http404
     return render(request, 'gallery/work_detail.html', {'work': work})
 
 
 @login_required
 def work_delete(request, pk):
-    work = get_object_or_404(StudentWork, pk=pk, teacher=request.user)
+    work = get_object_or_404(StudentWork, pk=pk)
+    # Allow delete if uploader OR coordinator
+    _role = getattr(getattr(request.user, 'teacher_profile', None), 'role', 'teacher')
+    if work.teacher != request.user and _role != 'coordinator':
+        messages.error(request, 'No tienes permiso para eliminar este trabajo.')
+        return redirect('gallery:list')
     if request.method == 'POST':
         work.delete()
         messages.success(request, 'Trabajo eliminado.')
