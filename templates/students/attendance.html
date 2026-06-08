@@ -142,7 +142,7 @@
 {% if not selected_classroom %}
 <div class="card">
   <div class="empty-state" style="padding:52px;">
-    <span class="empty-icon" style="font-size:48px;">📋</span>
+    <span class="empty-icon" style="font-size:48px;"><i class="bi bi-clipboard-check"></i></span>
     <h3>Selecciona un grupo para empezar</h3>
     <p>Elige el grupo y la fecha en el filtro de arriba.</p>
   </div>
@@ -151,7 +151,7 @@
 {% elif not students %}
 <div class="card">
   <div class="empty-state" style="padding:52px;">
-    <span class="empty-icon" style="font-size:48px;">👥</span>
+    <span class="empty-icon" style="font-size:48px;"><i class="bi bi-people"></i></span>
     <h3>Este grupo no tiene estudiantes</h3>
     <p>Agrega estudiantes al grupo para registrar asistencia.</p>
   </div>
@@ -197,7 +197,7 @@
   <div class="card" style="margin-bottom:16px;overflow:hidden;">
     <div class="card-header">
       <span class="card-title">
-        📋 {{ students|length }} estudiante{{ students|length|pluralize:"s" }} — {{ selected_date }}
+        <i class="bi bi-clipboard-check"></i> {{ students|length }} estudiante{{ students|length|pluralize:"s" }} — {{ selected_date }}
       </span>
     </div>
 

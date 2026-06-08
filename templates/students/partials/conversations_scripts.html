@@ -1,0 +1,22 @@
+<script>
+function toggleThread(id, hdr){
+  const win = document.getElementById(id);
+  const chv = document.getElementById('chv-'+id);
+  const open = win.classList.toggle('open');
+  hdr.classList.toggle('open', open);
+  chv.style.transform = open ? 'rotate(180deg)' : '';
+  if(open){
+    const msgs = win.querySelector('.chat-messages');
+    if(msgs) setTimeout(()=>{ msgs.scrollTop = msgs.scrollHeight; }, 80);
+    setTimeout(()=>win.querySelector('.reply-ta')?.focus(), 120);
+  }
+}
+function autoResize(ta){
+  ta.style.height='auto';
+  ta.style.height=Math.min(ta.scrollHeight, 120)+'px';
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  const first=document.querySelector('.thread-header');
+  if(first) first.click();
+});
+</script>

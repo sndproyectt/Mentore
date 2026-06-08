@@ -1,4 +1,5 @@
 {% extends 'base/layout.html' %}
+{% load grade_scale %}
 {% block title %}Todos los Estudiantes — Coordinación{% endblock %}
 {% block page_title %}Todos los Estudiantes{% endblock %}
 {% block content %}
@@ -37,7 +38,7 @@
 
 <div class="card">
   <div class="card-header">
-    <span class="card-title">👧 Estudiantes ({{ students|length }})</span>
+    <span class="card-title"><i class="bi bi-person-badge"></i> Estudiantes ({{ students|length }})</span>
   </div>
   <div style="overflow-x:auto;">
     <table class="table">
@@ -78,7 +79,7 @@
           <td>
             {% with avg=s.average_grade %}
             {% if avg %}
-            <span class="grade-pill {% if avg >= 4 %}grade-a{% elif avg >= 3 %}grade-b{% elif avg >= 2.5 %}grade-c{% else %}grade-d{% endif %}">{{ avg }}</span>
+            <span class="grade-pill {{ avg|grade_scale_class }}">{{ avg }}</span>
             {% else %}
             <span style="color:var(--gray-300);">—</span>
             {% endif %}
@@ -113,3 +114,4 @@
   </div>
 </div>
 {% endblock %}
+

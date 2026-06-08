@@ -1,0 +1,35 @@
+<div class="card" style="margin-top:20px;">
+  <div class="card-header">
+    <span class="card-title"><i class="bi bi-inbox"></i> Bandeja de entrada</span>
+  </div>
+  {% if received_announcements %}
+  <div style="display:flex;flex-direction:column;gap:10px;padding:16px;">
+    {% for ann in received_announcements %}
+    <div style="background:#fff;border:1px solid var(--gray-100);border-radius:12px;overflow:hidden;border-left:4px solid {% if ann.priority == 'high' %}#EF4444{% elif ann.priority == 'medium' %}#F9C32A{% else %}var(--primary){% endif %};">
+      <div style="padding:16px 20px;">
+        <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
+          <div style="flex:1;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+              <span style="font-size:18px;">{% if ann.priority == 'high' %}<i class="bi bi-exclamation-octagon-fill"></i>{% elif ann.priority == 'medium' %}<i class="bi bi-exclamation-triangle-fill"></i>{% else %}<i class="bi bi-clipboard-check"></i>{% endif %}</span>
+              <span style="font-weight:800;font-size:16px;color:var(--gray-900);">{{ ann.title }}</span>
+              <span class="badge {% if ann.priority == 'high' %}badge-danger{% elif ann.priority == 'medium' %}badge-warning{% else %}badge-info{% endif %}" style="font-size:10px;">{{ ann.get_priority_display }}</span>
+            </div>
+            <p style="font-size:14px;color:var(--gray-600);line-height:1.6;margin:0 0 10px;white-space:pre-wrap;">{{ ann.content }}</p>
+            <div style="font-size:12px;color:var(--gray-400);">
+              <i class="bi bi-person-circle"></i> {{ ann.teacher.get_full_name }} &nbsp;·&nbsp;
+              <i class="bi bi-calendar3"></i> {{ ann.created_at|date:"d/m/Y H:i" }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state" style="padding:36px;">
+    <span class="empty-icon" style="font-size:40px;"><i class="bi bi-inbox"></i></span>
+    <h3>Sin comunicados recibidos</h3>
+    <p>Cuando un coordinador o docente te envíe un comunicado, aparecerá aquí.</p>
+  </div>
+  {% endif %}
+</div>

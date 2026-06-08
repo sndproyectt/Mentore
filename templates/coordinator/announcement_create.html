@@ -36,7 +36,7 @@
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
     <div>
-      <h2 style="font-size:20px;font-weight:800;color:var(--gray-900);margin:0 0 2px;">📢 Nuevo comunicado global</h2>
+      <h2 style="font-size:20px;font-weight:800;color:var(--gray-900);margin:0 0 2px;"><i class="bi bi-megaphone"></i> Nuevo comunicado global</h2>
       <p style="font-size:13px;color:var(--gray-500);margin:0;">Como coordinador, puedes enviar a docentes y/o padres de familia</p>
     </div>
     <a href="{% url 'coordinator:announcement_list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
@@ -47,29 +47,29 @@
     <div class="card" style="padding:24px;margin-bottom:16px;">
 
       <div class="form-group">
-        <label class="form-label">📌 Título *</label>
+        <label class="form-label"><i class="bi bi-pin-angle"></i> Título *</label>
         <input type="text" name="title" class="form-control" placeholder="Ej: Inicio de semestre, Reunión general…" required>
       </div>
 
       <div class="form-group">
-        <label class="form-label">📝 Contenido *</label>
+        <label class="form-label"><i class="bi bi-journal-text"></i> Contenido *</label>
         <textarea name="content" class="form-control" rows="5" placeholder="Escribe el comunicado completo…" required></textarea>
       </div>
 
       <div class="form-group">
-        <label class="form-label">🏷️ Prioridad</label>
+        <label class="form-label"><i class="bi bi-tags"></i> Prioridad</label>
         <div class="priority-group">
           <div class="priority-opt low">
             <input type="radio" name="priority" id="p-low" value="low" checked>
-            <label for="p-low"><span class="pi">📋</span> Informativo</label>
+            <label for="p-low"><span class="pi"><i class="bi bi-clipboard-check"></i></span> Informativo</label>
           </div>
           <div class="priority-opt med">
             <input type="radio" name="priority" id="p-med" value="medium">
-            <label for="p-med"><span class="pi">⚠️</span> Importante</label>
+            <label for="p-med"><span class="pi"><i class="bi bi-exclamation-triangle-fill"></i></span> Importante</label>
           </div>
           <div class="priority-opt high">
             <input type="radio" name="priority" id="p-high" value="high">
-            <label for="p-high"><span class="pi">🚨</span> Urgente</label>
+            <label for="p-high"><span class="pi"><i class="bi bi-exclamation-octagon-fill"></i></span> Urgente</label>
           </div>
         </div>
       </div>
@@ -77,7 +77,7 @@
       <!-- DESTINATARIOS -->
       <div class="form-group" style="margin-bottom:0;">
         <label class="form-label" style="margin-bottom:10px;">
-          👥 Destinatarios *
+          <i class="bi bi-people"></i> Destinatarios *
           <span style="font-weight:400;font-size:11px;color:var(--gray-400);margin-left:6px;">— elige docentes, padres o ambos</span>
         </label>
 
@@ -108,7 +108,7 @@
                   <div class="person-name">{{ t.get_full_name }}</div>
                   <div class="person-sub">
                     {{ t.teacher_profile.subject|default:"Sin materia" }}
-                    {% if t.teacher_profile.role == 'coordinator' %} · ⭐ Coordinador{% endif %}
+                    {% if t.teacher_profile.role == 'coordinator' %} · <i class="bi bi-star-fill"></i> Coordinador{% endif %}
                   </div>
                 </div>
               </label>
@@ -141,7 +141,7 @@
                 <div>
                   <div class="person-name">{{ s.get_full_name }}</div>
                   <div class="person-sub">
-                    👨‍👩‍👧 {{ s.parent_name|default:"Sin acudiente" }}
+                    <i class="bi bi-people-fill"></i> {{ s.parent_name|default:"Sin acudiente" }}
                     {% if s.parent_email %} · {{ s.parent_email }}{% endif %}
                     {% if s.classroom %} · {{ s.classroom.name }}{% endif %}
                     · Prof. {{ s.teacher.get_full_name }}

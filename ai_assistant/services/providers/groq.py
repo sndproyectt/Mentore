@@ -84,8 +84,14 @@ class GroqProvider(BaseProvider):
         except ProviderRateLimitError:
             raise
         except requests.exceptions.HTTPError as e:
-            logger.error("Groq HTTP error: %s - %s", e, resp.text[:500] if resp else "")
-            raise ProviderError(self.name, f"Error HTTP: {e}", original_error=e)
+            status_code = e.response.status_code if e.response is not None else None
+            logger.error("Groq HTTP error: status=%s - %s", status_code, resp.text[:500] if resp else "")
+            raise ProviderError(
+                self.name,
+                "Error HTTP del proveedor",
+                original_error=e,
+                status_code=status_code,
+            )
         except ProviderError:
             raise
         except Exception as e:
@@ -143,8 +149,14 @@ class GroqProvider(BaseProvider):
         except ProviderRateLimitError:
             raise
         except requests.exceptions.HTTPError as e:
-            logger.error("Groq stream HTTP error: %s", str(e))
-            raise ProviderError(self.name, f"Error HTTP en stream: {e}", original_error=e)
+            status_code = e.response.status_code if e.response is not None else None
+            logger.error("Groq stream HTTP error: status=%s", status_code)
+            raise ProviderError(
+                self.name,
+                "Error HTTP del proveedor",
+                original_error=e,
+                status_code=status_code,
+            )
         except ProviderError:
             raise
         except Exception as e:

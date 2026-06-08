@@ -13,7 +13,7 @@
 
   <!-- Docentes asignados -->
   <div class="card">
-    <div class="card-header"><span class="card-title">👩‍🏫 Docentes asignados ({{ assigned|length }})</span></div>
+    <div class="card-header"><span class="card-title"><i class="bi bi-person-workspace"></i> Docentes asignados ({{ assigned|length }})</span></div>
     {% if assigned %}
     {% for t in assigned %}
     <div style="display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--gray-100);">
@@ -41,7 +41,7 @@
 
   <!-- Agregar docente -->
   <div class="card">
-    <div class="card-header"><span class="card-title">➕ Agregar docente</span></div>
+    <div class="card-header"><span class="card-title"><i class="bi bi-plus-lg"></i> Agregar docente</span></div>
     <div style="padding:16px;">
       {% if available %}
       <form method="post">

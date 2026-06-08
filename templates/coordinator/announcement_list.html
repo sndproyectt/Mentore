@@ -40,13 +40,13 @@
 
 <div class="card">
   <div class="card-header">
-    <span class="card-title">📢 Comunicados ({{ announcements|length }})</span>
+    <span class="card-title"><i class="bi bi-megaphone"></i> Comunicados ({{ announcements|length }})</span>
   </div>
   {% if announcements %}
   <div style="display:flex;flex-direction:column;gap:0;">
     {% for ann in announcements %}
     <div style="display:flex;align-items:flex-start;gap:14px;padding:16px 20px;border-bottom:1px solid var(--gray-100);border-left:4px solid {% if ann.priority == 'high' %}#EF4444{% elif ann.priority == 'medium' %}var(--accent){% else %}var(--primary){% endif %};">
-      <span style="font-size:20px;flex-shrink:0;">{% if ann.priority == 'high' %}🚨{% elif ann.priority == 'medium' %}⚠️{% else %}📋{% endif %}</span>
+      <span style="font-size:20px;flex-shrink:0;">{% if ann.priority == 'high' %}<i class="bi bi-exclamation-octagon-fill"></i>{% elif ann.priority == 'medium' %}<i class="bi bi-exclamation-triangle-fill"></i>{% else %}<i class="bi bi-clipboard-check"></i>{% endif %}</span>
       <div style="flex:1;">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
           <div style="font-weight:800;font-size:15px;color:var(--gray-900);">{{ ann.title }}</div>
@@ -54,9 +54,9 @@
         </div>
         <div style="font-size:13px;color:var(--gray-600);margin-bottom:6px;line-height:1.5;">{{ ann.content|truncatechars:120 }}</div>
         <div style="font-size:11px;color:var(--gray-400);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span>👩‍🏫 {{ ann.teacher.get_full_name }}</span>
-          <span>📅 {{ ann.created_at|date:"d/m/Y H:i" }}</span>
-          {% if ann.classroom %}<span>🏫 {{ ann.classroom.name }}</span>{% else %}<span style="color:var(--primary);font-weight:700;">🌐 Global</span>{% endif %}
+          <span><i class="bi bi-person-workspace"></i> {{ ann.teacher.get_full_name }}</span>
+          <span><i class="bi bi-calendar-event"></i> {{ ann.created_at|date:"d/m/Y H:i" }}</span>
+          {% if ann.classroom %}<span><i class="bi bi-building"></i> {{ ann.classroom.name }}</span>{% else %}<span style="color:var(--primary);font-weight:700;"><i class="bi bi-globe2"></i> Global</span>{% endif %}
         </div>
       </div>
       <div style="flex-shrink:0;">
@@ -72,7 +72,7 @@
   </div>
   {% else %}
   <div class="empty-state" style="padding:48px;">
-    <span class="empty-icon">📢</span>
+    <span class="empty-icon"><i class="bi bi-megaphone"></i></span>
     <h3>Sin comunicados</h3>
     <p>No hay comunicados que coincidan con los filtros.</p>
     <a href="{% url 'coordinator:announcement_create' %}" class="btn btn-primary" style="margin-top:12px;"><i class="bi bi-plus-lg"></i> Crear comunicado</a>

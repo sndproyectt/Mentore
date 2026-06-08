@@ -6,7 +6,7 @@ Compatible con el nuevo M2M Classroom.teachers.
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.db.models import Q, Avg
+from django.db.models import Q, Avg, Prefetch
 from django.shortcuts import render, redirect, get_object_or_404
 
 from .models import Classroom, Student, Announcement, Attendance, Message, DirectMessage
@@ -18,6 +18,52 @@ def _teacher_classrooms(user):
     return Classroom.objects.filter(
         Q(teacher=user) | Q(teachers=user)
     ).distinct()
+
+
+def _received_announcements(user):
+    return Announcement.objects.filter(
+        teacher_recipients=user
+    ).select_related('teacher').order_by('-created_at')
+
+
+def _conversation_context(user, mark_read=False):
+    """Contexto compartido para hilos de padres y docentes."""
+    dm_replies_qs = DirectMessage.objects.select_related('sender').order_by('sent_at')
+    received_direct = DirectMessage.objects.filter(
+        recipient=user,
+        reply_to__isnull=True,
+    ).select_related('sender').prefetch_related(
+        Prefetch('replies', queryset=dm_replies_qs, to_attr='replies_asc')
+    ).order_by('-sent_at')
+
+    root_ids_as_teacher = Message.objects.filter(
+        teacher=user, reply_to__isnull=True
+    ).values_list('pk', flat=True)
+    root_ids_via_reply = Message.objects.filter(
+        teacher=user, reply_to__isnull=False
+    ).values_list('reply_to_id', flat=True)
+    all_root_ids = set(root_ids_as_teacher) | set(root_ids_via_reply)
+    replies_qs = Message.objects.select_related('teacher').order_by('sent_at')
+    parent_messages = Message.objects.filter(
+        pk__in=all_root_ids,
+    ).select_related('student').prefetch_related(
+        Prefetch('replies', queryset=replies_qs)
+    ).order_by('-sent_at')
+
+    if mark_read:
+        DirectMessage.objects.filter(recipient=user, is_read=False).update(is_read=True)
+        Message.objects.filter(teacher=user, is_read=False).update(is_read=True)
+
+    unread_count = (
+        DirectMessage.objects.filter(recipient=user, is_read=False).count() +
+        Message.objects.filter(teacher=user, is_read=False, sender_label='padre').count()
+    )
+
+    return {
+        'received_direct': received_direct,
+        'parent_messages': parent_messages,
+        'unread_count': unread_count,
+    }
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 
@@ -56,6 +102,7 @@ def dashboard(request):
     announcements   = Announcement.objects.filter(
         teacher=request.user
     ).order_by('-created_at')[:4]
+    received_announcements = _received_announcements(request.user)
 
     return render(request, 'students/dashboard.html', {
         'classrooms':      classrooms,
@@ -67,6 +114,7 @@ def dashboard(request):
         'unread_msgs':     unread_msgs,
         'recent_students': recent_students,
         'announcements':   announcements,
+        'received_announcements': received_announcements,
     })
 
 # ── Classrooms ────────────────────────────────────────────────────────────────
@@ -480,12 +528,19 @@ def message_list(request):
     if classroom_id:
         students_qs = students_qs.filter(classroom_id=classroom_id)
     classrooms = _teacher_classrooms(request.user)
-    return render(request, 'students/message_list.html', {
+    messages_qs = Message.objects.filter(
+        teacher=request.user,
+        reply_to__isnull=True,
+    ).select_related('student', 'student__classroom').order_by('-sent_at')
+    context = {
         'students':           students_qs,
         'classrooms':         classrooms,
         'query':              query,
         'selected_classroom': classroom_id,
-    })
+        'messages_qs':        messages_qs,
+    }
+    context.update(_conversation_context(request.user, mark_read=True))
+    return render(request, 'students/message_list.html', context)
 
 
 @login_required
@@ -724,61 +779,22 @@ def parent_portal_auto(request):
 @login_required
 def inbox_view(request):
     """Bandeja de entrada: comunicados + DirectMessages + mensajes de padres."""
-    received_announcements = Announcement.objects.filter(
-        teacher_recipients=request.user
-    ).select_related('teacher').order_by('-created_at')
-
-    from django.db.models import Prefetch as _Prefetch, Q as _Q
-
-    # DirectMessages de docente a docente (hilos, solo raíz)
-    _dm_replies_qs = DirectMessage.objects.select_related('sender').order_by('sent_at')
-    received_direct = DirectMessage.objects.filter(
-        recipient=request.user,
-        reply_to__isnull=True,
-    ).select_related('sender').prefetch_related(
-        _Prefetch('replies', queryset=_dm_replies_qs, to_attr='replies_asc')
-    ).order_by('-sent_at')
-
-    # Mensajes raíz donde este usuario es el teacher,
-    # O donde este usuario tiene al menos una respuesta en el hilo
-    root_ids_as_teacher = Message.objects.filter(
-        teacher=request.user, reply_to__isnull=True
-    ).values_list('pk', flat=True)
-    root_ids_via_reply = Message.objects.filter(
-        teacher=request.user, reply_to__isnull=False
-    ).values_list('reply_to_id', flat=True)
-    all_root_ids = set(root_ids_as_teacher) | set(root_ids_via_reply)
-    _replies_qs = Message.objects.select_related('teacher').order_by('sent_at')
-    parent_messages = Message.objects.filter(
-        pk__in=all_root_ids,
-    ).select_related('student').prefetch_related(
-        _Prefetch('replies', queryset=_replies_qs)
-    ).order_by('-sent_at')
-
-    DirectMessage.objects.filter(recipient=request.user, is_read=False).update(is_read=True)
-    Message.objects.filter(teacher=request.user, is_read=False).update(is_read=True)
-
-    unread_count = (
-        DirectMessage.objects.filter(recipient=request.user, is_read=False).count() +
-        Message.objects.filter(teacher=request.user, is_read=False, sender_label='padre').count()
-    )
-
-    return render(request, 'students/inbox.html', {
-        'received_announcements': received_announcements,
-        'received_direct':        received_direct,
-        'parent_messages':        parent_messages,
-        'unread_count':           unread_count,
-    })
+    context = {
+        'received_announcements': _received_announcements(request.user),
+    }
+    context.update(_conversation_context(request.user, mark_read=True))
+    return render(request, 'students/inbox.html', context)
 
 
 @login_required
 def direct_message_reply(request, pk):
     """Responder a un DirectMessage (hilo tipo chat)."""
     original = get_object_or_404(DirectMessage, pk=pk)
+    next_url = request.POST.get('next', '')
     # Only sender or recipient can reply
     if request.user not in (original.sender, original.recipient):
         messages.error(request, 'Sin acceso a este hilo.')
-        return redirect('students:inbox')
+        return redirect('students:message_list' if next_url == 'messages' else 'students:inbox')
     if request.method == 'POST':
         body = request.POST.get('body', '').strip()
         if not body:
@@ -794,7 +810,7 @@ def direct_message_reply(request, pk):
                 reply_to=original,
             )
             messages.success(request, 'Respuesta enviada.')
-    return redirect('students:inbox')
+    return redirect('students:message_list' if next_url == 'messages' else 'students:inbox')
 
 @login_required
 def message_thread(request, pk):
@@ -831,6 +847,8 @@ def message_thread(request, pk):
         next_url = request.POST.get('next', '')
         if next_url == 'inbox':
             return redirect('students:inbox')
+        if next_url == 'messages':
+            return redirect('students:message_list')
         return redirect('students:message_thread', pk=msg.pk)
     return render(request, 'students/message_thread.html', {
         'root': msg, 'thread': thread,

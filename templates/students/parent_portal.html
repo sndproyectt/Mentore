@@ -1,10 +1,12 @@
-{% load static %}
+{% load static grade_scale %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Portal Familias — Mentore</title>
+  <link rel="icon" type="image/png" href="{% static 'img/ai/menta_icon.png' %}?v=menta-parent-1">
+  <link rel="shortcut icon" type="image/png" href="{% static 'img/ai/menta_icon.png' %}?v=menta-parent-1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="{% static 'css/mentore.css' %}">
   <style>
@@ -190,7 +192,7 @@
 
       {% if email and not student %}
       <div class="p-error">
-        <div class="p-error-title"><span style="font-size:18px;">🔍</span> Correo no registrado</div>
+        <div class="p-error-title"><span style="font-size:18px;"><i class="bi bi-search"></i></span> Correo no registrado</div>
         <div class="p-error-body">No encontramos ningún estudiante vinculado al correo <strong>{{ email }}</strong>.</div>
         <div class="p-error-tip">
           <strong>¿Qué hacer?</strong> Pídele al docente que registre exactamente este correo en el perfil del estudiante como <em>Correo del acudiente</em>.
@@ -466,7 +468,7 @@
         {% with tp=student.teacher.teacher_profile %}
         {% if tp.subject %}
         <div style="display:inline-flex;align-items:center;gap:6px;margin-top:8px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:4px 12px;">
-          <span style="font-size:13px;">📚</span>
+          <span style="font-size:13px;"><i class="bi bi-book"></i></span>
           <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,.95);">{{ tp.subject }}</span>
           {% if student.teacher.get_full_name %}
           <span style="font-size:11px;color:rgba(255,255,255,.65);border-left:1px solid rgba(255,255,255,.3);padding-left:8px;margin-left:2px;">{{ student.teacher.get_full_name }}</span>
@@ -509,8 +511,8 @@
       <div class="avg-card" style="min-width:160px;flex-shrink:0;padding:22px 20px;">
         <div class="avg-label">Promedio general</div>
         <div class="avg-ring"><div class="avg-num">{{ general_avg|default:"—" }}</div></div>
-        <div class="avg-emoji">{% if general_avg %}{% if general_avg >= 4 %}🌟{% elif general_avg >= 3 %}👍{% elif general_avg >= 2.5 %}📚{% else %}💪{% endif %}{% endif %}</div>
-        <div class="avg-text">{% if general_avg %}{% if general_avg >= 4 %}Excelente{% elif general_avg >= 3 %}Buen desempeño{% elif general_avg >= 2.5 %}En proceso{% else %}Necesita apoyo{% endif %}{% endif %}</div>
+        <div class="avg-emoji">{% if general_avg %}{% if general_avg|grade_scale_label == "Superior" %}<i class="bi bi-star-fill"></i>{% elif general_avg|grade_scale_label == "Alto" %}<i class="bi bi-hand-thumbs-up"></i>{% elif general_avg|grade_scale_label == "Básico" %}<i class="bi bi-book"></i>{% else %}<i class="bi bi-activity"></i>{% endif %}{% endif %}</div>
+        <div class="avg-text">{% if general_avg %}{{ general_avg|grade_scale_label }}{% endif %}</div>
       </div>
 
       <!-- Filtro por materias -->
@@ -527,7 +529,7 @@
             style="padding:7px 14px;border-radius:999px;border:1.5px solid rgba(255,255,255,.25);background:rgba(255,255,255,.1);color:#fff;font-size:12px;font-weight:700;cursor:pointer;transition:all .18s;backdrop-filter:blur(4px);"
             class="subj-btn">
             {{ data.name }}
-            <span style="background:rgba(255,255,255,.2);border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px;{% if data.avg %}color:{% if data.avg >= 4 %}#6EE7B7{% elif data.avg >= 3 %}#93C5FD{% elif data.avg >= 2.5 %}#FCD34D{% else %}#FCA5A5{% endif %}{% endif %}">{{ data.avg|default:"?" }}</span>
+            <span style="background:rgba(255,255,255,.2);border-radius:10px;padding:1px 6px;font-size:10px;margin-left:4px;{% if data.avg %}color:{{ data.avg|grade_scale_color }}{% endif %}">{{ data.avg|default:"?" }}</span>
           </button>
           {% endfor %}
         </div>
@@ -539,11 +541,11 @@
     <div class="card subj-section" data-subject="{{ data.name }}" style="margin-bottom:14px;overflow:hidden;">
       <div style="background:#E8F5FD;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #D8EAF5;">
         <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:17px;">📚</span>
+          <span style="font-size:17px;"><i class="bi bi-book"></i></span>
           <span style="font-weight:800;font-size:14px;color:#0D2D42;">{{ data.name }}</span>
           <span style="font-size:11px;color:#5588AA;">{{ data.grades|length }} actividade{{ data.grades|length|pluralize:",s" }}</span>
         </div>
-        {% if data.avg %}<span style="font-size:20px;font-weight:900;color:{% if data.avg >= 4 %}#065F46{% elif data.avg >= 3 %}#1E40AF{% elif data.avg >= 2.5 %}#92400E{% else %}#991B1B{% endif %};">{{ data.avg }}</span>{% endif %}
+        {% if data.avg %}<span style="font-size:20px;font-weight:900;color:{{ data.avg|grade_scale_color }};">{{ data.avg }}</span>{% endif %}
       </div>
       {% for grade in data.grades %}
       <div class="grade-row">
@@ -554,10 +556,10 @@
             {% if grade.period %}<span class="grade-date">{{ grade.period }}</span>{% endif %}
             <span class="grade-date"><i class="bi bi-calendar3"></i> {{ grade.date|date:"d/m/Y" }}</span>
           </div>
-          <div class="grade-bar-bg"><div class="grade-bar-fill" style="width:{{ grade.percentage }}%;background:{% if grade.score >= 4 %}#10B981{% elif grade.score >= 3 %}#1570A6{% elif grade.score >= 2.5 %}#F9C32A{% else %}#EF4444{% endif %};"></div></div>
+          <div class="grade-bar-bg"><div class="grade-bar-fill" style="width:{{ grade.percentage }}%;background:{{ grade.score|grade_scale_color }};"></div></div>
         </div>
         <div class="score-badge">
-          <span class="score-num {% if grade.score >= 4 %}score-green{% elif grade.score >= 3 %}score-blue{% elif grade.score >= 2.5 %}score-amber{% else %}score-red{% endif %}">{{ grade.score }}</span>
+          <span class="score-num" style="color:{{ grade.score|grade_scale_color }};">{{ grade.score }}</span>
           <span class="score-max">/ {{ grade.max_score }}</span>
         </div>
       </div>
@@ -565,11 +567,11 @@
     </div>
     {% endfor %}
     {% else %}
-    <div class="empty-state"><span class="empty-icon">📊</span><div class="empty-title">Sin notas aún</div><div class="empty-sub">El profesor registrará las notas aquí</div></div>
+    <div class="empty-state"><span class="empty-icon"><i class="bi bi-bar-chart-line"></i></span><div class="empty-title">Sin notas aún</div><div class="empty-sub">El profesor registrará las notas aquí</div></div>
     {% endif %}
   </div>
 
-  <!-- GALERÍA -->
+  <!-- GALERÃA -->
   <div id="t-gallery" class="p-section" style="display:none;">
     {% if works %}
     <script>
@@ -578,7 +580,7 @@
     function pPrev(){if(pI>0){pI--;pR();}} function pNext(){if(pI<PW.length-1){pI++;pR();}}
     function pR(){
       var w=PW[pI],t=PW.length;
-      document.getElementById('cMedia').innerHTML=w.image?`<img src="${w.image}" alt="${w.title}" style="max-width:100%;max-height:400px;object-fit:contain;">`:`<div style="font-size:72px;padding:48px;">${w.file?'📄':'✏️'}</div>`;
+      document.getElementById('cMedia').innerHTML=w.image?`<img src="${w.image}" alt="${w.title}" style="max-width:100%;max-height:400px;object-fit:contain;">`:`<div style="font-size:72px;padding:48px;">${w.file?'<i class="bi bi-file-earmark-text"></i>':'<i class="bi bi-pencil-square"></i>'}</div>`;
       document.getElementById('cTitle').textContent=w.title;
       document.getElementById('cMeta').innerHTML=`<i class="bi bi-person"></i> ${w.student} &nbsp;·&nbsp; <i class="bi bi-calendar3"></i> ${w.date}`;
       document.getElementById('cCat').innerHTML=w.category?`<span style="font-size:11px;background:#DBEAFE;color:#1E40AF;padding:3px 10px;border-radius:999px;font-weight:700;">${w.category}</span>`:'';
@@ -608,7 +610,7 @@
       <div class="c-dots" id="cDots"></div>
     </div>
     {% else %}
-    <div class="card"><div class="empty-state"><span class="empty-icon">🖼️</span><div class="empty-title">Sin trabajos publicados</div><div class="empty-sub">El profesor publicará los trabajos aquí pronto</div></div></div>
+    <div class="card"><div class="empty-state"><span class="empty-icon"><i class="bi bi-images"></i></span><div class="empty-title">Sin trabajos publicados</div><div class="empty-sub">El profesor publicará los trabajos aquí pronto</div></div></div>
     {% endif %}
   </div>
 
@@ -617,7 +619,7 @@
     {% if attendances %}
     <div class="card">
       <div class="card-head">
-        <span class="card-title">📅 Registro de asistencia</span>
+        <span class="card-title"><i class="bi bi-calendar-event"></i> Registro de asistencia</span>
         <span class="card-badge">{{ attendances.count }} días</span>
       </div>
       {% for att in attendances %}
@@ -630,7 +632,7 @@
       {% endfor %}
     </div>
     {% else %}
-    <div class="card"><div class="empty-state"><span class="empty-icon">✅</span><div class="empty-title">Sin registros de asistencia</div><div class="empty-sub">El profesor registrará la asistencia aquí</div></div></div>
+    <div class="card"><div class="empty-state"><span class="empty-icon"><i class="bi bi-check-circle-fill"></i></span><div class="empty-title">Sin registros de asistencia</div><div class="empty-sub">El profesor registrará la asistencia aquí</div></div></div>
     {% endif %}
   </div>
 
@@ -702,7 +704,7 @@
     {% endfor %}
     {% else %}
     <div class="card"><div class="empty-state" style="padding:40px;">
-      <span class="empty-icon" style="font-size:48px;">✉️</span>
+      <span class="empty-icon" style="font-size:48px;"><i class="bi bi-envelope"></i></span>
       <div class="empty-title">Sin mensajes aún</div>
       <div class="empty-sub">Los mensajes del colegio aparecerán aquí</div>
     </div></div>
@@ -713,7 +715,7 @@
   <div id="t-send" class="p-section" style="display:none;">
     <div class="card" style="overflow:hidden;">
       <div class="card-head" style="padding:16px 22px;border-bottom:1px solid #EEF4FA;">
-        <span class="card-title">📤 Enviar mensaje al colegio</span>
+        <span class="card-title"><i class="bi bi-cloud-arrow-up"></i> Enviar mensaje al colegio</span>
       </div>
       <div style="padding:22px;">
         <form method="post" action="/padres/mensaje/" id="parentMsgForm">
@@ -734,7 +736,7 @@
                 <div>
                   <div style="font-weight:700;font-size:13px;color:#0A1F35;">{{ staff.get_full_name }}</div>
                   <div style="font-size:11px;color:#9DB8CC;">
-                    {% if staff.teacher_profile.role == 'coordinator' %}🏫 Coordinador{% else %}📚 {% if staff.teacher_profile.subject %}{{ staff.teacher_profile.subject }}{% else %}Docente{% endif %}{% endif %}
+                    {% if staff.teacher_profile.role == 'coordinator' %}<i class="bi bi-building"></i> Coordinador{% else %}<i class="bi bi-book"></i> {% if staff.teacher_profile.subject %}{{ staff.teacher_profile.subject }}{% else %}Docente{% endif %}{% endif %}
                     {% if staff == student.teacher %} · <span style="color:#059669;font-weight:700;">Docente de {{ student.first_name }}</span>{% endif %}
                   </div>
                 </div>
@@ -811,3 +813,4 @@ document.addEventListener('DOMContentLoaded', function(){
 </script>
 </body>
 </html>
+

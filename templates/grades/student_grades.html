@@ -1,4 +1,5 @@
 {% extends 'base/layout.html' %}
+{% load grade_scale %}
 {% block title %}Notas de {{ student.get_full_name }}{% endblock %}
 {% block page_title %}Notas por Materia{% endblock %}
 {% block content %}
@@ -39,7 +40,7 @@
     <!-- ENCABEZADO MATERIA -->
     <div style="background:var(--primary-light);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--gray-100);">
       <div style="display:flex;align-items:center;gap:10px;">
-        <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;">📚</div>
+        <div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;"><i class="bi bi-book"></i></div>
         <div>
           <div style="font-weight:800;font-size:15px;color:var(--gray-900);">{{ data.subject_name }}</div>
           <div style="font-size:11px;color:var(--gray-500);">{{ data.grades|length }} actividade{{ data.grades|length|pluralize:",s" }}</div>
@@ -49,7 +50,7 @@
       {% if data.average %}
       <div style="text-align:center;">
         <div style="font-size:22px;font-weight:900;
-          color:{% if data.average >= 4.6 %}#065F46{% elif data.average >= 4.0 %}#1E40AF{% elif data.average >= 3.0 %}#92400E{% else %}#991B1B{% endif %};">
+          color:{{ data.average|grade_scale_color }};">
           {{ data.average }}
         </div>
         <div style="font-size:10px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:.4px;">Promedio</div>
@@ -75,10 +76,7 @@
         <!-- Nota individual -->
         <div style="flex-shrink:0;">
           <span class="grade-pill
-            {% if grade.score >= 4.6 %}grade-a
-            {% elif grade.score >= 4.0 %}grade-b
-            {% elif grade.score >= 3.0 %}grade-c
-            {% else %}grade-d{% endif %}"
+            {{ grade.score|grade_scale_class }}"
             style="font-size:16px;font-weight:900;padding:4px 12px;">
             {{ grade.score|floatformat:1 }}
           </span>
@@ -95,7 +93,7 @@
 {% else %}
 <div class="card">
   <div class="empty-state" style="padding:52px;">
-    <span class="empty-icon" style="font-size:48px;">📊</span>
+    <span class="empty-icon" style="font-size:48px;"><i class="bi bi-bar-chart-line"></i></span>
     <h3>Sin notas registradas</h3>
     <p>Este estudiante aún no tiene notas en el sistema.</p>
     <a href="{% url 'grades:create' %}?student={{ student.pk }}" class="btn btn-primary" style="margin-top:14px;">
@@ -117,3 +115,5 @@
   </a>
 </div>
 {% endblock %}
+
+

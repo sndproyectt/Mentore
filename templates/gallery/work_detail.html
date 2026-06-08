@@ -24,7 +24,7 @@
         <img src="{{ work.image.url }}" alt="{{ work.title }}" style="width:100%;border-radius:var(--radius-sm);margin-bottom:1.25rem;max-height:450px;object-fit:contain;background:var(--gray-50);">
       {% else %}
         <div style="height:250px;display:flex;align-items:center;justify-content:center;background:var(--gray-50);border-radius:var(--radius-sm);margin-bottom:1.25rem;font-size:4rem;">
-          {% if work.file %}📄{% else %}✏️{% endif %}
+          {% if work.file %}<i class="bi bi-file-earmark-text"></i>{% else %}<i class="bi bi-pencil-square"></i>{% endif %}
         </div>
       {% endif %}
 

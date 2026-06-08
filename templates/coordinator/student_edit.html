@@ -9,7 +9,7 @@
       <i class="bi bi-arrow-left"></i> Volver
     </a>
     <h2 style="margin:0;font-size:18px;font-weight:800;color:var(--gray-900);">
-      ✏️ Editar: {{ student.get_full_name }}
+      <i class="bi bi-pencil-square"></i> Editar: {{ student.get_full_name }}
     </h2>
   </div>
 
@@ -18,7 +18,7 @@
 
     <div class="card" style="padding:24px;margin-bottom:16px;">
       <h3 style="font-size:14px;font-weight:800;color:var(--gray-700);margin:0 0 16px;border-bottom:1px solid var(--gray-100);padding-bottom:10px;">
-        👧 Datos del estudiante
+        <i class="bi bi-person-badge"></i> Datos del estudiante
       </h3>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
         <div class="form-group" style="margin:0;">
@@ -69,7 +69,7 @@
 
     <div class="card" style="padding:24px;margin-bottom:16px;">
       <h3 style="font-size:14px;font-weight:800;color:var(--gray-700);margin:0 0 4px;padding-bottom:10px;border-bottom:1px solid var(--gray-100);">
-        👨‍👩‍👧 Acudientes
+        <i class="bi bi-people-fill"></i> Acudientes
       </h3>
       <p style="font-size:12px;color:var(--gray-400);margin:0 0 18px;">Obligatorio: 1 acudiente principal. Opcional: hasta 2 adicionales. El correo del acudiente principal habilita el acceso al portal de padres.</p>
 
@@ -115,7 +115,7 @@
 
     <div class="card" style="padding:24px;margin-bottom:16px;">
       <div class="form-group" style="margin:0;">
-        <label class="form-label">📝 Observaciones</label>
+        <label class="form-label"><i class="bi bi-journal-text"></i> Observaciones</label>
         <textarea name="notes" class="form-control" rows="3" placeholder="Notas internas sobre el estudiante…">{{ student.notes }}</textarea>
       </div>
     </div>

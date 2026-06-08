@@ -77,7 +77,7 @@
 
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
     <div>
-      <h2 style="font-size:20px;font-weight:800;color:var(--gray-900);margin:0 0 2px;">📢 Nuevo comunicado</h2>
+      <h2 style="font-size:20px;font-weight:800;color:var(--gray-900);margin:0 0 2px;"><i class="bi bi-megaphone"></i> Nuevo comunicado</h2>
       <p style="font-size:13px;color:var(--gray-500);margin:0;">Envía a docentes y/o padres de familia</p>
     </div>
     <a href="{% url 'students:announcement_list' %}" class="btn btn-secondary">
@@ -91,33 +91,33 @@
 
       <!-- TÍTULO -->
       <div class="form-group">
-        <label class="form-label">📌 Título *</label>
+        <label class="form-label"><i class="bi bi-pin-angle"></i> Título *</label>
         <input type="text" name="title" class="form-control"
           placeholder="Ej: Reunión de padres el viernes…" required>
       </div>
 
       <!-- CONTENIDO -->
       <div class="form-group">
-        <label class="form-label">📝 Contenido *</label>
+        <label class="form-label"><i class="bi bi-journal-text"></i> Contenido *</label>
         <textarea name="content" class="form-control" rows="5"
           placeholder="Escribe aquí el mensaje completo…" required></textarea>
       </div>
 
       <!-- PRIORIDAD -->
       <div class="form-group">
-        <label class="form-label">🏷️ Nivel de prioridad</label>
+        <label class="form-label"><i class="bi bi-tags"></i> Nivel de prioridad</label>
         <div class="priority-group">
           <div class="priority-opt low">
             <input type="radio" name="priority" id="p-low" value="low" checked>
-            <label for="p-low"><span class="pi">📋</span> Informativo</label>
+            <label for="p-low"><span class="pi"><i class="bi bi-clipboard-check"></i></span> Informativo</label>
           </div>
           <div class="priority-opt med">
             <input type="radio" name="priority" id="p-med" value="medium">
-            <label for="p-med"><span class="pi">⚠️</span> Importante</label>
+            <label for="p-med"><span class="pi"><i class="bi bi-exclamation-triangle-fill"></i></span> Importante</label>
           </div>
           <div class="priority-opt high">
             <input type="radio" name="priority" id="p-high" value="high">
-            <label for="p-high"><span class="pi">🚨</span> Urgente</label>
+            <label for="p-high"><span class="pi"><i class="bi bi-exclamation-octagon-fill"></i></span> Urgente</label>
           </div>
         </div>
       </div>
@@ -125,7 +125,7 @@
       <!-- DESTINATARIOS -->
       <div class="form-group" style="margin-bottom:0;">
         <label class="form-label" style="margin-bottom:10px;">
-          👥 Destinatarios
+          <i class="bi bi-people"></i> Destinatarios
           <span style="font-weight:400;font-size:11px;color:var(--gray-400);margin-left:6px;">
             — selecciona docentes, padres o ambos
           </span>
@@ -164,7 +164,7 @@
                   <div class="person-name">{{ t.get_full_name }}</div>
                   <div class="person-sub">
                     {{ t.teacher_profile.subject|default:"Sin materia" }}
-                    {% if t.teacher_profile.role == 'coordinator' %} · ⭐ Coordinador{% endif %}
+                    {% if t.teacher_profile.role == 'coordinator' %} · <i class="bi bi-star-fill"></i> Coordinador{% endif %}
                   </div>
                 </div>
               </label>
@@ -201,7 +201,7 @@
                 <div class="person-info">
                   <div class="person-name">{{ s.get_full_name }}</div>
                   <div class="person-sub">
-                    👨‍👩‍👧 {{ s.parent_name|default:"Sin acudiente" }}
+                    <i class="bi bi-people-fill"></i> {{ s.parent_name|default:"Sin acudiente" }}
                     {% if s.parent_email %} · {{ s.parent_email }}{% endif %}
                     {% if s.classroom %} · {{ s.classroom.name }}{% endif %}
                   </div>

@@ -5,7 +5,7 @@
 
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
   <div>
-    <h2 style="margin:0;font-size:18px;font-weight:800;color:var(--gray-900);">👨‍👩‍👧 Padres de familia registrados</h2>
+    <h2 style="margin:0;font-size:18px;font-weight:800;color:var(--gray-900);"><i class="bi bi-people-fill"></i> Padres de familia registrados</h2>
     <p style="margin:4px 0 0;font-size:13px;color:var(--gray-500);">Estudiantes con correo de acudiente activo</p>
   </div>
   <a href="{% url 'coordinator:parent_message_create' %}" class="btn btn-primary">
@@ -38,7 +38,7 @@
 
 <div class="card">
   <div class="card-header">
-    <span class="card-title">👨‍👩‍👧 Acudientes ({{ students|length }})</span>
+    <span class="card-title"><i class="bi bi-people-fill"></i> Acudientes ({{ students|length }})</span>
   </div>
   <div style="overflow-x:auto;">
     <table class="table">

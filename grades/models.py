@@ -54,6 +54,17 @@ class Grade(models.Model):
         ('activity',      'Actividad'),
         ('other',         'Otro'),
     ]
+    PERIOD_CHOICES = [
+        ('Periodo I', 'Periodo I'),
+        ('Periodo II', 'Periodo II'),
+        ('Periodo III', 'Periodo III'),
+    ]
+    SCALE = [
+        ('grade-d', 'Bajo', 0.0, 3.4, '#991B1B'),
+        ('grade-c', 'Básico', 3.5, 4.0, '#92400E'),
+        ('grade-b', 'Alto', 4.1, 4.7, '#1E40AF'),
+        ('grade-a', 'Superior', 4.8, 5.0, '#065F46'),
+    ]
 
     student       = models.ForeignKey(
         Student, on_delete=models.CASCADE,
@@ -82,7 +93,9 @@ class Grade(models.Model):
         max_digits=4, decimal_places=2,
         default=5.0, verbose_name='Nota máxima',
     )
-    period        = models.CharField(max_length=50, blank=True, verbose_name='Periodo')
+    period        = models.CharField(
+        max_length=50, blank=True, choices=PERIOD_CHOICES, verbose_name='Periodo',
+    )
     date          = models.DateField(verbose_name='Fecha')
     observations  = models.TextField(blank=True, verbose_name='Observaciones')
     created_at    = models.DateTimeField(auto_now_add=True)
@@ -100,6 +113,31 @@ class Grade(models.Model):
         if self.max_score:
             return round((float(self.score) / float(self.max_score)) * 100, 1)
         return 0
+
+    @classmethod
+    def scale_for_score(cls, score):
+        try:
+            value = round(float(score), 2)
+        except (TypeError, ValueError):
+            return None
+        for css_class, label, minimum, maximum, color in cls.SCALE:
+            if minimum <= value <= maximum:
+                return {
+                    'class': css_class,
+                    'label': label,
+                    'min': minimum,
+                    'max': maximum,
+                    'color': color,
+                }
+        return None
+
+    def scale_label(self):
+        scale = self.scale_for_score(self.score)
+        return scale['label'] if scale else ''
+
+    def scale_class(self):
+        scale = self.scale_for_score(self.score)
+        return scale['class'] if scale else ''
 
     def subject_display(self):
         """Nombre de la materia independientemente de si es FK o texto."""

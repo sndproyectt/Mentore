@@ -77,7 +77,7 @@
 
   <!-- FORM -->
   <div class="card">
-    <div class="card-header"><span class="card-title">✏️ Editar información</span></div>
+    <div class="card-header"><span class="card-title"><i class="bi bi-pencil-square"></i> Editar información</span></div>
     <div style="padding:20px;">
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
@@ -126,7 +126,7 @@
         <!-- DIRECTOR DE GRUPO -->
         <div style="border:1.5px solid #A8D9F5;border-radius:10px;padding:16px;margin-top:16px;background:#E8F5FD;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-            <span style="font-size:20px;">🏅</span>
+            <span style="font-size:20px;"><i class="bi bi-award"></i></span>
             <div>
               <div style="font-weight:800;font-size:14px;color:#0D2D42;">Dirección de grupo</div>
               <div style="font-size:12px;color:#80AACC;">Indica si eres director(a) de un grupo</div>
@@ -153,29 +153,45 @@
   <!-- SIDEBAR -->
   <div>
     <div class="card" style="margin-bottom:16px;">
-      <div class="card-header"><span class="card-title">📊 Resumen</span></div>
+      <div class="card-header"><span class="card-title"><i class="bi bi-bar-chart-line"></i> Resumen</span></div>
       <div style="padding:16px;display:flex;flex-direction:column;gap:8px;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#E8F5FD;border-radius:8px;">
-          <span style="font-size:13px;font-weight:700;color:#3A6B8A;">👧 Estudiantes</span>
+          <span style="font-size:13px;font-weight:700;color:#3A6B8A;"><i class="bi bi-person-badge"></i> Estudiantes</span>
           <span style="font-family:'Sora',sans-serif;font-weight:800;color:var(--primary);">{{ request.user.students.count }}</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#D1FAE5;border-radius:8px;">
-          <span style="font-size:13px;font-weight:700;color:#065F46;">🏫 Grupos</span>
+          <span style="font-size:13px;font-weight:700;color:#065F46;"><i class="bi bi-building"></i> Grupos</span>
           <span style="font-family:'Sora',sans-serif;font-weight:800;color:#10B981;">{{ request.user.classrooms.count }}</span>
         </div>
       </div>
     </div>
 
     <!-- ── SELECTOR DE TEMA estilo Google Classroom ── -->
+    <div class="card" style="margin-bottom:16px;" id="assistant-settings-card" data-preferences-url="{% url 'ai_assistant:global_preferences' %}">
+      <div class="card-header"><span class="card-title"><i class="bi bi-robot"></i> Asistente IA</span></div>
+      <div style="padding:16px;display:flex;flex-direction:column;gap:12px;">
+        <label style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;background:#F4F9FC;border:1px solid #D0E4EF;border-radius:10px;cursor:pointer;">
+          <span>
+            <span style="display:block;font-size:13px;font-weight:800;color:#0D2D42;">Mostrar asistente flotante</span>
+            <span style="display:block;font-size:12px;color:#5588AA;">Activa o desactiva la burbuja global.</span>
+          </span>
+          <input type="checkbox" id="globalAssistantVisibleToggle" style="width:20px;height:20px;accent-color:var(--primary);">
+        </label>
+        <button type="button" class="btn btn-secondary btn-sm" id="globalAssistantOpenSettings" style="justify-content:center;">
+          <i class="bi bi-sliders"></i> Personalizar burbuja
+        </button>
+      </div>
+    </div>
+
     <div class="theme-picker-wrap">
       <!-- Vista previa del tema -->
       <div class="theme-banner banner-{{ theme }}" id="preview-banner"></div>
       <div style="padding:0 16px 4px;position:relative;">
-        <div class="theme-icon-float icon-{{ theme }}" id="preview-icon">📚</div>
+        <div class="theme-icon-float icon-{{ theme }}" id="preview-icon"><i class="bi bi-book"></i></div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#80AACC;margin-bottom:2px;">Mi tema / materia</div>
         <div style="font-size:16px;font-weight:800;color:#0D2D42;">{{ profile.subject|default:"Sin especificar" }}</div>
-        {% if profile.school_name %}<div style="font-size:12px;color:#5588AA;margin-top:3px;">🏫 {{ profile.school_name }}</div>{% endif %}
-        {% if profile.city %}<div style="font-size:12px;color:#5588AA;margin-top:2px;">📍 {{ profile.city }}</div>{% endif %}
+        {% if profile.school_name %}<div style="font-size:12px;color:#5588AA;margin-top:3px;"><i class="bi bi-building"></i> {{ profile.school_name }}</div>{% endif %}
+        {% if profile.city %}<div style="font-size:12px;color:#5588AA;margin-top:2px;"><i class="bi bi-geo-alt"></i> {{ profile.city }}</div>{% endif %}
       </div>
 
       <div style="display:flex;align-items:center;gap:8px;padding:12px 16px 0;">
@@ -185,35 +201,35 @@
 
       <div class="swatch-grid">
         <div>
-          <div class="swatch fill-ocean {% if theme == 'ocean' %}active{% endif %}" data-theme="ocean" onclick="pickTheme('ocean')"><span class="check">✓</span></div>
+          <div class="swatch fill-ocean {% if theme == 'ocean' %}active{% endif %}" data-theme="ocean" onclick="pickTheme('ocean')"><span class="check"><i class="bi bi-check-lg"></i></span></div>
           <div class="swatch-label">Océano</div>
         </div>
         <div>
-          <div class="swatch fill-forest {% if theme == 'forest' %}active{% endif %}" data-theme="forest" onclick="pickTheme('forest')"><span class="check">✓</span></div>
+          <div class="swatch fill-forest {% if theme == 'forest' %}active{% endif %}" data-theme="forest" onclick="pickTheme('forest')"><span class="check"><i class="bi bi-check-lg"></i></span></div>
           <div class="swatch-label">Bosque</div>
         </div>
         <div>
-          <div class="swatch fill-sunset {% if theme == 'sunset' %}active{% endif %}" data-theme="sunset" onclick="pickTheme('sunset')"><span class="check">✓</span></div>
+          <div class="swatch fill-sunset {% if theme == 'sunset' %}active{% endif %}" data-theme="sunset" onclick="pickTheme('sunset')"><span class="check"><i class="bi bi-check-lg"></i></span></div>
           <div class="swatch-label">Atardecer</div>
         </div>
         <div>
-          <div class="swatch fill-purple {% if theme == 'purple' %}active{% endif %}" data-theme="purple" onclick="pickTheme('purple')"><span class="check">✓</span></div>
+          <div class="swatch fill-purple {% if theme == 'purple' %}active{% endif %}" data-theme="purple" onclick="pickTheme('purple')"><span class="check"><i class="bi bi-check-lg"></i></span></div>
           <div class="swatch-label">Violeta</div>
         </div>
         <div>
-          <div class="swatch fill-rose {% if theme == 'rose' %}active{% endif %}" data-theme="rose" onclick="pickTheme('rose')"><span class="check">✓</span></div>
+          <div class="swatch fill-rose {% if theme == 'rose' %}active{% endif %}" data-theme="rose" onclick="pickTheme('rose')"><span class="check"><i class="bi bi-check-lg"></i></span></div>
           <div class="swatch-label">Rosa</div>
         </div>
         <div>
-          <div class="swatch fill-slate {% if theme == 'slate' %}active{% endif %}" data-theme="slate" onclick="pickTheme('slate')"><span class="check">✓</span></div>
+          <div class="swatch fill-slate {% if theme == 'slate' %}active{% endif %}" data-theme="slate" onclick="pickTheme('slate')"><span class="check"><i class="bi bi-check-lg"></i></span></div>
           <div class="swatch-label">Pizarra</div>
         </div>
         <div>
-          <div class="swatch fill-amber {% if theme == 'amber' %}active{% endif %}" data-theme="amber" onclick="pickTheme('amber')"><span class="check">✓</span></div>
+          <div class="swatch fill-amber {% if theme == 'amber' %}active{% endif %}" data-theme="amber" onclick="pickTheme('amber')"><span class="check"><i class="bi bi-check-lg"></i></span></div>
           <div class="swatch-label">Ámbar</div>
         </div>
         <div>
-          <div class="swatch fill-teal {% if theme == 'teal' %}active{% endif %}" data-theme="teal" onclick="pickTheme('teal')"><span class="check">✓</span></div>
+          <div class="swatch fill-teal {% if theme == 'teal' %}active{% endif %}" data-theme="teal" onclick="pickTheme('teal')"><span class="check"><i class="bi bi-check-lg"></i></span></div>
           <div class="swatch-label">Esmeralda</div>
         </div>
       </div>
@@ -222,7 +238,7 @@
 
     {% if profile.is_homeroom_teacher %}
     <div style="background:linear-gradient(135deg,#E8F5FD,#FFF8EE);border:1px solid #A8D9F5;border-radius:10px;padding:18px;text-align:center;">
-      <div style="font-size:36px;margin-bottom:6px;">🏅</div>
+      <div style="font-size:36px;margin-bottom:6px;"><i class="bi bi-award"></i></div>
       <div style="font-weight:800;font-size:14px;color:#0D2D42;margin-bottom:4px;">Director(a) de grupo</div>
       <div style="font-size:13px;color:#5588AA;">Grupo: <strong>{{ profile.homeroom_group|default:"No especificado" }}</strong></div>
     </div>
@@ -270,6 +286,50 @@ function pickTheme(t) {
     s.classList.toggle('active', s.dataset.theme === t);
   });
 }
+
+(function() {
+  const card = document.getElementById('assistant-settings-card');
+  const visibleToggle = document.getElementById('globalAssistantVisibleToggle');
+  const openSettings = document.getElementById('globalAssistantOpenSettings');
+  if (!card || !visibleToggle) return;
+
+  function csrfToken() {
+    const match = document.cookie.match(/csrftoken=([^;]+)/);
+    return match ? decodeURIComponent(match[1]) : '{{ csrf_token }}';
+  }
+
+  async function loadAssistantPreference() {
+    const response = await fetch(card.dataset.preferencesUrl, { credentials: 'same-origin' });
+    const data = await response.json();
+    visibleToggle.checked = !!data.preference.is_visible;
+  }
+
+  async function saveAssistantVisibility(visible) {
+    await fetch(card.dataset.preferencesUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken() },
+      body: JSON.stringify({ is_visible: visible }),
+    });
+    document.dispatchEvent(new CustomEvent('mentoreGlobalAssistantVisibility', {
+      detail: { visible: visible },
+    }));
+  }
+
+  visibleToggle.addEventListener('change', function() {
+    saveAssistantVisibility(visibleToggle.checked).catch(function() {
+      visibleToggle.checked = !visibleToggle.checked;
+      alert('No se pudo actualizar el asistente flotante.');
+    });
+  });
+
+  openSettings.addEventListener('click', function() {
+    const settingsButton = document.querySelector('[data-global-ai-settings]');
+    if (settingsButton) settingsButton.click();
+  });
+
+  loadAssistantPreference().catch(function() {});
+})();
 </script>
 {% endwith %}
 {% endblock %}

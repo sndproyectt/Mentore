@@ -3,6 +3,7 @@ Clase base abstracta para proveedores de IA.
 Todos los proveedores deben heredar de esta clase.
 """
 import logging
+import re
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
@@ -84,7 +85,14 @@ class ProviderError(Exception):
         self.provider_name = provider_name
         self.original_error = original_error
         self.status_code = status_code
-        super().__init__(f"[{provider_name}] {message}")
+        super().__init__(f"[{provider_name}] {self._redact_sensitive(message)}")
+
+    @staticmethod
+    def _redact_sensitive(message):
+        text = str(message)
+        text = re.sub(r'([?&]key=)[^&\s]+', r'\1[redacted]', text, flags=re.IGNORECASE)
+        text = re.sub(r'(Bearer\s+)[A-Za-z0-9._\-]+', r'\1[redacted]', text, flags=re.IGNORECASE)
+        return text
 
 
 class ProviderRateLimitError(ProviderError):

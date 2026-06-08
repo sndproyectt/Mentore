@@ -117,7 +117,7 @@
         <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;">
           <div style="flex:1;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
-              <span style="font-size:18px;">{% if ann.priority == 'high' %}🚨{% elif ann.priority == 'medium' %}⚠️{% else %}📋{% endif %}</span>
+              <span style="font-size:18px;">{% if ann.priority == 'high' %}<i class="bi bi-exclamation-octagon-fill"></i>{% elif ann.priority == 'medium' %}<i class="bi bi-exclamation-triangle-fill"></i>{% else %}<i class="bi bi-clipboard-check"></i>{% endif %}</span>
               <span style="font-weight:800;font-size:16px;color:var(--gray-900);">{{ ann.title }}</span>
               <span class="badge {% if ann.priority == 'high' %}badge-danger{% elif ann.priority == 'medium' %}badge-warning{% else %}badge-info{% endif %}" style="font-size:10px;">{{ ann.get_priority_display }}</span>
             </div>
@@ -134,7 +134,7 @@
   </div>
   {% else %}
   <div class="card"><div class="empty-state" style="padding:52px;">
-    <span class="empty-icon" style="font-size:48px;">📢</span>
+    <span class="empty-icon" style="font-size:48px;"><i class="bi bi-megaphone"></i></span>
     <h3>Sin comunicados recibidos</h3>
     <p>Cuando un coordinador o docente te envíe un comunicado, aparecerá aquí.</p>
   </div></div>
@@ -145,12 +145,12 @@
   {% if received_direct or parent_messages %}
 
   {% if parent_messages %}
-  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-400);margin-bottom:8px;padding-left:4px;">👨‍👩‍👧 Mensajes de padres</div>
+  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-400);margin-bottom:8px;padding-left:4px;"><i class="bi bi-people-fill"></i> Mensajes de padres</div>
   {% for msg in parent_messages %}
   {% with rc=msg.replies.count preview=msg.body|truncatechars:40 %}
   <div class="thread-card">
     <div class="thread-header" onclick="toggleThread('pm{{ msg.pk }}',this)" id="hdr-pm{{ msg.pk }}">
-      <div class="t-avatar" style="background:linear-gradient(135deg,#059669,#34D399);font-size:18px;">👨‍👩‍👧</div>
+      <div class="t-avatar" style="background:linear-gradient(135deg,#059669,#34D399);font-size:18px;"><i class="bi bi-people-fill"></i></div>
       <div class="t-meta">
         <div class="t-subject">{{ msg.student.parent_name|default:"Acudiente" }} — {{ msg.subject }}</div>
         <div class="t-preview">{{ preview }}</div>
@@ -165,7 +165,7 @@
       <div class="chat-messages" id="msgs-pm{{ msg.pk }}">
         <!-- Root message (oldest = first) -->
         <div class="bubble-row">
-          <div class="b-avatar" style="background:linear-gradient(135deg,#059669,#34D399);">👨‍👩‍👧</div>
+          <div class="b-avatar" style="background:linear-gradient(135deg,#059669,#34D399);"><i class="bi bi-people-fill"></i></div>
           <div class="b-col">
             <div class="b-name">{{ msg.student.parent_name|default:"Acudiente" }}</div>
             <div class="b-bubble">{{ msg.body }}</div>
@@ -201,7 +201,7 @@
   {% endif %}
 
   {% if received_direct %}
-  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-400);margin-bottom:8px;{% if parent_messages %}margin-top:16px;{% endif %}padding-left:4px;">👩‍🏫 Mensajes de docentes</div>
+  <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-400);margin-bottom:8px;{% if parent_messages %}margin-top:16px;{% endif %}padding-left:4px;"><i class="bi bi-person-workspace"></i> Mensajes de docentes</div>
   {% for msg in received_direct %}
   {% with rc=msg.replies.count preview=msg.body|truncatechars:40 %}
   <div class="thread-card">
@@ -265,7 +265,7 @@
 
   {% else %}
   <div class="card"><div class="empty-state" style="padding:52px;">
-    <span class="empty-icon" style="font-size:48px;">💬</span>
+    <span class="empty-icon" style="font-size:48px;"><i class="bi bi-chat-dots"></i></span>
     <h3>Sin conversaciones</h3>
     <p>Los mensajes de padres y docentes aparecerán aquí.</p>
   </div></div>

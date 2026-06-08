@@ -1,6 +1,42 @@
 {% extends 'base/layout.html' %}
+{% load grade_scale %}
 {% block title %}Estudiantes{% endblock %}
 {% block page_title %}Estudiantes{% endblock %}
+{% block extra_css %}
+<style>
+  .student-search-filter {
+    flex: 1 1 auto !important;
+  }
+
+  .students-filter-group {
+    flex: 0 0 230px !important;
+  }
+
+  .students-filter-actions {
+    flex: 0 0 auto;
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+
+  .student-search-filter .filter-search {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .student-search-filter input[name="q"] {
+    flex: 1 1 auto;
+    width: 100% !important;
+    min-width: 320px !important;
+    max-width: none !important;
+  }
+
+  @media (max-width: 768px) {
+    .student-search-filter input[name="q"] {
+      min-width: 0 !important;
+    }
+  }
+</style>
+{% endblock %}
 {% block content %}
 
 <div class="page-header">
@@ -17,14 +53,14 @@
 <div class="filter-bar">
   <form method="get">
     <div class="filter-bar-inner">
-      <div class="filter-item" style="flex:2;">
+      <div class="filter-item student-search-filter">
         <span class="filter-label">Buscar</span>
         <div class="filter-search">
           <i class="bi bi-search"></i>
-          <input type="text" name="q" value="{{ query }}" placeholder="Nombre, apellido o documento...">
+          <input type="text" name="q" value="{{ query }}" placeholder="Nombre, apellido o documentos">
         </div>
       </div>
-      <div class="filter-item">
+      <div class="filter-item students-filter-group">
         <span class="filter-label">Grupo</span>
         <select name="classroom" class="form-control">
           <option value="">Todos los grupos</option>
@@ -33,7 +69,7 @@
           {% endfor %}
         </select>
       </div>
-      <div class="filter-actions">
+      <div class="filter-actions students-filter-actions">
         <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search"></i> Filtrar</button>
         {% if query or selected_classroom %}
         <a href="{% url 'students:list' %}" class="btn btn-secondary btn-sm"><i class="bi bi-x"></i></a>
@@ -78,7 +114,7 @@
               <div style="font-size:11px;color:var(--gray-400);">{{ student.parent_email|default:"" }}</div>
             </div>
           </td>
-          <td>{% with avg=student.average_grade %}{% if avg %}<span class="grade-pill {% if avg >= 4 %}grade-a{% elif avg >= 3 %}grade-b{% elif avg >= 2.5 %}grade-c{% else %}grade-d{% endif %}">{{ avg }}</span>{% else %}<span style="color:var(--gray-300);">—</span>{% endif %}{% endwith %}</td>
+          <td>{% with avg=student.average_grade %}{% if avg %}<span class="grade-pill {{ avg|grade_scale_class }}">{{ avg }}</span>{% else %}<span style="color:var(--gray-300);">—</span>{% endif %}{% endwith %}</td>
           <td>
             <div style="display:flex;gap:6px;justify-content:flex-end;">
               <a href="{% url 'students:detail' student.pk %}" class="btn btn-secondary btn-sm"><i class="bi bi-eye"></i></a>
@@ -97,7 +133,7 @@
 {% else %}
 <div class="card">
   <div class="empty-state">
-    <span class="empty-icon">👥</span>
+    <span class="empty-icon"><i class="bi bi-people"></i></span>
     <h3>No se encontraron estudiantes</h3>
     <p>{% if query or selected_classroom %}Intenta con otros filtros{% else %}Comienza agregando tu primer estudiante{% endif %}</p>
     {% if not query and not selected_classroom %}
@@ -107,3 +143,4 @@
 </div>
 {% endif %}
 {% endblock %}
+

@@ -76,8 +76,14 @@ class GeminiProvider(BaseProvider):
         except ProviderRateLimitError:
             raise
         except requests.exceptions.HTTPError as e:
-            logger.error("Gemini HTTP error: %s", str(e))
-            raise ProviderError(self.name, f"Error HTTP: {e}", original_error=e)
+            status_code = e.response.status_code if e.response is not None else None
+            logger.error("Gemini HTTP error: status=%s", status_code)
+            raise ProviderError(
+                self.name,
+                "Error HTTP del proveedor",
+                original_error=e,
+                status_code=status_code,
+            )
         except ProviderError:
             raise
         except Exception as e:
@@ -132,6 +138,15 @@ class GeminiProvider(BaseProvider):
             raise ProviderError(self.name, "Streaming tardó demasiado")
         except ProviderRateLimitError:
             raise
+        except requests.exceptions.HTTPError as e:
+            status_code = e.response.status_code if e.response is not None else None
+            logger.error("Gemini stream HTTP error: status=%s", status_code)
+            raise ProviderError(
+                self.name,
+                "Error HTTP del proveedor",
+                original_error=e,
+                status_code=status_code,
+            )
         except ProviderError:
             raise
         except Exception as e:

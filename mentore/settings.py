@@ -261,6 +261,7 @@ DATABASE_URL = os.environ.get('DATABASE_URL', DATABASE_URL)
 ANTHROPIC_API_KEY = os.environ.get('ANTHROPIC_API_KEY', '')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+HUGGINGFACE_API_KEY = os.environ.get('HUGGINGFACE_API_KEY', '')
 
 # GOOGLE OAUTH
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')

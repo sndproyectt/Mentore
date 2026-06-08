@@ -3,76 +3,88 @@
 {% block page_title %}Asistente IA para Primaria{% endblock %}
 {% block content %}
 
-<div class="ai-header-bar">
-  <div class="ai-header-icon">✨</div>
-  <div class="ai-header-text">
-    <h2>Mentore IA — Tu asistente pedagógico</h2>
-    <p>Especializado para profes de primaria · Genera actividades, ideas y recursos al instante</p>
-  </div>
-  <div style="display:flex;gap:.5rem;align-items:center;">
-    <span class="ai-header-badge" id="providerBadge" title="Streaming activo">⚡ IA</span>
-    <form method="post" action="{% url 'ai_assistant:clear' %}" onsubmit="return confirm('¿Limpiar el historial?')">
-      {% csrf_token %}<button type="submit" class="btn-outline btn-sm"><i class="bi bi-trash"></i></button>
-    </form>
-  </div>
-</div>
-
 <div class="ai-category-tabs">
-  <span class="ai-cat-tab active" onclick="filterChips('all',this)">🎯 Todo</span>
-  <span class="ai-cat-tab" onclick="filterChips('actividades',this)">📚 Actividades</span>
-  <span class="ai-cat-tab" onclick="filterChips('evaluacion',this)">📝 Evaluación</span>
-  <span class="ai-cat-tab" onclick="filterChips('dinamicas',this)">🎮 Dinámicas</span>
-  <span class="ai-cat-tab" onclick="filterChips('proyectos',this)">🚀 Proyectos</span>
-  <span class="ai-cat-tab" onclick="filterChips('comunicacion',this)">💌 Comunicados</span>
+  <span class="ai-cat-tab active" onclick="filterChips('all',this)"><i class="bi bi-bullseye"></i> Todo</span>
+  <span class="ai-cat-tab" onclick="filterChips('actividades',this)"><i class="bi bi-book"></i> Actividades</span>
+  <span class="ai-cat-tab" onclick="filterChips('evaluacion',this)"><i class="bi bi-journal-text"></i> Evaluación</span>
+  <span class="ai-cat-tab" onclick="filterChips('dinamicas',this)"><i class="bi bi-controller"></i> Dinámicas</span>
+  <span class="ai-cat-tab" onclick="filterChips('proyectos',this)"><i class="bi bi-rocket-takeoff"></i> Proyectos</span>
+  <span class="ai-cat-tab" onclick="filterChips('comunicacion',this)"><i class="bi bi-envelope-heart"></i> Comunicados</span>
 </div>
 
 <div class="ai-chips-row" id="chipsContainer">
-  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Genera una actividad lúdica de matemáticas para primero de primaria sobre sumas y restas con objetos del salón">🧮 Sumas y restas divertidas</span>
-  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea una actividad de lectoescritura creativa para segundo de primaria usando dibujos y colores">✏️ Lectoescritura creativa</span>
-  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña una actividad de ciencias naturales para tercer grado sobre los animales del entorno colombiano">🦋 Animales colombianos</span>
-  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea una actividad de educación artística para primaria usando materiales reciclados">🎨 Arte con reciclaje</span>
-  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña una actividad sobre las plantas y sus partes para cuarto de primaria con experimento sencillo">🌱 Las plantas y sus partes</span>
-  <span class="ai-chip" data-cat="evaluacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea un quiz de 5 preguntas sobre las tablas de multiplicar del 2 al 5 para tercer grado de primaria">📝 Quiz multiplicación</span>
-  <span class="ai-chip" data-cat="evaluacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña una rúbrica de evaluación para valorar la caligrafía y presentación en cuadernos de primaria">📋 Rúbrica caligrafía</span>
-  <span class="ai-chip" data-cat="evaluacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea una evaluación formativa sobre fracciones para cuarto de primaria con actividades visuales">➗ Evaluación fracciones</span>
-  <span class="ai-chip" data-cat="evaluacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña una lista de cotejo para evaluar hábitos de convivencia en el salón de clases">✅ Lista de cotejo convivencia</span>
-  <span class="ai-chip" data-cat="dinamicas" onclick="setPrompt(this.dataset.prompt)" data-prompt="Sugiere 5 juegos educativos para repasar las vocales y consonantes en primero de primaria">🎲 Juegos con letras</span>
-  <span class="ai-chip" data-cat="dinamicas" onclick="setPrompt(this.dataset.prompt)" data-prompt="Propón 3 dinámicas de integración para inicio del año escolar en primaria que fomenten el trabajo en equipo">🤝 Dinámicas de integración</span>
-  <span class="ai-chip" data-cat="dinamicas" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea una dinámica kinestésica para aprender las figuras geométricas usando el cuerpo y el movimiento">🔷 Geometría con movimiento</span>
-  <span class="ai-chip" data-cat="proyectos" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña un proyecto interdisciplinario de 2 semanas para quinto de primaria sobre el medio ambiente y el reciclaje">♻️ Proyecto medio ambiente</span>
-  <span class="ai-chip" data-cat="proyectos" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea un proyecto de aula sobre nuestra región colombiana para tercer grado que incluya arte, sociales y lenguaje">🇨🇴 Mi región colombiana</span>
-  <span class="ai-chip" data-cat="proyectos" onclick="setPrompt(this.dataset.prompt)" data-prompt="Propón un proyecto de huerta escolar para primaria con actividades semanales durante un mes">🌻 Huerta escolar</span>
-  <span class="ai-chip" data-cat="comunicacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Redacta un comunicado amable para los padres de familia sobre la importancia de los hábitos de lectura en casa">💌 Circular lectura en casa</span>
-  <span class="ai-chip" data-cat="comunicacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Escribe un mensaje positivo de bienvenida al nuevo año escolar para compartir con los padres de familia">🎉 Bienvenida año escolar</span>
+  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Genera una actividad lúdica de matemáticas para primero de primaria sobre sumas y restas con objetos del salón"><i class="bi bi-calculator"></i> Sumas y restas divertidas</span>
+  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea una actividad de lectoescritura creativa para segundo de primaria usando dibujos y colores"><i class="bi bi-pencil-square"></i> Lectoescritura creativa</span>
+  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña una actividad de ciencias naturales para tercer grado sobre los animales del entorno colombiano"><i class="bi bi-flower1"></i> Animales colombianos</span>
+  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea una actividad de educación artística para primaria usando materiales reciclados"><i class="bi bi-palette"></i> Arte con reciclaje</span>
+  <span class="ai-chip" data-cat="actividades" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña una actividad sobre las plantas y sus partes para cuarto de primaria con experimento sencillo"><i class="bi bi-flower1"></i> Las plantas y sus partes</span>
+  <span class="ai-chip" data-cat="evaluacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea un quiz de 5 preguntas sobre las tablas de multiplicar del 2 al 5 para tercer grado de primaria"><i class="bi bi-journal-text"></i> Quiz multiplicación</span>
+  <span class="ai-chip" data-cat="evaluacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña una rúbrica de evaluación para valorar la caligrafía y presentación en cuadernos de primaria"><i class="bi bi-clipboard-check"></i> Rúbrica caligrafía</span>
+  <span class="ai-chip" data-cat="evaluacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea una evaluación formativa sobre fracciones para cuarto de primaria con actividades visuales"><i class="bi bi-calculator"></i> Evaluación fracciones</span>
+  <span class="ai-chip" data-cat="evaluacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña una lista de cotejo para evaluar hábitos de convivencia en el salón de clases"><i class="bi bi-check-circle-fill"></i> Lista de cotejo convivencia</span>
+  <span class="ai-chip" data-cat="dinamicas" onclick="setPrompt(this.dataset.prompt)" data-prompt="Sugiere 5 juegos educativos para repasar las vocales y consonantes en primero de primaria"><i class="bi bi-dice-5"></i> Juegos con letras</span>
+  <span class="ai-chip" data-cat="dinamicas" onclick="setPrompt(this.dataset.prompt)" data-prompt="Propón 3 dinámicas de integración para inicio del año escolar en primaria que fomenten el trabajo en equipo"><i class="bi bi-people-fill"></i> Dinámicas de integración</span>
+  <span class="ai-chip" data-cat="dinamicas" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea una dinámica kinestésica para aprender las figuras geométricas usando el cuerpo y el movimiento"><i class="bi bi-gem"></i> Geometría con movimiento</span>
+  <span class="ai-chip" data-cat="proyectos" onclick="setPrompt(this.dataset.prompt)" data-prompt="Diseña un proyecto interdisciplinario de 2 semanas para quinto de primaria sobre el medio ambiente y el reciclaje"><i class="bi bi-recycle"></i> Proyecto medio ambiente</span>
+  <span class="ai-chip" data-cat="proyectos" onclick="setPrompt(this.dataset.prompt)" data-prompt="Crea un proyecto de aula sobre nuestra región colombiana para tercer grado que incluya arte, sociales y lenguaje"><i class="bi bi-geo-alt-fill"></i> Mi región colombiana</span>
+  <span class="ai-chip" data-cat="proyectos" onclick="setPrompt(this.dataset.prompt)" data-prompt="Propón un proyecto de huerta escolar para primaria con actividades semanales durante un mes"><i class="bi bi-flower1"></i> Huerta escolar</span>
+  <span class="ai-chip" data-cat="comunicacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Redacta un comunicado amable para los padres de familia sobre la importancia de los hábitos de lectura en casa"><i class="bi bi-envelope-heart"></i> Circular lectura en casa</span>
+  <span class="ai-chip" data-cat="comunicacion" onclick="setPrompt(this.dataset.prompt)" data-prompt="Escribe un mensaje positivo de bienvenida al nuevo año escolar para compartir con los padres de familia"><i class="bi bi-stars"></i> Bienvenida año escolar</span>
 </div>
 
 <div class="ai-chat-wrapper">
   <div class="ai-chat-messages" id="chatMessages">
     <div class="ai-message bot">
-      <div class="ai-avatar bot">✨</div>
       <div class="ai-message-content">
-        ¡Hola, profe! 👋 Soy <strong>Mentore IA</strong>, tu asistente pedagógico.<br><br>
+        ¡Hola, profe! <i class="bi bi-person-check"></i> Soy <strong>Mentore IA</strong>, tu asistente pedagógico.<br><br>
         Puedo ayudarte con:<br>
-        📚 <strong>Actividades y talleres</strong> creativos por grado<br>
-        📝 <strong>Evaluaciones y rúbricas</strong> adaptadas<br>
-        🎮 <strong>Dinámicas y juegos</strong> educativos<br>
-        🚀 <strong>Proyectos de aula</strong> interdisciplinarios<br>
-        💌 <strong>Comunicados</strong> para padres<br><br>
+        <i class="bi bi-book"></i> <strong>Actividades y talleres</strong> creativos por grado<br>
+        <i class="bi bi-journal-text"></i> <strong>Evaluaciones y rúbricas</strong> adaptadas<br>
+        <i class="bi bi-controller"></i> <strong>Dinámicas y juegos</strong> educativos<br>
+        <i class="bi bi-rocket-takeoff"></i> <strong>Proyectos de aula</strong> interdisciplinarios<br>
+        <i class="bi bi-envelope-heart"></i> <strong>Comunicados</strong> para padres<br><br>
         ¿Con qué empezamos hoy?
       </div>
     </div>
     {% for chat in history %}
     <div class="ai-message user">
-      <div class="ai-avatar user"><i class="bi bi-person-fill"></i></div>
       <div class="ai-message-content">{{ chat.user_message }}</div>
     </div>
-    <div class="ai-message bot">
-      <div class="ai-avatar bot">✨</div>
+    <div class="ai-message bot ai-response-message"
+         data-message-id="{{ chat.pk }}"
+         data-feedback="{{ chat.action_feedback }}"
+         data-current-version="{{ chat.action_current_version }}"
+         data-versions='{{ chat.action_versions_json }}'>
       <div class="ai-message-content" id="md-{{ chat.pk }}">{{ chat.ai_response }}</div>
+      <div class="ai-message-actions" aria-label="Acciones de respuesta IA">
+        <button type="button" class="ai-action-btn" data-action="copy" title="Copiar" aria-label="Copiar"><i class="fa-solid fa-copy"></i></button>
+        <button type="button" class="ai-action-btn" data-action="feedback-up" title="Me gustó" aria-label="Me gustó"><i class="fa-regular fa-thumbs-up"></i></button>
+        <button type="button" class="ai-action-btn" data-action="feedback-down" title="No me gustó" aria-label="No me gustó"><i class="fa-regular fa-thumbs-down"></i></button>
+        <div class="ai-action-menu-wrap">
+          <button type="button" class="ai-action-btn" data-action="download-menu" title="Descargar" aria-label="Descargar"><i class="fa-solid fa-download"></i></button>
+          <div class="ai-download-menu" hidden>
+            <button type="button" data-format="pdf">PDF</button>
+            <button type="button" data-format="txt">TXT</button>
+            <button type="button" data-format="docx">DOCX</button>
+            <button type="button" data-format="png">PNG</button>
+            <button type="button" data-format="jpg">JPG</button>
+          </div>
+        </div>
+        <button type="button" class="ai-action-btn" data-action="speak" title="Escuchar" aria-label="Escuchar"><i class="fa-solid fa-volume-high"></i></button>
+        <button type="button" class="ai-action-btn" data-action="regenerate" title="Regenerar" aria-label="Regenerar"><i class="fa-solid fa-rotate-right"></i></button>
+      </div>
+      <div class="ai-tts-controls" hidden>
+        <button type="button" data-tts="toggle" title="Pausar/Reproducir" aria-label="Pausar o reproducir"><i class="fa-solid fa-pause"></i></button>
+        <button type="button" data-tts="stop" title="Detener" aria-label="Detener"><i class="fa-solid fa-stop"></i></button>
+      </div>
+      <div class="ai-version-nav" hidden>
+        <button type="button" data-version-prev aria-label="Versión anterior"><i class="fa-solid fa-chevron-left"></i></button>
+        <span data-version-label>Respuesta 1 de 1</span>
+        <button type="button" data-version-next aria-label="Versión siguiente"><i class="fa-solid fa-chevron-right"></i></button>
+      </div>
     </div>
     {% endfor %}
     <div class="ai-message bot" id="loadingMsg" style="display:none;">
-      <div class="ai-avatar bot">✨</div>
       <div class="ai-message-content"><span class="loading-dots"><span></span><span></span><span></span></span></div>
     </div>
   </div>
@@ -102,9 +114,20 @@
         <div class="ai-attach-recent" id="recentDocsList">
           <p class="ai-attach-empty">Cargando archivos…</p>
         </div>
+        <div class="ai-attach-menu-divider"></div>
+        <button type="button" class="ai-attach-menu-upload ai-gen-image-btn" id="genImageBtn">
+          <i class="bi bi-image"></i>
+          <span>Generar imagen</span>
+        </button>
+        <p class="ai-attach-menu-hint">Activa el modo imagen para tu siguiente mensaje</p>
       </div>
     </div>
     <input type="file" id="docFileInput" hidden accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.md,.rtf">
+    <button type="button" class="ai-image-mode-chip" id="imageModeChip" title="Generar imagen activado" hidden>
+      <i class="bi bi-images"></i>
+      <span>Imagen</span>
+      <i class="bi bi-x-lg ai-image-mode-remove" aria-hidden="true"></i>
+    </button>
     <textarea id="userInput" class="ai-input" placeholder="Escribe tu consulta pedagógica... (Enter para enviar, Shift+Enter para nueva línea)" rows="1"></textarea>
     <div class="ai-input-actions">
       <button type="button" id="dictateBtn" class="ai-dictate-btn" title="Dictado por voz" aria-pressed="false" aria-label="Iniciar dictado por voz">
@@ -128,6 +151,12 @@ const SEND_URL = "{% url 'ai_assistant:send' %}";
 const DOCS_URL = "{% url 'ai_assistant:documents' %}";
 const DOC_UPLOAD_URL = "{% url 'ai_assistant:document_upload' %}";
 const DOC_DELETE_URL_TEMPLATE = "{% url 'ai_assistant:document_delete' pk=0 %}";
+const GENERATE_IMAGE_URL = "{% url 'ai_assistant:generate_image' %}";
+const MESSAGE_COPY_URL_TEMPLATE = "{% url 'ai_assistant:message_copy' pk=0 %}";
+const MESSAGE_FEEDBACK_URL_TEMPLATE = "{% url 'ai_assistant:message_feedback' pk=0 %}";
+const MESSAGE_DOWNLOAD_URL_TEMPLATE = "{% url 'ai_assistant:message_download' pk=0 %}";
+const MESSAGE_REGENERATE_URL_TEMPLATE = "{% url 'ai_assistant:message_regenerate' pk=0 %}";
+const MESSAGE_TTS_URL_TEMPLATE = "{% url 'ai_assistant:message_tts' pk=0 %}";
 const CSRF_TOKEN = "{{ csrf_token }}";
 
 function getCsrfToken() {
@@ -158,6 +187,7 @@ async function parseJsonResponse(res) {
 
 let libraryDocs = [];
 let attachedDocIds = [];
+let isImageMode = false;
 const MAX_ATTACH = 5;
 
 // ============================================================
@@ -350,6 +380,17 @@ function toggleAttachMenu(force) {
   if (open) loadDocuments();
 }
 
+function setImageMode(active) {
+  isImageMode = active;
+  const chip = document.getElementById('imageModeChip');
+  const input = document.getElementById('userInput');
+  chip.hidden = !isImageMode;
+  input.placeholder = isImageMode
+    ? 'Describe o edita una imagen'
+    : 'Escribe tu consulta pedagógica... (Enter para enviar, Shift+Enter para nueva línea)';
+  if (isImageMode) input.focus();
+}
+
 function buildPayload(message) {
   return JSON.stringify({
     message,
@@ -365,10 +406,392 @@ function documentBadgesHtml() {
   ).join('')}</div>`;
 }
 
+function generatedDocumentCardHtml(doc) {
+  if (!doc) return '';
+  return `
+    <div class="ai-generated-doc-card">
+      <div class="ai-generated-doc-icon"><i class="bi ${escapeHtml(doc.icon || 'bi-file-earmark')}"></i></div>
+      <div class="ai-generated-doc-main">
+        <div class="ai-generated-doc-type">${escapeHtml(doc.file_type || 'Archivo')}</div>
+        <div class="ai-generated-doc-name">${escapeHtml(doc.name || 'Documento generado')}</div>
+        <div class="ai-generated-doc-meta">${escapeHtml(doc.created_at || '')}${doc.size_label ? ' · ' + escapeHtml(doc.size_label) : ''}</div>
+      </div>
+      <a class="ai-generated-doc-download" href="${escapeHtml(doc.download_url || '#')}" download>
+        <i class="bi bi-download"></i>
+        <span>Descargar</span>
+      </a>
+    </div>
+  `;
+}
+
+function messageUrl(template, id) {
+  return template.replace('/0/', `/${id}/`);
+}
+
+function aiActionsHtml() {
+  return `
+    <div class="ai-message-actions" aria-label="Acciones de respuesta IA">
+      <button type="button" class="ai-action-btn" data-action="copy" title="Copiar" aria-label="Copiar"><i class="fa-solid fa-copy"></i></button>
+      <button type="button" class="ai-action-btn" data-action="feedback-up" title="Me gustó" aria-label="Me gustó"><i class="fa-regular fa-thumbs-up"></i></button>
+      <button type="button" class="ai-action-btn" data-action="feedback-down" title="No me gustó" aria-label="No me gustó"><i class="fa-regular fa-thumbs-down"></i></button>
+      <div class="ai-action-menu-wrap">
+        <button type="button" class="ai-action-btn" data-action="download-menu" title="Descargar" aria-label="Descargar"><i class="fa-solid fa-download"></i></button>
+        <div class="ai-download-menu" hidden>
+          <button type="button" data-format="pdf">PDF</button>
+          <button type="button" data-format="txt">TXT</button>
+          <button type="button" data-format="docx">DOCX</button>
+          <button type="button" data-format="png">PNG</button>
+          <button type="button" data-format="jpg">JPG</button>
+        </div>
+      </div>
+      <button type="button" class="ai-action-btn" data-action="speak" title="Escuchar" aria-label="Escuchar"><i class="fa-solid fa-volume-high"></i></button>
+      <button type="button" class="ai-action-btn" data-action="regenerate" title="Regenerar" aria-label="Regenerar"><i class="fa-solid fa-rotate-right"></i></button>
+    </div>
+    <div class="ai-tts-controls" hidden>
+      <button type="button" data-tts="toggle" title="Pausar/Reproducir" aria-label="Pausar o reproducir"><i class="fa-solid fa-pause"></i></button>
+      <button type="button" data-tts="stop" title="Detener" aria-label="Detener"><i class="fa-solid fa-stop"></i></button>
+    </div>
+    <div class="ai-version-nav" hidden>
+      <button type="button" data-version-prev aria-label="Versión anterior"><i class="fa-solid fa-chevron-left"></i></button>
+      <span data-version-label>Respuesta 1 de 1</span>
+      <button type="button" data-version-next aria-label="Versión siguiente"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+  `;
+}
+
+function attachAiActions(messageEl, meta = {}) {
+  if (!messageEl) return;
+  if (!meta.message_id && !messageEl.dataset.messageId) return;
+  messageEl.classList.add('ai-response-message');
+  if (meta.message_id) messageEl.dataset.messageId = meta.message_id;
+  if (meta.feedback !== undefined) messageEl.dataset.feedback = meta.feedback;
+  if (meta.versions) {
+    messageEl.dataset.versions = JSON.stringify(meta.versions);
+    messageEl.dataset.currentVersion = String(meta.versions.length || 1);
+  }
+  if (!messageEl.querySelector('.ai-message-actions')) {
+    messageEl.insertAdjacentHTML('beforeend', aiActionsHtml());
+  }
+  updateFeedbackUi(messageEl);
+  updateVersionUi(messageEl);
+}
+
+function getMessageContent(messageEl) {
+  return messageEl.querySelector('.ai-message-content');
+}
+
+function getVersions(messageEl) {
+  try {
+    return JSON.parse(messageEl.dataset.versions || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function setVersions(messageEl, versions, currentNumber) {
+  messageEl.dataset.versions = JSON.stringify(versions || []);
+  messageEl.dataset.currentVersion = String(currentNumber || (versions || []).length || 1);
+  updateVersionUi(messageEl);
+}
+
+function updateVersionUi(messageEl) {
+  const versions = getVersions(messageEl);
+  const nav = messageEl.querySelector('.ai-version-nav');
+  if (!nav) return;
+  const total = versions.length || 1;
+  let current = parseInt(messageEl.dataset.currentVersion || total, 10);
+  current = Math.max(1, Math.min(current, total));
+  messageEl.dataset.currentVersion = String(current);
+  nav.hidden = total <= 1;
+  const label = nav.querySelector('[data-version-label]');
+  if (label) label.textContent = `Respuesta ${current} de ${total}`;
+  const prev = nav.querySelector('[data-version-prev]');
+  const next = nav.querySelector('[data-version-next]');
+  if (prev) prev.disabled = current <= 1;
+  if (next) next.disabled = current >= total;
+}
+
+function showToast(message) {
+  let toast = document.getElementById('aiActionToast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'aiActionToast';
+    toast.className = 'ai-action-toast';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = message;
+  toast.classList.add('show');
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => toast.classList.remove('show'), 1600);
+}
+
+async function copyResponse(messageEl) {
+  const contentEl = getMessageContent(messageEl);
+  const image = contentEl ? contentEl.querySelector('img') : null;
+  if (image && navigator.clipboard && window.ClipboardItem) {
+    try {
+      const imageRes = await fetch(image.src);
+      const blob = await imageRes.blob();
+      await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
+      showToast('Respuesta copiada');
+      return;
+    } catch (err) {
+      await navigator.clipboard.writeText(image.src);
+      showToast('Respuesta copiada');
+      return;
+    }
+  }
+  const html = contentEl ? contentEl.innerHTML : '';
+  const text = contentEl ? contentEl.innerText.trim() : '';
+  if (navigator.clipboard && window.ClipboardItem && html) {
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([text], { type: 'text/plain' }),
+        }),
+      ]);
+      showToast('Respuesta copiada');
+      return;
+    } catch (err) {
+      // Fallback a texto plano.
+    }
+  }
+  await navigator.clipboard.writeText(text);
+  showToast('Respuesta copiada');
+}
+
+function updateFeedbackUi(messageEl) {
+  const feedback = parseInt(messageEl.dataset.feedback || '0', 10);
+  messageEl.querySelectorAll('[data-action="feedback-up"],[data-action="feedback-down"]').forEach(btn => {
+    btn.classList.remove('is-active');
+    const icon = btn.querySelector('i');
+    if (icon) {
+      icon.classList.remove('fa-solid');
+      icon.classList.add('fa-regular');
+    }
+  });
+  const activeButton = feedback === 1
+    ? messageEl.querySelector('[data-action="feedback-up"]')
+    : feedback === -1
+      ? messageEl.querySelector('[data-action="feedback-down"]')
+      : null;
+  if (activeButton) {
+    activeButton.classList.add('is-active');
+    const icon = activeButton.querySelector('i');
+    if (icon) {
+      icon.classList.remove('fa-regular');
+      icon.classList.add('fa-solid');
+    }
+  }
+}
+
+async function submitFeedback(messageEl, value) {
+  const id = messageEl.dataset.messageId;
+  if (!id) return;
+  const res = await fetch(messageUrl(MESSAGE_FEEDBACK_URL_TEMPLATE, id), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+    credentials: 'same-origin',
+    body: JSON.stringify({ tipo: value }),
+  });
+  const data = await parseJsonResponse(res);
+  if (!res.ok) throw new Error(data.error || 'No se pudo guardar el feedback');
+  messageEl.dataset.feedback = String(data.feedback || value);
+  updateFeedbackUi(messageEl);
+}
+
+async function downloadResponse(messageEl, format) {
+  if (format === 'png' || format === 'jpg') {
+    const image = getMessageContent(messageEl)?.querySelector('img');
+    if (!image) {
+      showToast('Esta respuesta no contiene imagen');
+      return;
+    }
+    const res = await fetch(image.src);
+    const blob = await res.blob();
+    const ext = format === 'jpg' ? 'jpg' : 'png';
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = ext === 'jpg' ? 'imagen_generada.jpg' : 'imagen_generada.png';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    return;
+  }
+  const id = messageEl.dataset.messageId;
+  if (!id) return;
+  window.location.href = `${messageUrl(MESSAGE_DOWNLOAD_URL_TEMPLATE, id)}?format=${encodeURIComponent(format)}`;
+}
+
+let currentUtterance = null;
+let currentSpeechButton = null;
+let currentSpeechMessage = null;
+
+function setTtsControls(messageEl, visible, paused = false) {
+  const controls = messageEl?.querySelector('.ai-tts-controls');
+  if (!controls) return;
+  controls.hidden = !visible;
+  const icon = controls.querySelector('[data-tts="toggle"] i');
+  if (icon) icon.className = paused ? 'fa-solid fa-play' : 'fa-solid fa-pause';
+}
+
+function stopCurrentSpeech() {
+  if (window.speechSynthesis) window.speechSynthesis.cancel();
+  if (currentSpeechButton) currentSpeechButton.classList.remove('is-active');
+  if (currentSpeechMessage) setTtsControls(currentSpeechMessage, false);
+  currentUtterance = null;
+  currentSpeechButton = null;
+  currentSpeechMessage = null;
+}
+
+async function speakResponse(messageEl, button) {
+  const id = messageEl.dataset.messageId;
+  if (!id || !window.speechSynthesis) {
+    showToast('Lectura no disponible');
+    return;
+  }
+  if (button.classList.contains('is-active')) {
+    if (speechSynthesis.paused) speechSynthesis.resume();
+    else speechSynthesis.pause();
+    return;
+  }
+  stopCurrentSpeech();
+  const res = await fetch(messageUrl(MESSAGE_TTS_URL_TEMPLATE, id), {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCsrfToken() },
+    credentials: 'same-origin',
+  });
+  const data = await parseJsonResponse(res);
+  const text = data.text || getMessageContent(messageEl)?.innerText || '';
+  if (!text.trim()) return;
+  currentUtterance = new SpeechSynthesisUtterance(text);
+  currentUtterance.lang = data.lang || 'es-CO';
+  currentUtterance.onend = stopCurrentSpeech;
+  currentUtterance.onerror = stopCurrentSpeech;
+  currentSpeechButton = button;
+  currentSpeechMessage = messageEl;
+  button.classList.add('is-active');
+  setTtsControls(messageEl, true, false);
+  speechSynthesis.speak(currentUtterance);
+}
+
+async function regenerateResponse(messageEl, button) {
+  const id = messageEl.dataset.messageId;
+  if (!id || isStreaming) return;
+  stopCurrentSpeech();
+  button.disabled = true;
+  button.classList.add('is-loading');
+  const contentEl = getMessageContent(messageEl);
+  const previousHtml = contentEl.innerHTML;
+  contentEl.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  notifyGlobalAssistant('working');
+  try {
+    const res = await fetch(messageUrl(MESSAGE_REGENERATE_URL_TEMPLATE, id), {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCsrfToken() },
+      credentials: 'same-origin',
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok) throw new Error(data.error || 'No se pudo regenerar');
+    contentEl.innerHTML = formatMarkdown(data.version.content || '');
+    setVersions(messageEl, data.versions || [], data.version.number);
+    showToast('Respuesta regenerada');
+  } catch (err) {
+    contentEl.innerHTML = previousHtml;
+    showToast(err.message || 'No se pudo regenerar');
+  } finally {
+    button.disabled = false;
+    button.classList.remove('is-loading');
+    notifyGlobalAssistant('complete');
+  }
+}
+
+function showVersion(messageEl, direction) {
+  const versions = getVersions(messageEl);
+  if (!versions.length) return;
+  const total = versions.length;
+  let current = parseInt(messageEl.dataset.currentVersion || total, 10);
+  current = Math.max(1, Math.min(total, current + direction));
+  const version = versions.find(v => v.number === current) || versions[current - 1];
+  if (!version) return;
+  getMessageContent(messageEl).innerHTML = formatMarkdown(version.content || '');
+  messageEl.dataset.currentVersion = String(current);
+  updateVersionUi(messageEl);
+}
+
+document.addEventListener('click', async (e) => {
+  const menuButton = e.target.closest('[data-action="download-menu"]');
+  document.querySelectorAll('.ai-download-menu').forEach(menu => {
+    if (!menuButton || !menu.parentElement.contains(menuButton)) menu.hidden = true;
+  });
+
+  const versionPrev = e.target.closest('[data-version-prev]');
+  const versionNext = e.target.closest('[data-version-next]');
+  if (versionPrev || versionNext) {
+    showVersion(e.target.closest('.ai-response-message'), versionPrev ? -1 : 1);
+    return;
+  }
+
+  const ttsButton = e.target.closest('[data-tts]');
+  if (ttsButton) {
+    const messageEl = e.target.closest('.ai-response-message');
+    if (ttsButton.dataset.tts === 'stop') {
+      stopCurrentSpeech();
+      return;
+    }
+    if (window.speechSynthesis?.paused) {
+      speechSynthesis.resume();
+      setTtsControls(messageEl, true, false);
+    } else {
+      speechSynthesis.pause();
+      setTtsControls(messageEl, true, true);
+    }
+    return;
+  }
+
+  const formatButton = e.target.closest('.ai-download-menu [data-format]');
+  if (formatButton) {
+    const messageEl = e.target.closest('.ai-response-message');
+    await downloadResponse(messageEl, formatButton.dataset.format);
+    formatButton.closest('.ai-download-menu').hidden = true;
+    return;
+  }
+
+  const actionButton = e.target.closest('.ai-action-btn');
+  if (!actionButton) return;
+  const messageEl = actionButton.closest('.ai-response-message');
+  if (!messageEl) return;
+  const action = actionButton.dataset.action;
+  try {
+    if (action === 'copy') await copyResponse(messageEl);
+    if (action === 'feedback-up') await submitFeedback(messageEl, 1);
+    if (action === 'feedback-down') await submitFeedback(messageEl, -1);
+    if (action === 'download-menu') {
+      const menu = actionButton.parentElement.querySelector('.ai-download-menu');
+      if (menu) menu.hidden = !menu.hidden;
+    }
+    if (action === 'speak') await speakResponse(messageEl, actionButton);
+    if (action === 'regenerate') await regenerateResponse(messageEl, actionButton);
+  } catch (err) {
+    showToast(err.message || 'No se pudo completar la acción');
+  }
+});
+
+document.querySelectorAll('.ai-response-message').forEach(el => attachAiActions(el));
+
 // ============================================================
 // ENVÍO CON STREAMING (SSE)
 // ============================================================
 let isStreaming = false;
+
+function notifyGlobalAssistant(state) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ type: 'mentore-ai-state', state }, window.location.origin);
+  }
+}
 
 async function sendMessage() {
   if (isStreaming) return;
@@ -379,6 +802,12 @@ async function sendMessage() {
   const hasDocs = attachedDocIds.length > 0;
   if (!message && !hasDocs) return;
 
+  if (isImageMode) {
+    if (!message) return;
+    await sendImageMessage(message);
+    return;
+  }
+
   const chatMessages = document.getElementById('chatMessages');
   const loadingMsg = document.getElementById('loadingMsg');
   const sendBtn = document.getElementById('sendBtn');
@@ -388,7 +817,7 @@ async function sendMessage() {
 
   const userDiv = document.createElement('div');
   userDiv.className = 'ai-message user';
-  userDiv.innerHTML = `<div class="ai-avatar user"><i class="bi bi-person-fill"></i></div><div class="ai-message-content">${docsHtml}${message ? escapeHtml(message) : '<em class="ai-msg-docs-only">Consulta sobre documentos adjuntos</em>'}</div>`;
+  userDiv.innerHTML = `<div class="ai-message-content">${docsHtml}${message ? escapeHtml(message) : '<em class="ai-msg-docs-only">Consulta sobre documentos adjuntos</em>'}</div>`;
   chatMessages.insertBefore(userDiv, loadingMsg);
 
   attachedDocIds = [];
@@ -404,6 +833,7 @@ async function sendMessage() {
   sendBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
   sendBtn.title = 'Enviando…';
   isStreaming = true;
+  notifyGlobalAssistant('working');
   scrollToBottom();
 
   // Intentar streaming primero, fallback a sincrónico
@@ -419,6 +849,69 @@ async function sendMessage() {
   sendBtn.innerHTML = '<i class="bi bi-send-fill"></i>';
   sendBtn.title = 'Enviar mensaje';
   isStreaming = false;
+  notifyGlobalAssistant('complete');
+  scrollToBottom();
+}
+
+async function sendImageMessage(prompt) {
+  if (isGeneratingImage) return;
+
+  const input = document.getElementById('userInput');
+  const chatMessages = document.getElementById('chatMessages');
+  const loadingMsg = document.getElementById('loadingMsg');
+  const sendBtn = document.getElementById('sendBtn');
+
+  const userDiv = document.createElement('div');
+  userDiv.className = 'ai-message user';
+  userDiv.innerHTML = `<div class="ai-message-content"><span class="ai-msg-img-badge"><i class="bi bi-image"></i> Imagen</span>${escapeHtml(prompt)}</div>`;
+  chatMessages.insertBefore(userDiv, loadingMsg);
+
+  input.value = '';
+  input.style.height = 'auto';
+  setImageMode(false);
+
+  loadingMsg.style.display = 'flex';
+  sendBtn.disabled = true;
+  sendBtn.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+  sendBtn.title = 'Generando imagen...';
+  isGeneratingImage = true;
+  notifyGlobalAssistant('working');
+  scrollToBottom();
+
+  try {
+    const res = await fetch(GENERATE_IMAGE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken() },
+      credentials: 'same-origin',
+      body: JSON.stringify({ prompt }),
+    });
+    const data = await res.json();
+    loadingMsg.style.display = 'none';
+
+    const botDiv = document.createElement('div');
+    botDiv.className = 'ai-message bot';
+    if (res.ok && data.image_data) {
+      const imgSrc = `data:${data.mime_type};base64,${data.image_data}`;
+      const textHtml = data.text ? `<p>${escapeHtml(data.text)}</p>` : '';
+      botDiv.innerHTML = `<div class="ai-message-content"><div class="ai-gen-image-result">${textHtml}<img src="${imgSrc}" alt="Imagen generada" class="ai-gen-image-chat" onclick="window.open(this.src,'_blank')"></div></div>`;
+      if (data.message_id) attachAiActions(botDiv, data);
+    } else {
+      botDiv.innerHTML = `<div class="ai-message-content" style="color:var(--danger,#dc3545);">${formatMarkdown(data.error || 'No se pudo generar la imagen')}</div>`;
+    }
+    chatMessages.insertBefore(botDiv, loadingMsg);
+  } catch (err) {
+    loadingMsg.style.display = 'none';
+    const errDiv = document.createElement('div');
+    errDiv.className = 'ai-message bot';
+    errDiv.innerHTML = `<div class="ai-message-content" style="color:var(--danger,#dc3545);">Error de conexion. Intenta de nuevo.</div>`;
+    chatMessages.insertBefore(errDiv, loadingMsg);
+  }
+
+  sendBtn.disabled = false;
+  sendBtn.innerHTML = '<i class="bi bi-send-fill"></i>';
+  sendBtn.title = 'Enviar mensaje';
+  isGeneratingImage = false;
+  notifyGlobalAssistant('complete');
   scrollToBottom();
 }
 
@@ -429,10 +922,11 @@ async function sendWithStreaming(payload, chatMessages, loadingMsg) {
     botDiv.className = 'ai-message bot';
     const contentDiv = document.createElement('div');
     contentDiv.className = 'ai-message-content';
-    botDiv.innerHTML = '<div class="ai-avatar bot">✨</div>';
+    botDiv.innerHTML = '';
     botDiv.appendChild(contentDiv);
 
     let fullText = '';
+    let generatedDocument = null;
     let cursorSpan = document.createElement('span');
     cursorSpan.className = 'streaming-cursor';
     cursorSpan.textContent = '▊';
@@ -463,7 +957,8 @@ async function sendWithStreaming(payload, chatMessages, loadingMsg) {
           if (done) {
             // Quitar cursor
             if (cursorSpan.parentNode) cursorSpan.remove();
-            contentDiv.innerHTML = formatMarkdown(fullText);
+            contentDiv.innerHTML = formatMarkdown(fullText) + generatedDocumentCardHtml(generatedDocument);
+            attachAiActions(botDiv);
             resolve();
             return;
           }
@@ -479,7 +974,8 @@ async function sendWithStreaming(payload, chatMessages, loadingMsg) {
 
                 if (data.done) {
                   if (cursorSpan.parentNode) cursorSpan.remove();
-                  contentDiv.innerHTML = formatMarkdown(fullText);
+                  contentDiv.innerHTML = formatMarkdown(fullText) + generatedDocumentCardHtml(generatedDocument);
+                  attachAiActions(botDiv, data);
                   resolve();
                   return;
                 }
@@ -488,6 +984,14 @@ async function sendWithStreaming(payload, chatMessages, loadingMsg) {
                   contentDiv.innerHTML = `<span style="color:var(--danger,#dc3545);">Error: ${escapeHtml(data.error)}</span>`;
                   reject(new Error(data.error));
                   return;
+                }
+
+                if (data.generated_document) {
+                  generatedDocument = data.generated_document;
+                  contentDiv.innerHTML = formatMarkdown(fullText) + generatedDocumentCardHtml(generatedDocument);
+                  contentDiv.appendChild(cursorSpan);
+                  scrollToBottom();
+                  continue;
                 }
 
                 if (data.chunk) {
@@ -506,7 +1010,8 @@ async function sendWithStreaming(payload, chatMessages, loadingMsg) {
         }).catch(err => {
           if (cursorSpan.parentNode) cursorSpan.remove();
           if (fullText) {
-            contentDiv.innerHTML = formatMarkdown(fullText);
+            contentDiv.innerHTML = formatMarkdown(fullText) + generatedDocumentCardHtml(generatedDocument);
+            attachAiActions(botDiv);
             resolve();
           } else {
             reject(err);
@@ -534,13 +1039,14 @@ async function sendSynchronous(payload, chatMessages, loadingMsg) {
 
     const botDiv = document.createElement('div');
     botDiv.className = 'ai-message bot';
-    botDiv.innerHTML = `<div class="ai-avatar bot">✨</div><div class="ai-message-content">${formatMarkdown(data.response || data.error || 'Error desconocido')}</div>`;
+    botDiv.innerHTML = `<div class="ai-message-content">${formatMarkdown(data.response || data.error || 'Error desconocido')}${generatedDocumentCardHtml(data.generated_document)}</div>`;
+    if (data.message_id) attachAiActions(botDiv, data);
     chatMessages.insertBefore(botDiv, loadingMsg);
   } catch (err) {
     loadingMsg.style.display = 'none';
     const errDiv = document.createElement('div');
     errDiv.className = 'ai-message bot';
-    errDiv.innerHTML = `<div class="ai-avatar bot">✨</div><div class="ai-message-content" style="color:var(--danger,#dc3545);">Error de conexión. Intenta de nuevo.</div>`;
+    errDiv.innerHTML = `<div class="ai-message-content" style="color:var(--danger,#dc3545);">Error de conexión. Intenta de nuevo.</div>`;
     chatMessages.insertBefore(errDiv, loadingMsg);
   }
 }
@@ -783,6 +1289,21 @@ if (!SpeechRecognition) {
 
 loadDocuments();
 scrollToBottom();
+notifyGlobalAssistant('ready');
+
+// ============================================================
+// GENERACION DE IMAGENES COMO MODO DEL CHAT
+// ============================================================
+let isGeneratingImage = false;
+
+document.getElementById('genImageBtn').addEventListener('click', () => {
+  setImageMode(true);
+  toggleAttachMenu(false);
+});
+
+document.getElementById('imageModeChip').addEventListener('click', () => {
+  setImageMode(false);
+});
 </script>
 
 <style>
@@ -849,5 +1370,61 @@ scrollToBottom();
   0%, 50% { opacity: 1; }
   51%, 100% { opacity: 0; }
 }
+
+/* Botón Generar imagen en menú + */
+.ai-message.ai-response-message{display:grid;grid-template-columns:minmax(0,min(88%,760px));row-gap:4px;align-items:start;justify-content:start;}
+.ai-response-message .ai-message-content{grid-column:1;grid-row:1;max-width:100%;width:100%;}
+.ai-message-actions{grid-column:1;grid-row:2;justify-self:end;display:flex;align-items:center;gap:4px;padding:4px;margin-top:-2px;background:rgba(255,255,255,.94);border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 8px 24px rgba(13,45,66,.12);opacity:0;pointer-events:none;transform:translateY(-4px);transition:opacity .18s ease,transform .18s ease;z-index:30;backdrop-filter:blur(10px);overflow:visible;}
+.ai-response-message:hover .ai-message-actions,.ai-response-message:focus-within .ai-message-actions{opacity:1;pointer-events:auto;transform:translateY(0);}
+.ai-action-btn{width:30px;height:30px;border:none;border-radius:7px;background:transparent;color:var(--gray-500);display:inline-flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;transition:background .16s ease,color .16s ease,transform .16s ease;}
+.ai-action-btn:hover,.ai-action-btn.is-active{background:var(--primary-light);color:var(--primary-dark);}
+.ai-action-btn[data-action="feedback-up"].is-active,.ai-action-btn[data-action="feedback-down"].is-active{background:transparent;color:var(--primary);}
+.ai-action-btn:disabled{opacity:.55;cursor:not-allowed;}
+.ai-action-btn.is-loading i{animation:ai-action-spin .8s linear infinite;}
+@keyframes ai-action-spin{to{transform:rotate(360deg);}}
+.ai-action-menu-wrap{position:relative;display:inline-flex;overflow:visible;}
+.ai-download-menu{position:absolute;right:0;bottom:calc(100% + 8px);min-width:112px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 12px 30px rgba(13,45,66,.16);padding:5px;z-index:1000;}
+.ai-download-menu[hidden]{display:none!important;}
+.ai-download-menu button{width:100%;border:none;background:transparent;border-radius:6px;padding:7px 9px;text-align:left;font-size:12px;font-weight:800;color:var(--gray-700);cursor:pointer;}
+.ai-download-menu button:hover{background:var(--gray-50);color:var(--primary-dark);}
+.ai-tts-controls{grid-column:1;grid-row:3;justify-self:end;display:inline-flex;align-items:center;gap:4px;padding:3px;background:#fff;border:1px solid var(--gray-200);border-radius:999px;box-shadow:0 4px 14px rgba(13,45,66,.08);z-index:6;}
+.ai-tts-controls[hidden]{display:none!important;}
+.ai-tts-controls button{width:22px;height:22px;border:none;border-radius:50%;background:transparent;color:var(--gray-500);font-size:10px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;}
+.ai-tts-controls button:hover{background:var(--primary-light);color:var(--primary-dark);}
+.ai-version-nav{grid-column:1;grid-row:3;justify-self:start;display:inline-flex;align-items:center;gap:6px;padding:3px 8px;background:#fff;border:1px solid var(--gray-200);border-radius:999px;box-shadow:0 4px 14px rgba(13,45,66,.08);font-size:11px;font-weight:800;color:var(--gray-600);}
+.ai-version-nav[hidden]{display:none!important;}
+.ai-version-nav button{width:20px;height:20px;border:none;background:transparent;color:var(--gray-500);border-radius:50%;cursor:pointer;font-size:10px;display:inline-flex;align-items:center;justify-content:center;}
+.ai-version-nav button:hover:not(:disabled){background:var(--primary-light);color:var(--primary-dark);}
+.ai-version-nav button:disabled{opacity:.35;cursor:not-allowed;}
+.ai-action-toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,12px);padding:9px 14px;border-radius:999px;background:var(--gray-900);color:#fff;font-size:13px;font-weight:800;box-shadow:0 10px 30px rgba(13,45,66,.24);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;z-index:2000;}
+.ai-action-toast.show{opacity:1;transform:translate(-50%,0);}
+@media (max-width:760px){.ai-message.ai-response-message{grid-template-columns:minmax(0,100%);}.ai-message-content{max-width:92%;}.ai-message-actions{opacity:.96;pointer-events:auto;max-width:100%;overflow:visible;transform:translateY(0);}.ai-action-btn{width:32px;height:32px;}.ai-version-nav{grid-row:3;}.ai-tts-controls{grid-row:3;}}
+
+.ai-gen-image-btn{color:var(--primary)!important;}
+.ai-gen-image-btn i{font-size:18px;}
+.ai-msg-img-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.2);margin-bottom:6px;color:var(--primary-dark,#1a6d96);}
+.ai-message.user .ai-msg-img-badge{background:var(--primary-50,#e8f4fc);border-color:var(--primary-100,#cfe8f7);}
+
+.ai-image-mode-chip{height:42px;border:none;background:transparent;color:var(--primary);display:inline-flex;align-items:center;gap:6px;padding:0 4px;font-size:14px;font-weight:600;cursor:pointer;flex-shrink:0;transition:color .15s;}
+.ai-image-mode-chip[hidden]{display:none!important;}
+.ai-image-mode-chip i{font-size:18px;}
+.ai-image-mode-chip .ai-image-mode-remove{display:none;font-size:13px;color:var(--gray-500);}
+.ai-image-mode-chip:hover .ai-image-mode-remove{display:inline-flex;}
+.ai-image-mode-chip:hover{color:var(--primary-dark,#1a6d96);}
+
+/* Imagen en el chat */
+.ai-gen-image-result{text-align:center;}
+.ai-gen-image-chat,.ai-message-content img{width:100%;max-width:min(100%,720px);height:auto;border-radius:14px;box-shadow:0 4px 16px rgba(0,0,0,.1);cursor:pointer;transition:transform .2s;margin-top:8px;display:block;}
+.ai-gen-image-chat:hover{transform:scale(1.02);}
+
+.ai-generated-doc-card{display:flex;align-items:center;gap:12px;margin-top:12px;padding:12px;border:1px solid var(--gray-200);border-radius:8px;background:#fff;max-width:520px;}
+.ai-generated-doc-icon{width:42px;height:42px;border-radius:8px;background:var(--primary-50,#e8f4fc);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.ai-generated-doc-main{min-width:0;flex:1;}
+.ai-generated-doc-type{font-size:11px;font-weight:800;color:var(--primary-dark,#1a6d96);text-transform:uppercase;letter-spacing:.04em;}
+.ai-generated-doc-name{font-size:14px;font-weight:800;color:var(--gray-900);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ai-generated-doc-meta{font-size:12px;color:var(--gray-500);margin-top:2px;}
+.ai-generated-doc-download{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;background:var(--primary);color:#fff;text-decoration:none;font-size:13px;font-weight:800;flex-shrink:0;}
+.ai-generated-doc-download:hover{background:var(--primary-dark,#1a6d96);color:#fff;text-decoration:none;}
+@media (max-width:640px){.ai-generated-doc-card{align-items:flex-start;flex-wrap:wrap}.ai-generated-doc-download{width:100%;justify-content:center}.ai-generated-doc-main{min-width:calc(100% - 54px);}}
 </style>
 {% endblock %}

@@ -174,7 +174,7 @@
 
   <div class="gal-header">
     <div>
-      <h1>📤 Subir Trabajo</h1>
+      <h1><i class="bi bi-cloud-arrow-up"></i> Subir Trabajo</h1>
       <p>Publica el trabajo de un estudiante y celebra su esfuerzo</p>
     </div>
     <a href="{% url 'gallery:list' %}" class="btn-sec"><i class="bi bi-arrow-left"></i> Volver</a>
@@ -186,7 +186,7 @@
 
       <!-- ESTUDIANTE -->
       <div class="gal-field">
-        <label class="gal-label">👧 Estudiante *</label>
+        <label class="gal-label"><i class="bi bi-person-badge"></i> Estudiante *</label>
         <div id="stuWrap" style="position:relative;">
           <!-- Input de búsqueda -->
           <input
@@ -221,9 +221,9 @@
           </div>
           <!-- Chip seleccionado -->
           <div id="stuChip" style="display:none;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid #1570A6;border-radius:10px;background:#EEF6FD;cursor:pointer;" onclick="stuClear()">
-            <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#059669,#34D399);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;flex-shrink:0;">✓</div>
+            <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#059669,#34D399);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;flex-shrink:0;"><i class="bi bi-check-lg"></i></div>
             <span id="stuChipName" style="font-size:14px;font-weight:700;color:#0D2D42;flex:1;"></span>
-            <span style="font-size:11px;color:#5588AA;">✕ cambiar</span>
+            <span style="font-size:11px;color:#5588AA;"><i class="bi bi-x-lg"></i> cambiar</span>
           </div>
           <!-- Hidden real input -->
           <input type="hidden" name="student" id="stuHidden" required>
@@ -232,40 +232,40 @@
 
       <!-- TÍTULO -->
       <div class="gal-field">
-        <label class="gal-label">📌 Título del trabajo *</label>
+        <label class="gal-label"><i class="bi bi-pin-angle"></i> Título del trabajo *</label>
         <input type="text" name="title" class="gal-input" placeholder="Ej: Maqueta del sistema solar, Mi poema favorito..." required>
       </div>
 
       <!-- DESCRIPCIÓN -->
       <div class="gal-field">
-        <label class="gal-label">📝 Descripción</label>
+        <label class="gal-label"><i class="bi bi-journal-text"></i> Descripción</label>
         <textarea name="description" class="gal-textarea" placeholder="Describe el trabajo, el objetivo o la materia..."></textarea>
       </div>
 
       <!-- CATEGORÍA -->
       <div class="gal-row gal-field">
         <div>
-          <label class="gal-label">🏷️ Categoría</label>
+          <label class="gal-label"><i class="bi bi-tags"></i> Categoría</label>
           <select name="category" class="gal-select">
             <option value="">Sin categoría</option>
             {% for cat in categories %}<option value="{{ cat.pk }}">{{ cat.name }}</option>{% endfor %}
           </select>
         </div>
         <div>
-          <label class="gal-label">✨ O crear nueva categoría</label>
+          <label class="gal-label"><i class="bi bi-robot"></i> O crear nueva categoría</label>
           <input type="text" name="new_category" class="gal-input" placeholder="Ej: Arte, Ciencias, Escritura...">
         </div>
       </div>
 
       <!-- IMAGEN -->
       <div class="gal-field">
-        <label class="gal-label">🖼️ Imagen del trabajo</label>
+        <label class="gal-label"><i class="bi bi-images"></i> Imagen del trabajo</label>
         <div class="drop-zone" id="imageDropZone"
              onclick="document.getElementById('imageInput').click()"
              ondragover="this.classList.add('drag-over');event.preventDefault()"
              ondragleave="this.classList.remove('drag-over')"
              ondrop="handleDrop(event)">
-          <div class="dz-icon">📷</div>
+          <div class="dz-icon"><i class="bi bi-camera"></i></div>
           <div class="dz-title">Haz clic o arrastra la imagen aquí</div>
           <div class="dz-sub">JPG, PNG, GIF · Máx 10MB</div>
           <div id="imagePreview">
@@ -278,14 +278,14 @@
 
       <!-- ARCHIVO -->
       <div class="gal-field">
-        <label class="gal-label">📎 Archivo adjunto (opcional)</label>
+        <label class="gal-label"><i class="bi bi-paperclip"></i> Archivo adjunto (opcional)</label>
         <input type="file" name="file" class="gal-input" style="padding:10px 14px;">
         <div style="font-size:12px;color:#9DB8CC;margin-top:5px;">PDF, Word, PowerPoint y más</div>
       </div>
 
       <!-- VISIBILIDAD -->
       <div class="gal-field">
-        <label class="gal-label">👁️ Visibilidad</label>
+        <label class="gal-label"><i class="bi bi-eye"></i> Visibilidad</label>
         <label class="vis-toggle">
           <input type="checkbox" name="is_public" id="is_public" checked>
           <div>
@@ -307,7 +307,7 @@
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
 
     <div class="gal-card" style="margin-bottom:0;">
-      <div style="font-size:14px;font-weight:800;color:#0D2D42;margin-bottom:14px;">✨ ¿Cómo funciona?</div>
+      <div style="font-size:14px;font-weight:800;color:#0D2D42;margin-bottom:14px;"><i class="bi bi-robot"></i> ¿Cómo funciona?</div>
       <div class="steps">
         <div class="step step-1"><div class="step-num">1</div><div class="step-text">Sube la foto o archivo del trabajo del estudiante.</div></div>
         <div class="step step-2"><div class="step-num">2</div><div class="step-text">Márcalo como <strong>público</strong> para que los padres puedan verlo.</div></div>
@@ -316,7 +316,7 @@
     </div>
 
     <div class="ai-banner" style="align-self:start;">
-      <div class="ai-icon">✨</div>
+      <div class="ai-icon"><i class="bi bi-robot"></i></div>
       <div style="flex:1;">
         <strong style="font-size:14px;color:#0D2D42;font-weight:800;">Consejo del Asistente IA</strong>
         <p style="font-size:13px;color:#5588AA;margin:4px 0 12px;line-height:1.5;">¿Necesitas escribir una descripción creativa? El Asistente IA puede ayudarte.</p>

@@ -5,7 +5,7 @@
 
 <div class="page-header">
   <div>
-    <h1>{% if action == "Editar" %}✏️ Editar Estudiante{% else %}👧 Nuevo Estudiante{% endif %}</h1>
+    <h1>{% if action == "Editar" %}<i class="bi bi-pencil-square"></i> Editar Estudiante{% else %}<i class="bi bi-person-badge"></i> Nuevo Estudiante{% endif %}</h1>
     <p>{% if action == "Editar" %}Modifica la información del estudiante{% else %}Agrega un nuevo estudiante a tu lista{% endif %}</p>
   </div>
   <a href="{% url 'students:list' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
@@ -19,7 +19,7 @@
   <div style="display:flex;flex-direction:column;gap:20px;">
 
     <div class="card">
-      <div class="card-header"><span class="card-title">📋 Información personal</span></div>
+      <div class="card-header"><span class="card-title"><i class="bi bi-clipboard-check"></i> Información personal</span></div>
       <div class="card-body">
         <div class="form-grid">
           <div class="form-group">
@@ -74,7 +74,7 @@
     </div>
 
     <div class="card">
-      <div class="card-header"><span class="card-title">👨‍👩‍👧 Información del acudiente</span></div>
+      <div class="card-header"><span class="card-title"><i class="bi bi-people-fill"></i> Información del acudiente</span></div>
       <div class="card-body">
         <div class="form-grid">
           <div class="form-group">

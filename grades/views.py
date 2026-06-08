@@ -26,6 +26,11 @@ def parsear_nota(valor, default=0):
         return float(default)
 
 
+def _valid_period(value):
+    valid_periods = {choice[0] for choice in Grade.PERIOD_CHOICES}
+    return value if value in valid_periods else ''
+
+
 def _accessible_students(user):
     """Estudiantes accesibles: propios (FK) + en salones M2M."""
     shared_ids = user.shared_classrooms.values_list('id', flat=True)
@@ -109,9 +114,7 @@ def grade_list(request):
 
     avg      = grades.aggregate(Avg('score'))['score__avg'] or 0
     subjects = Subject.objects.filter(active=True)
-    periods  = Grade.objects.filter(
-        student_id__in=student_ids
-    ).values_list('period', flat=True).distinct()
+    periods = [choice[0] for choice in Grade.PERIOD_CHOICES]
 
     my_subjects = _my_subjects(request.user) if not is_coord else None
 
@@ -120,7 +123,7 @@ def grade_list(request):
         'avg':                round(float(avg), 2),
         'classrooms':         classrooms,
         'subjects':           subjects,
-        'periods':            [p for p in periods if p],
+        'periods':            periods,
         'query':              query,
         'selected_period':    period,
         'selected_classroom': classroom_id,
@@ -153,6 +156,11 @@ def grade_create(request):
         p          = request.POST
         student_pk = p.get('student')
         subject_pk = p.get('subject')
+        period     = _valid_period(p.get('period', ''))
+
+        if not period:
+            messages.error(request, 'Selecciona un periodo válido.')
+            return redirect('grades:create')
 
         # Validar acceso al estudiante
         if is_coord:
@@ -179,7 +187,7 @@ def grade_create(request):
             grade_type=p.get('grade_type', 'activity'),
             score=parsear_nota(p.get('score', 0)),
             max_score=5.0,
-            period=p.get('period', ''),
+            period=period,
             date=p.get('date') or date.today(),
             observations=p.get('observations', ''),
         )
@@ -193,6 +201,7 @@ def grade_create(request):
         'preselect':      preselect,
         'today':          date.today().isoformat(),
         'grade_types':    Grade.GRADE_TYPES,
+        'period_choices': Grade.PERIOD_CHOICES,
         'is_coord':       is_coord,
     })
 
@@ -225,6 +234,12 @@ def grade_edit(request, pk):
     if request.method == 'POST':
         p          = request.POST
         subject_pk = p.get('subject')
+        period     = _valid_period(p.get('period', ''))
+
+        if not period:
+            messages.error(request, 'Selecciona un periodo válido.')
+            return redirect('grades:edit', pk=grade.pk)
+
         subject_obj = None
         if subject_pk:
             subject_obj = get_object_or_404(Subject, pk=subject_pk)
@@ -239,7 +254,7 @@ def grade_edit(request, pk):
         grade.activity_name  = p.get('activity_name', grade.activity_name)
         grade.grade_type     = p.get('grade_type', grade.grade_type)
         grade.score          = parsear_nota(p.get('score', grade.score), grade.score)
-        grade.period         = p.get('period', grade.period)
+        grade.period         = period
         grade.date           = p.get('date') or grade.date
         grade.observations   = p.get('observations', grade.observations)
         grade.save()
@@ -253,6 +268,7 @@ def grade_edit(request, pk):
         'action':         'Editar',
         'today':          date.today().isoformat(),
         'grade_types':    Grade.GRADE_TYPES,
+        'period_choices': Grade.PERIOD_CHOICES,
         'is_coord':       is_coord,
     })
 

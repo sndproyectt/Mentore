@@ -1,0 +1,127 @@
+{% if parent_messages or received_direct %}
+
+{% if parent_messages %}
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-400);margin-bottom:8px;padding-left:4px;"><i class="bi bi-people-fill"></i> Mensajes de padres</div>
+{% for msg in parent_messages %}
+{% with rc=msg.replies.count preview=msg.body|truncatechars:40 %}
+<div class="thread-card">
+  <div class="thread-header" onclick="toggleThread('pm{{ msg.pk }}',this)" id="hdr-pm{{ msg.pk }}">
+    <div class="t-avatar" style="background:linear-gradient(135deg,#059669,#34D399);font-size:18px;"><i class="bi bi-people-fill"></i></div>
+    <div class="t-meta">
+      <div class="t-subject">{{ msg.student.parent_name|default:"Acudiente" }} — {{ msg.subject }}</div>
+      <div class="t-preview">{{ preview }}</div>
+    </div>
+    <div class="t-right">
+      <span class="t-time">{{ msg.sent_at|date:"d/m H:i" }}</span>
+      {% if rc %}<span class="t-count">{{ rc }}</span>{% endif %}
+    </div>
+    <i class="bi bi-chevron-down" style="color:#B0BEC5;font-size:12px;margin-left:6px;transition:transform .2s;" id="chv-pm{{ msg.pk }}"></i>
+  </div>
+  <div class="chat-window" id="pm{{ msg.pk }}">
+    <div class="chat-messages" id="msgs-pm{{ msg.pk }}">
+      <div class="bubble-row">
+        <div class="b-avatar" style="background:linear-gradient(135deg,#059669,#34D399);"><i class="bi bi-people-fill"></i></div>
+        <div class="b-col">
+          <div class="b-name">{{ msg.student.parent_name|default:"Acudiente" }}</div>
+          <div class="b-bubble">{{ msg.body }}</div>
+          <div class="b-time">{{ msg.sent_at|date:"H:i" }}</div>
+        </div>
+      </div>
+      {% for reply in msg.replies.all %}
+      <div class="bubble-row mine">
+        <div class="b-avatar" style="background:linear-gradient(135deg,var(--primary),var(--secondary));">{{ reply.teacher.first_name|first|upper }}{{ reply.teacher.last_name|first|upper }}</div>
+        <div class="b-col">
+          <div class="b-name">{{ reply.teacher.get_full_name }}</div>
+          <div class="b-bubble">{{ reply.body }}</div>
+          <div class="b-time">{{ reply.sent_at|date:"H:i" }} <i class="bi bi-check2-all b-check"></i></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="reply-bar">
+      <form method="post" action="{% url 'students:message_thread' msg.pk %}" style="display:contents;">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="messages">
+        <textarea class="reply-ta" name="body" rows="1" placeholder="Escribe un mensaje..."
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.closest('form').submit();}"
+          oninput="autoResize(this)"></textarea>
+        <button type="submit" class="send-btn" title="Enviar"><i class="bi bi-send-fill"></i></button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% endfor %}
+{% endif %}
+
+{% if received_direct %}
+<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--gray-400);margin-bottom:8px;{% if parent_messages %}margin-top:16px;{% endif %}padding-left:4px;"><i class="bi bi-person-workspace"></i> Mensajes de docentes</div>
+{% for msg in received_direct %}
+{% with rc=msg.replies.count preview=msg.body|truncatechars:40 %}
+<div class="thread-card">
+  <div class="thread-header" onclick="toggleThread('dm{{ msg.pk }}',this)" id="hdr-dm{{ msg.pk }}">
+    <div class="t-avatar" style="background:linear-gradient(135deg,var(--primary),var(--secondary));">{{ msg.sender.first_name|first|upper }}{{ msg.sender.last_name|first|upper }}</div>
+    <div class="t-meta">
+      <div class="t-subject">{{ msg.sender.get_full_name }}</div>
+      <div class="t-preview">{{ msg.subject }} · {{ preview }}</div>
+    </div>
+    <div class="t-right">
+      <span class="t-time">{{ msg.sent_at|date:"d/m H:i" }}</span>
+      {% if rc %}<span class="t-count">{{ rc }}</span>{% endif %}
+    </div>
+    <i class="bi bi-chevron-down" style="color:#B0BEC5;font-size:12px;margin-left:6px;transition:transform .2s;" id="chv-dm{{ msg.pk }}"></i>
+  </div>
+  <div class="chat-window" id="dm{{ msg.pk }}">
+    <div class="chat-messages" id="msgs-dm{{ msg.pk }}">
+      <div class="bubble-row">
+        <div class="b-avatar" style="background:linear-gradient(135deg,var(--primary),var(--secondary));">{{ msg.sender.first_name|first|upper }}{{ msg.sender.last_name|first|upper }}</div>
+        <div class="b-col">
+          <div class="b-name">{{ msg.sender.get_full_name }}{% if msg.sender.teacher_profile.subject %} · {{ msg.sender.teacher_profile.subject }}{% endif %}</div>
+          <div class="b-bubble">{{ msg.body }}</div>
+          <div class="b-time">{{ msg.sent_at|date:"H:i" }}</div>
+        </div>
+      </div>
+      {% for reply in msg.replies_asc %}
+      {% if reply.sender == request.user %}
+      <div class="bubble-row mine">
+        <div class="b-avatar" style="background:linear-gradient(135deg,#059669,#34D399);">{{ reply.sender.first_name|first|upper }}{{ reply.sender.last_name|first|upper }}</div>
+        <div class="b-col">
+          <div class="b-bubble">{{ reply.body }}</div>
+          <div class="b-time">{{ reply.sent_at|date:"H:i" }} <i class="bi bi-check2-all b-check"></i></div>
+        </div>
+      </div>
+      {% else %}
+      <div class="bubble-row">
+        <div class="b-avatar" style="background:linear-gradient(135deg,var(--primary),var(--secondary));">{{ reply.sender.first_name|first|upper }}{{ reply.sender.last_name|first|upper }}</div>
+        <div class="b-col">
+          <div class="b-name">{{ reply.sender.get_full_name }}</div>
+          <div class="b-bubble">{{ reply.body }}</div>
+          <div class="b-time">{{ reply.sent_at|date:"H:i" }}</div>
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    <div class="reply-bar">
+      <form method="post" action="{% url 'students:direct_message_reply' msg.pk %}" style="display:contents;">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="messages">
+        <textarea class="reply-ta" name="body" rows="1" placeholder="Escribe un mensaje..."
+          onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();this.closest('form').submit();}"
+          oninput="autoResize(this)"></textarea>
+        <button type="submit" class="send-btn" title="Enviar"><i class="bi bi-send-fill"></i></button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endwith %}
+{% endfor %}
+{% endif %}
+
+{% else %}
+<div class="card"><div class="empty-state" style="padding:52px;">
+  <span class="empty-icon" style="font-size:48px;"><i class="bi bi-chat-dots"></i></span>
+  <h3>Sin conversaciones</h3>
+  <p>Los mensajes de padres y docentes aparecerán aquí.</p>
+</div></div>
+{% endif %}

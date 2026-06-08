@@ -1,0 +1,150 @@
+{% load static %}
+<div
+  class="global-ai"
+  id="globalAi"
+  data-preferences-url="{% url 'ai_assistant:global_preferences' %}"
+  data-chat-url="{% url 'ai_assistant:chat' %}?embed=global_assistant"
+  data-clear-url="{% url 'ai_assistant:clear' %}"
+  data-csrf-token="{{ csrf_token }}"
+  aria-live="polite">
+  <div class="global-ai-actions" aria-label="Acciones del asistente">
+    <button type="button" class="global-ai-action" data-global-ai-settings title="Configuracion" aria-label="Configurar asistente IA">
+      <i class="fa-solid fa-gear" aria-hidden="true"></i>
+    </button>
+    <button type="button" class="global-ai-action" data-global-ai-hide title="Ocultar asistente" aria-label="Ocultar asistente IA">
+      <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <button type="button" class="global-ai-bubble" data-global-ai-toggle aria-label="Abrir asistente IA de Mentore" aria-expanded="false" aria-controls="globalAiDrawer">
+    <span class="global-ai-status" aria-hidden="true"></span>
+    <img class="global-ai-avatar-img" data-global-ai-avatar alt="" loading="lazy">
+    <span class="global-ai-avatar-fallback" aria-hidden="true"><i class="fa-solid fa-graduation-cap"></i></span>
+    <span class="global-ai-tooltip" role="tooltip">Asistente IA</span>
+  </button>
+</div>
+
+<div class="global-ai-backdrop" id="globalAiBackdrop" data-global-ai-close hidden></div>
+<aside class="global-ai-drawer" id="globalAiDrawer" aria-label="Chat del asistente IA" aria-hidden="true">
+  <button
+    type="button"
+    class="global-ai-resizer"
+    id="globalAiResizer"
+    aria-label="Redimensionar asistente IA"
+    title="Arrastra para redimensionar"
+    tabindex="0">
+    <span aria-hidden="true"></span>
+  </button>
+  <div class="global-ai-drawer-header">
+    <div>
+      <strong>Mentore IA</strong>
+      <span>Asistente pedagógico</span>
+    </div>
+    <div class="global-ai-drawer-actions">
+      <button type="button" class="global-ai-drawer-clear" data-global-ai-clear aria-label="Borrar chat de IA" title="Borrar chat">
+        <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+      </button>
+      <button type="button" class="global-ai-drawer-close" data-global-ai-close aria-label="Cerrar asistente IA" title="Cerrar">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </div>
+  </div>
+  <iframe class="global-ai-frame" id="globalAiFrame" title="Asistente IA de Mentore" loading="lazy"></iframe>
+  <div class="global-ai-frame-fallback" id="globalAiFrameFallback" hidden>
+    <div>
+      <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+      <strong>No se pudo cargar el chat</strong>
+      <span>Verifica que Mentore siga abierto en este mismo servidor.</span>
+      <a href="{% url 'ai_assistant:chat' %}" class="btn btn-primary btn-sm">Abrir asistente</a>
+    </div>
+  </div>
+</aside>
+
+<div class="global-ai-modal" id="globalAiSettingsModal" role="dialog" aria-modal="true" aria-labelledby="globalAiSettingsTitle" hidden>
+  <div class="global-ai-modal-panel">
+    <div class="global-ai-modal-header">
+      <div>
+        <h2 id="globalAiSettingsTitle">Asistente IA</h2>
+        <p>Personaliza la burbuja flotante en toda la plataforma.</p>
+      </div>
+      <button type="button" class="global-ai-modal-close" data-global-ai-settings-close aria-label="Cerrar configuracion">
+        <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="global-ai-settings-grid">
+      <section class="global-ai-setting-group">
+        <h3>Avatar</h3>
+        <div class="global-ai-avatar-options" data-global-ai-avatar-options></div>
+      </section>
+
+      <section class="global-ai-setting-group">
+        <h3>Tamaño</h3>
+        <div class="global-ai-segmented" data-global-ai-field="size">
+          <button type="button" data-value="small">Pequeño</button>
+          <button type="button" data-value="medium">Mediano</button>
+          <button type="button" data-value="large">Grande</button>
+          <button type="button" data-value="xlarge">Extra</button>
+        </div>
+      </section>
+
+      <section class="global-ai-setting-group">
+        <h3>Posición</h3>
+        <div class="global-ai-segmented" data-global-ai-field="position">
+          <button type="button" data-value="bottom_left">Izquierda</button>
+          <button type="button" data-value="bottom_right">Derecha</button>
+        </div>
+      </section>
+
+      <section class="global-ai-setting-group">
+        <h3>Transparencia</h3>
+        <label class="global-ai-range-label">
+          <input type="range" min="0" max="100" step="1" data-global-ai-input="transparency">
+          <span data-global-ai-transparency-label>0%</span>
+        </label>
+      </section>
+
+      <section class="global-ai-setting-group">
+        <h3>Color de borde</h3>
+        <div class="global-ai-swatch-row" data-global-ai-field="border_color">
+          <button type="button" class="is-blue" data-value="mentore_blue" title="Azul Mentore" aria-label="Azul Mentore"></button>
+          <button type="button" class="is-green" data-value="green" title="Verde" aria-label="Verde"></button>
+          <button type="button" class="is-purple" data-value="purple" title="Morado" aria-label="Morado"></button>
+          <button type="button" class="is-gray" data-value="gray" title="Gris" aria-label="Gris"></button>
+          <button type="button" class="is-black" data-value="black" title="Negro" aria-label="Negro"></button>
+          <button type="button" class="is-none" data-value="none" title="Sin borde" aria-label="Sin borde"></button>
+        </div>
+      </section>
+
+      <section class="global-ai-setting-group">
+        <h3>Sombra</h3>
+        <div class="global-ai-segmented" data-global-ai-field="shadow">
+          <button type="button" data-value="none">Sin</button>
+          <button type="button" data-value="soft">Suave</button>
+          <button type="button" data-value="medium">Media</button>
+          <button type="button" data-value="intense">Intensa</button>
+        </div>
+      </section>
+
+      <section class="global-ai-setting-group">
+        <h3>Animaciones</h3>
+        <label class="global-ai-toggle-row">
+          <input type="checkbox" data-global-ai-input="animations_enabled">
+          <span>Activadas</span>
+        </label>
+      </section>
+
+      <section class="global-ai-setting-group">
+        <h3>Efecto de actividad</h3>
+        <div class="global-ai-segmented" data-global-ai-field="activity_effect">
+          <button type="button" data-value="halo">Halo</button>
+          <button type="button" data-value="glow">Brillo</button>
+          <button type="button" data-value="pulse">Pulso</button>
+          <button type="button" data-value="none">Ninguno</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script src="{% static 'js/global_assistant.js' %}" defer></script>

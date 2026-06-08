@@ -4,7 +4,7 @@
 {% block content %}
 <div class="page-header">
   <div class="page-header-left">
-    <h1>📢 Comunicados</h1>
+    <h1><i class="bi bi-megaphone"></i> Comunicados</h1>
     <p>{{ announcements.count }} comunicado{{ announcements.count|pluralize:",s" }} publicado{{ announcements.count|pluralize:",s" }}</p>
   </div>
   <a href="{% url 'students:announcement_create' %}" class="btn-primary"><i class="bi bi-plus-lg"></i> Nuevo comunicado</a>
@@ -17,7 +17,7 @@
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
       <div style="flex:1;">
         <div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem;">
-          <span style="font-size:1.1rem;">{% if ann.priority == 'high' %}🚨{% elif ann.priority == 'medium' %}⚠️{% else %}📋{% endif %}</span>
+          <span style="font-size:1.1rem;">{% if ann.priority == 'high' %}<i class="bi bi-exclamation-octagon-fill"></i>{% elif ann.priority == 'medium' %}<i class="bi bi-exclamation-triangle-fill"></i>{% else %}<i class="bi bi-clipboard-check"></i>{% endif %}</span>
           <h3 style="font-size:1rem;font-weight:800;margin:0;">{{ ann.title }}</h3>
           <span class="badge {% if ann.priority == 'high' %}badge-rose{% elif ann.priority == 'medium' %}badge-amber{% else %}badge-blue{% endif %}">
             {{ ann.get_priority_display }}
@@ -37,7 +37,7 @@
 {% else %}
 <div class="card">
   <div class="empty-state">
-    <div class="icon">📢</div>
+    <div class="icon"><i class="bi bi-megaphone"></i></div>
     <h3>Sin comunicados aún</h3>
     <p>Crea comunicados para tus estudiantes y grupos</p>
     <a href="{% url 'students:announcement_create' %}" class="btn-primary mt-3"><i class="bi bi-plus-lg"></i> Crear comunicado</a>

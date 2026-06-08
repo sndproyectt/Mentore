@@ -21,16 +21,15 @@ from .memory import (
 from .providers.base import ProviderError, ProviderRateLimitError
 from .rate_limit import RATE_LIMIT_USER_MESSAGE
 from .providers.groq import GroqProvider
-from .providers.claude import ClaudeProvider
-from .providers.gemini import GeminiProvider
+from .ai_tools import ai_actions
 
 logger = logging.getLogger(__name__)
 
 
-def _get_providers():
+def _get_text_providers():
     """
-    Retorna la lista ordenada de proveedores configurados.
-    Groq es el principal; Claude y Gemini son fallback.
+    Retorna los proveedores configurados para chat de texto.
+    El chat normal usa Groq; imagenes se generan por image_service.
 
     Returns:
         list[BaseProvider]: Proveedores configurados y disponibles
@@ -38,20 +37,9 @@ def _get_providers():
     providers = []
 
     groq_key = getattr(settings, 'GROQ_API_KEY', '')
-    claude_key = getattr(settings, 'ANTHROPIC_API_KEY', '')
-    gemini_key = getattr(settings, 'GEMINI_API_KEY', '')
-
     groq = GroqProvider(groq_key)
     if groq.is_configured():
         providers.append(groq)
-
-    claude = ClaudeProvider(claude_key)
-    if claude.is_configured():
-        providers.append(claude)
-
-    gemini = GeminiProvider(gemini_key)
-    if gemini.is_configured():
-        providers.append(gemini)
 
     return providers
 
@@ -59,16 +47,26 @@ def _get_providers():
 def _get_no_provider_message():
     """Mensaje cuando no hay proveedores configurados."""
     return (
-        "⚠️ **API de IA no configurada.**\n\n"
-        "Configura al menos una clave de API en el archivo `.env`:\n\n"
+        "**API de IA no configurada.**\n\n"
+        "Configura la clave de Groq para que el chat responda en texto:\n\n"
         "```\n"
-        "GROQ_API_KEY=tu-clave-aquí\n"
-        "# o\n"
-        "ANTHROPIC_API_KEY=tu-clave-aquí\n"
-        "# o\n"
-        "GEMINI_API_KEY=tu-clave-aquí\n"
+        "GROQ_API_KEY=tu-clave-aqui\n"
         "```"
     )
+
+
+def _safe_error_for_user(error):
+    """Evita mostrar URLs, tokens o API keys en mensajes visibles."""
+    if not error:
+        return "Error desconocido"
+    message = str(error)
+    if '413' in message or 'Payload Too Large' in message:
+        return 'Payload Too Large'
+    status_code = getattr(error, 'status_code', None)
+    provider_name = getattr(error, 'provider_name', 'IA')
+    if status_code:
+        return f'Error del proveedor ({provider_name}, HTTP {status_code})'
+    return f'Error del proveedor ({provider_name})'
 
 
 def _compose_user_message(user_message, document_context=''):
@@ -76,6 +74,25 @@ def _compose_user_message(user_message, document_context=''):
     if not document_context:
         return user_message
     return f'{document_context}\n\n---\n\n**Pregunta del profesor:**\n{user_message}'
+
+
+def _build_data_action_response(provider, user, user_message):
+    """Detecta y responde preguntas sobre datos reales con herramientas ORM."""
+    action = ai_actions.detect_action(provider, user_message)
+    if not action:
+        return None
+    try:
+        action_result = ai_actions.execute_action(user, action)
+    except Exception:
+        logger.exception("Error ejecutando accion IA de solo lectura")
+        return "No pude consultar esa informacion del sistema en este momento. Intenta con una pregunta mas especifica."
+    messages = ai_actions.build_answer_messages(user_message, action_result)
+    return provider.chat(
+        ai_actions.ANSWER_PROMPT,
+        messages,
+        max_tokens=900,
+        temperature=0.2,
+    )
 
 
 def chat(user, user_message, document_context=''):
@@ -92,7 +109,7 @@ def chat(user, user_message, document_context=''):
     Returns:
         str: Respuesta de la IA
     """
-    providers = _get_providers()
+    providers = _get_text_providers()
     if not providers:
         return _get_no_provider_message()
 
@@ -116,7 +133,9 @@ def chat(user, user_message, document_context=''):
     for provider in providers:
         try:
             logger.info("Intentando con proveedor: %s", provider.name)
-            response = provider.chat(system_prompt, messages)
+            response = _build_data_action_response(provider, user, user_message)
+            if response is None:
+                response = provider.chat(system_prompt, messages)
             logger.info("Respuesta exitosa de %s", provider.name)
 
             # Gestionar memoria en background (sin bloquear respuesta)
@@ -132,7 +151,7 @@ def chat(user, user_message, document_context=''):
             last_error = e
             continue
 
-    error_msg = str(last_error) if last_error else "Error desconocido"
+    error_msg = _safe_error_for_user(last_error)
     logger.error("Todos los proveedores fallaron para %s. Último error: %s",
                  user.username, error_msg)
     if isinstance(last_error, ProviderRateLimitError):
@@ -145,12 +164,31 @@ def chat(user, user_message, document_context=''):
             "📄 **El documento es demasiado grande** para procesarlo de una vez con la IA.\n\n"
             "Prueba con un PDF más corto, solo las páginas clave, o pregunta por una sección concreta "
             "(por ejemplo: «resume las primeras 5 páginas»).\n\n"
-            f"_Detalle: {error_msg}_"
+            "_Detalle: el proveedor rechazo el tamano de la solicitud._"
         )
     return (
         "😔 Lo siento, no pude procesar tu solicitud en este momento. "
         "Por favor intenta de nuevo en unos segundos.\n\n"
         f"_Detalle técnico: {error_msg}_"
+    )
+
+
+def _stream_data_action_response(provider, user, user_message):
+    """Yield chunks si la pregunta corresponde a una accion ORM; si no, None."""
+    action = ai_actions.detect_action(provider, user_message)
+    if not action:
+        return None
+    try:
+        action_result = ai_actions.execute_action(user, action)
+    except Exception:
+        logger.exception("Error ejecutando accion IA de solo lectura en stream")
+        return ["No pude consultar esa informacion del sistema en este momento. Intenta con una pregunta mas especifica."]
+    messages = ai_actions.build_answer_messages(user_message, action_result)
+    return provider.chat_stream(
+        ai_actions.ANSWER_PROMPT,
+        messages,
+        max_tokens=900,
+        temperature=0.2,
     )
 
 
@@ -167,7 +205,7 @@ def chat_stream(user, user_message, document_context=''):
     Yields:
         str: Fragmentos de texto conforme se generan
     """
-    providers = _get_providers()
+    providers = _get_text_providers()
     if not providers:
         yield _get_no_provider_message()
         return
@@ -191,7 +229,10 @@ def chat_stream(user, user_message, document_context=''):
     for provider in providers:
         try:
             logger.info("Stream intentando con: %s", provider.name)
-            for chunk in provider.chat_stream(system_prompt, messages):
+            stream = _stream_data_action_response(provider, user, user_message)
+            if stream is None:
+                stream = provider.chat_stream(system_prompt, messages)
+            for chunk in stream:
                 yield chunk
 
             # Si llegamos aquí, el stream fue exitoso
@@ -207,7 +248,7 @@ def chat_stream(user, user_message, document_context=''):
             last_error = e
             continue
 
-    error_msg = str(last_error) if last_error else "Error desconocido"
+    error_msg = _safe_error_for_user(last_error)
     logger.error("Stream: todos los proveedores fallaron para %s", user.username)
     if isinstance(last_error, ProviderRateLimitError):
         raise ProviderRateLimitError(

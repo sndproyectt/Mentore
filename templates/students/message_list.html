@@ -1,11 +1,14 @@
 {% extends 'base/layout.html' %}
 {% block title %}Mensajería{% endblock %}
 {% block page_title %}Mensajería{% endblock %}
+{% block extra_css %}
+{% include 'students/partials/conversations_styles.html' %}
+{% endblock %}
 {% block content %}
 
 <div class="page-header">
   <div class="page-header-left">
-    <h1>✉️ Mensajería</h1>
+    <h1><i class="bi bi-envelope"></i> Mensajería</h1>
     <p>{{ messages_qs.count }} mensaje{{ messages_qs.count|pluralize:",s" }} enviado{{ messages_qs.count|pluralize:",s" }}</p>
   </div>
   <a href="{% url 'students:message_create' %}" class="btn-primary">
@@ -16,10 +19,10 @@
 <!-- STATS STRIP -->
 <div style="display:flex;gap:1rem;background:var(--white);border-radius:var(--radius);padding:1rem 1.25rem;border:1.5px solid var(--gray-100);margin-bottom:1.5rem;flex-wrap:wrap;">
   <div style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;font-weight:700;color:var(--gray-700);">
-    <span>✉️</span><span style="font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:800;color:var(--primary);">{{ messages_qs.count }}</span><span>Enviados</span>
+    <span><i class="bi bi-envelope"></i></span><span style="font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:800;color:var(--primary);">{{ messages_qs.count }}</span><span>Enviados</span>
   </div>
   <div style="display:flex;align-items:center;gap:.5rem;font-size:.85rem;font-weight:700;color:var(--gray-700);">
-    <span>👨‍👩‍👧</span><span style="font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:800;color:var(--teal);">{{ students.count }}</span><span>Familias</span>
+    <span><i class="bi bi-people-fill"></i></span><span style="font-family:'Sora',sans-serif;font-size:1.1rem;font-weight:800;color:var(--teal);">{{ students.count }}</span><span>Familias</span>
   </div>
   <div style="margin-left:auto;">
     <a href="/padres/" class="btn-outline btn-sm" target="_blank">
@@ -28,7 +31,19 @@
   </div>
 </div>
 
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-header">
+    <span class="card-title"><i class="bi bi-chat-dots"></i> Conversaciones</span>
+  </div>
+  <div style="padding:16px;">
+    {% include 'students/partials/conversations_panel.html' %}
+  </div>
+</div>
+
 {% if messages_qs %}
+<div class="card-header" style="background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius) var(--radius) 0 0;">
+  <span class="card-title"><i class="bi bi-send"></i> Mensajes enviados</span>
+</div>
 <div style="display:flex;flex-direction:column;gap:.75rem;">
   {% for msg in messages_qs %}
   <div class="card" style="padding:1.1rem 1.4rem;">
@@ -59,7 +74,7 @@
 {% else %}
 <div class="card">
   <div class="empty-state">
-    <div class="icon">✉️</div>
+    <div class="icon"><i class="bi bi-envelope"></i></div>
     <h3>Sin mensajes enviados aún</h3>
     <p>Envía tu primer mensaje a un padre de familia</p>
     <a href="{% url 'students:message_create' %}" class="btn-primary mt-3">
@@ -68,4 +83,7 @@
   </div>
 </div>
 {% endif %}
+{% endblock %}
+{% block extra_js %}
+{% include 'students/partials/conversations_scripts.html' %}
 {% endblock %}

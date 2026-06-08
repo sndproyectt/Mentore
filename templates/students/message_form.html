@@ -30,6 +30,26 @@
 }
 .person-name { font-weight:700;font-size:13px;color:var(--gray-900); }
 .person-sub  { font-size:11px;color:var(--gray-400); }
+.header-tools { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+.header-chip { position:relative; padding-right:24px!important; }
+.header-chip-delete {
+  display:none; position:absolute; top:-6px; right:-6px; width:18px; height:18px;
+  border:1px solid var(--gray-200); border-radius:50%; background:#fff;
+  color:var(--danger); font-size:12px; font-weight:800; line-height:16px;
+  align-items:center; justify-content:center; cursor:pointer; box-shadow:var(--shadow);
+}
+.header-chip:hover .header-chip-delete,
+.header-chip:focus-within .header-chip-delete { display:flex; }
+.header-menu {
+  display:none; margin:8px 0 10px; padding:12px;
+  border:1px solid var(--gray-200); border-radius:8px; background:var(--gray-50);
+}
+.header-menu.open { display:block; }
+.header-menu-grid { display:grid; grid-template-columns:1fr; gap:10px; }
+.header-menu-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+.header-switch { display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:800; color:var(--gray-600); }
+.header-switch input { width:34px; height:18px; accent-color:var(--primary); cursor:pointer; }
+.header-help { font-size:11px; color:var(--gray-400); margin-top:4px; }
 </style>
 {% endblock %}
 
@@ -37,7 +57,7 @@
 <div class="msg-wrap">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
     <div>
-      <h2 style="font-size:20px;font-weight:800;color:var(--gray-900);margin:0 0 2px;">✉️ Nuevo mensaje</h2>
+      <h2 style="font-size:20px;font-weight:800;color:var(--gray-900);margin:0 0 2px;"><i class="bi bi-envelope"></i> Nuevo mensaje</h2>
       <p style="font-size:13px;color:var(--gray-500);margin:0;">Envía a docentes y/o padres de familia</p>
     </div>
     <a href="{% url 'students:message_list' %}" class="btn btn-secondary">
@@ -52,7 +72,7 @@
       <!-- DESTINATARIOS -->
       <div class="form-group">
         <label class="form-label" style="margin-bottom:10px;">
-          👥 Destinatarios *
+          <i class="bi bi-people"></i> Destinatarios *
           <span style="font-weight:400;font-size:11px;color:var(--gray-400);margin-left:6px;">— elige docentes, padres o ambos</span>
         </label>
 
@@ -82,7 +102,7 @@
                 <div class="person-avatar">{{ t.first_name|first|upper }}{{ t.last_name|first|upper }}</div>
                 <div>
                   <div class="person-name">{{ t.get_full_name }}</div>
-                  <div class="person-sub">{{ t.teacher_profile.subject|default:"Sin materia" }}{% if t.teacher_profile.role == 'coordinator' %} · ⭐ Coordinador{% endif %}</div>
+                  <div class="person-sub">{{ t.teacher_profile.subject|default:"Sin materia" }}{% if t.teacher_profile.role == 'coordinator' %} · <i class="bi bi-star-fill"></i> Coordinador{% endif %}</div>
                 </div>
               </label>
               {% empty %}
@@ -114,7 +134,7 @@
                 <div>
                   <div class="person-name">{{ s.get_full_name }}</div>
                   <div class="person-sub">
-                    👨‍👩‍👧 {{ s.parent_name|default:"Sin acudiente" }}
+                    <i class="bi bi-people-fill"></i> {{ s.parent_name|default:"Sin acudiente" }}
                     {% if s.parent_email %} · {{ s.parent_email }}{% endif %}
                     {% if s.classroom %} · {{ s.classroom.name }}{% endif %}
                   </div>
@@ -135,21 +155,43 @@
 
       <!-- ASUNTO -->
       <div class="form-group">
-        <label class="form-label">📌 Asunto *</label>
+        <label class="form-label"><i class="bi bi-pin-angle"></i> Asunto *</label>
         <input type="text" name="subject" class="form-control"
           placeholder="Ej: Tarea pendiente, Felicitaciones, Recordatorio…" required>
       </div>
 
-      <!-- SALUDO RÁPIDO -->
+      <!-- ENCABEZADO -->
       <div class="form-group">
         <label class="form-label">
-          📝 Mensaje *
-          <span style="font-weight:400;font-size:11px;color:var(--gray-400);margin-left:4px;">— saludos rápidos:</span>
+          <i class="bi bi-journal-text"></i> Mensaje *
+          <span style="font-weight:400;font-size:11px;color:var(--gray-400);margin-left:4px;">- encabezado:</span>
         </label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-          <button type="button" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="addGreeting('Buen día, paz y bien.\n\n')">🌅 Buen día</button>
-          <button type="button" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="addGreeting('Buenas tardes, paz y bien.\n\n')">🌤️ Buenas tardes</button>
-          <button type="button" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="addGreeting('Cordial saludo, paz y bien.\n\n')">🙏 Cordial saludo</button>
+        <div class="header-tools" id="headerButtons"></div>
+        <button type="button" class="btn btn-secondary" style="font-size:11px;padding:4px 10px;margin-bottom:8px;" onclick="toggleHeaderMenu()">
+          <i class="bi bi-plus-lg"></i> Crear encabezado
+        </button>
+        <div class="header-menu" id="headerMenu">
+          <div class="header-menu-grid">
+            <div>
+              <label class="form-label" style="font-size:11px;margin-bottom:4px;">Titulo Encabezado/cierre</label>
+              <input type="text" id="headerTitle" class="form-control" style="font-size:13px;padding:8px 10px;" maxlength="40" placeholder="Ej: Saludo reunion">
+            </div>
+            <div>
+              <label class="form-label" style="font-size:11px;margin-bottom:4px;">Encabezado o cierre</label>
+              <textarea id="headerText" class="form-control" rows="3" maxlength="700" style="font-size:13px;" placeholder="Texto breve, menos de 100 palabras"></textarea>
+              <div class="header-help" id="headerWordCount">0/99 palabras</div>
+            </div>
+            <div class="header-menu-actions">
+              <label class="header-switch">
+                Encabezado
+                <input type="checkbox" id="headerTypeSwitch">
+                Cierre
+              </label>
+              <button type="button" class="btn btn-primary" style="font-size:12px;padding:7px 12px;" onclick="createHeaderButton()">
+                <i class="bi bi-check-lg"></i> Guardar
+              </button>
+            </div>
+          </div>
         </div>
         <textarea name="body" id="bodyTxt" class="form-control" rows="6"
           placeholder="Escribe tu mensaje aquí…" required></textarea>
@@ -196,20 +238,131 @@ function selByClass(crId) {
   });
   updateBadge('padres', 'chk-padre');
 }
-function addGreeting(g) {
+const headerStorageKey = 'mentore-message-headers';
+const legacyDefaultHeaderTitles = ['Buen dia', 'Buenas tardes', 'Cordial saludo'];
+
+function isLegacyDefaultHeader(item) {
+  return legacyDefaultHeaderTitles.includes(item.title)
+    && item.type === 'header'
+    && ['Buen dia, paz y bien.', 'Buenas tardes, paz y bien.', 'Cordial saludo, paz y bien.'].includes(item.text);
+}
+
+function getHeaderItems() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(headerStorageKey) || '[]');
+    if (!Array.isArray(saved)) return [];
+    const items = saved.filter((item) => !isLegacyDefaultHeader(item));
+    if (items.length !== saved.length) saveHeaderItems(items);
+    return items;
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveHeaderItems(items) {
+  localStorage.setItem(headerStorageKey, JSON.stringify(items));
+}
+
+function normalizeBlock(text) {
+  return text.trim().replace(/\r\n/g, '\n');
+}
+
+function wordCount(text) {
+  return normalizeBlock(text).split(/\s+/).filter(Boolean).length;
+}
+
+function applyHeaderBlock(item) {
   const ta = document.getElementById('bodyTxt');
-  const cur = ta.value.replace(/^(Buen día|Buenas tardes|Cordial saludo)[^\n]*\n\n?/, '');
-  ta.value = g + cur;
+  const block = normalizeBlock(item.text);
+  if (!block) return;
+  const cur = ta.value.trim();
+  ta.value = item.type === 'footer'
+    ? (cur ? cur + '\n\n' + block : block)
+    : (cur ? block + '\n\n' + cur : block);
   ta.focus();
   updateChar();
 }
+
+function deleteHeaderButton(index) {
+  const items = getHeaderItems();
+  items.splice(index, 1);
+  saveHeaderItems(items);
+  renderHeaderButtons();
+}
+
+function renderHeaderButtons() {
+  const wrap = document.getElementById('headerButtons');
+  wrap.innerHTML = '';
+  getHeaderItems().forEach((item, index) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-secondary header-chip';
+    btn.style.cssText = 'font-size:11px;padding:4px 10px;';
+    const icon = document.createElement('i');
+    icon.className = 'bi ' + (item.type === 'footer' ? 'bi-arrow-down-short' : 'bi-arrow-up-short');
+    const label = document.createTextNode(' ' + item.title);
+    const del = document.createElement('span');
+    del.className = 'header-chip-delete';
+    del.textContent = 'x';
+    del.title = 'Eliminar';
+    del.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteHeaderButton(index);
+    });
+    btn.append(icon, label, del);
+    btn.addEventListener('click', () => applyHeaderBlock(item));
+    wrap.appendChild(btn);
+  });
+}
+
+function toggleHeaderMenu() {
+  document.getElementById('headerMenu').classList.toggle('open');
+}
+
+function updateHeaderWordCount() {
+  const count = wordCount(document.getElementById('headerText').value);
+  const label = document.getElementById('headerWordCount');
+  label.textContent = count + '/99 palabras';
+  label.style.color = count >= 100 ? 'var(--danger)' : 'var(--gray-400)';
+}
+
+function createHeaderButton() {
+  const titleInput = document.getElementById('headerTitle');
+  const textInput = document.getElementById('headerText');
+  const title = titleInput.value.trim();
+  const text = normalizeBlock(textInput.value);
+  if (!title || !text) {
+    alert('Escribe el titulo y el texto del encabezado o cierre.');
+    return;
+  }
+  if (wordCount(text) >= 100) {
+    alert('El encabezado o cierre debe tener menos de 100 palabras.');
+    return;
+  }
+  const items = getHeaderItems();
+  items.push({
+    title,
+    text,
+    type: document.getElementById('headerTypeSwitch').checked ? 'footer' : 'header',
+  });
+  saveHeaderItems(items);
+  renderHeaderButtons();
+  titleInput.value = '';
+  textInput.value = '';
+  document.getElementById('headerTypeSwitch').checked = false;
+  updateHeaderWordCount();
+  document.getElementById('headerMenu').classList.remove('open');
+}
+
 function updateChar() {
   document.getElementById('charCount').textContent = document.getElementById('bodyTxt').value.length + ' caracteres';
 }
 document.getElementById('bodyTxt').addEventListener('input', updateChar);
+document.getElementById('headerText').addEventListener('input', updateHeaderWordCount);
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('bodyTxt').value = 'Buen día, paz y bien.\n\n';
+  renderHeaderButtons();
   updateChar();
+  updateHeaderWordCount();
 });
 document.getElementById('msgForm').addEventListener('submit', function(e) {
   const td = document.querySelectorAll('.chk-docente:checked').length;

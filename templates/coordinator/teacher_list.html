@@ -22,7 +22,7 @@
 
 <div class="card">
   <div class="card-header">
-    <span class="card-title">👩‍🏫 Profesores ({{ teachers|length }})</span>
+    <span class="card-title"><i class="bi bi-person-workspace"></i> Profesores ({{ teachers|length }})</span>
   </div>
   <div style="overflow-x:auto;">
     <table class="table">
@@ -55,9 +55,9 @@
           <td><span class="badge badge-success">{{ t.student_count }}</span></td>
           <td>
             {% if t.teacher_profile.role == 'coordinator' %}
-            <span class="badge" style="background:#FEF3C7;color:#92400E;">⭐ Coordinador</span>
+            <span class="badge" style="background:#FEF3C7;color:#92400E;"><i class="bi bi-star-fill"></i> Coordinador</span>
             {% else %}
-            <span class="badge badge-primary">📚 Profesor</span>
+            <span class="badge badge-primary"><i class="bi bi-book"></i> Profesor</span>
             {% endif %}
           </td>
           <td style="white-space:nowrap;">

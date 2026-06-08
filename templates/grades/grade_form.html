@@ -47,7 +47,7 @@
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
   <div>
     <h2 style="font-size:20px;font-weight:800;color:var(--gray-900);margin:0 0 3px;">
-      {% if action == "Editar" %}✏️ Editar nota{% else %}📝 Registrar nueva nota{% endif %}
+      {% if action == "Editar" %}<i class="bi bi-pencil-square"></i> Editar nota{% else %}<i class="bi bi-journal-text"></i> Registrar nueva nota{% endif %}
     </h2>
     <p style="font-size:13px;color:var(--gray-500);margin:0;">
       {% if not is_coord %}Solo puedes registrar notas de tus materias asignadas.{% else %}Como coordinador puedes registrar notas de cualquier materia.{% endif %}
@@ -65,7 +65,7 @@
 
         <!-- ESTUDIANTE -->
         <div class="form-group">
-          <label class="form-label">👧 Estudiante *</label>
+          <label class="form-label"><i class="bi bi-person-badge"></i> Estudiante *</label>
           <div id="stuWrap" style="position:relative;">
             <input
               id="stuInput"
@@ -98,9 +98,9 @@
               <div id="stuNoRes" style="display:none;padding:16px;text-align:center;font-size:13px;color:#9DB8CC;">Sin resultados</div>
             </div>
             <div id="stuChip" style="display:none;align-items:center;gap:10px;padding:10px 14px;border:1.5px solid #1570A6;border-radius:10px;background:#EEF6FD;cursor:pointer;" onclick="stuClear()">
-              <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#059669,#34D399);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;flex-shrink:0;">✓</div>
+              <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#059669,#34D399);display:flex;align-items:center;justify-content:center;font-size:15px;color:#fff;flex-shrink:0;"><i class="bi bi-check-lg"></i></div>
               <span id="stuChipName" style="font-size:14px;font-weight:700;color:#0D2D42;flex:1;"></span>
-              <span style="font-size:11px;color:#5588AA;">✕ cambiar</span>
+              <span style="font-size:11px;color:#5588AA;"><i class="bi bi-x-lg"></i> cambiar</span>
             </div>
             <input type="hidden" name="student" id="stuHidden" required>
           </div>
@@ -108,7 +108,7 @@
 
         <!-- MATERIA -->
         <div class="form-group">
-          <label class="form-label">📚 Materia *</label>
+          <label class="form-label"><i class="bi bi-book"></i> Materia *</label>
           {% if avail_subjects %}
           <select name="subject" class="form-control" required>
             <option value="">Seleccionar materia…</option>
@@ -133,13 +133,13 @@
         <!-- ACTIVIDAD Y TIPO -->
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">📌 Nombre de la actividad *</label>
+            <label class="form-label"><i class="bi bi-pin-angle"></i> Nombre de la actividad *</label>
             <input type="text" name="activity_name" class="form-control"
               value="{{ grade.activity_name|default:'' }}"
               placeholder="Ej: Examen parcial 1, Taller 3…" required>
           </div>
           <div class="form-group">
-            <label class="form-label">🏷️ Tipo</label>
+            <label class="form-label"><i class="bi bi-tags"></i> Tipo</label>
             <select name="grade_type" class="form-control">
               {% for val, lbl in grade_types %}
               <option value="{{ val }}" {% if grade.grade_type == val %}selected{% endif %}>{{ lbl }}</option>
@@ -151,19 +151,22 @@
         <!-- NOTA Y PERIODO -->
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">🔢 Nota * <span style="font-size:11px;color:var(--primary);font-weight:600;">(sobre 5.0)</span></label>
+            <label class="form-label"><i class="bi bi-123"></i> Nota * <span style="font-size:11px;color:var(--primary);font-weight:600;">(sobre 5.0)</span></label>
             <input type="number" name="score" class="form-control"
               value="{{ grade.score|default:'' }}"
               step="0.01" min="0" max="5" placeholder="Ej: 4.5" required>
           </div>
           <div class="form-group">
-            <label class="form-label">📅 Periodo</label>
-            <input type="text" name="period" class="form-control"
-              value="{{ grade.period|default:'' }}"
-              placeholder="Ej: Periodo 1, Primer semestre…">
+            <label class="form-label"><i class="bi bi-calendar-event"></i> Periodo</label>
+            <select name="period" class="form-control" required>
+              <option value="">Seleccionar periodo...</option>
+              {% for value, label in period_choices %}
+              <option value="{{ value }}" {% if grade.period == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
           </div>
           <div class="form-group">
-            <label class="form-label">📆 Fecha *</label>
+            <label class="form-label"><i class="bi bi-calendar3"></i> Fecha *</label>
             <input type="date" name="date" class="form-control"
               value="{{ grade.date|date:'Y-m-d'|default:today }}" required>
           </div>
@@ -171,7 +174,7 @@
 
         <!-- OBSERVACIONES -->
         <div class="form-group">
-          <label class="form-label">💬 Observaciones</label>
+          <label class="form-label"><i class="bi bi-chat-dots"></i> Observaciones</label>
           <textarea name="observations" class="form-control" rows="2"
             placeholder="Opcional — comentario sobre el desempeño…">{{ grade.observations|default:'' }}</textarea>
         </div>
@@ -190,7 +193,7 @@
   <div>
     {% if not is_coord and avail_subjects %}
     <div class="card" style="margin-bottom:16px;">
-      <div class="card-header"><span class="card-title">📚 Tus materias</span></div>
+      <div class="card-header"><span class="card-title"><i class="bi bi-book"></i> Tus materias</span></div>
       <div style="padding:12px 16px;display:flex;flex-direction:column;gap:6px;">
         {% for subj in avail_subjects %}
         <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--primary-light);border-radius:8px;">
@@ -204,23 +207,23 @@
     {% endif %}
 
     <div class="card">
-      <div class="card-header"><span class="card-title">ℹ️ Escala de notas</span></div>
+      <div class="card-header"><span class="card-title"><i class="bi bi-info-circle-fill"></i> Escala de notas</span></div>
       <div style="padding:12px 16px;display:flex;flex-direction:column;gap:6px;">
         <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--gray-100);">
-          <span style="font-size:12px;font-weight:700;color:#065F46;">🟢 Excelente</span>
-          <span style="font-size:12px;color:var(--gray-600);">4.6 – 5.0</span>
+          <span style="font-size:12px;font-weight:700;color:#065F46;"><i class="bi bi-circle-fill"></i> Superior</span>
+          <span style="font-size:12px;color:var(--gray-600);">4.8 - 5.0</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--gray-100);">
-          <span style="font-size:12px;font-weight:700;color:#1E40AF;">🔵 Bien</span>
-          <span style="font-size:12px;color:var(--gray-600);">4.0 – 4.5</span>
+          <span style="font-size:12px;font-weight:700;color:#1E40AF;"><i class="bi bi-circle-fill"></i> Alto</span>
+          <span style="font-size:12px;color:var(--gray-600);">4.1 - 4.7</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--gray-100);">
-          <span style="font-size:12px;font-weight:700;color:#92400E;">🟡 Básico</span>
-          <span style="font-size:12px;color:var(--gray-600);">3.0 – 3.9</span>
+          <span style="font-size:12px;font-weight:700;color:#92400E;"><i class="bi bi-circle-fill"></i> Básico</span>
+          <span style="font-size:12px;color:var(--gray-600);">3.5 - 4.0</span>
         </div>
         <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;">
-          <span style="font-size:12px;font-weight:700;color:#991B1B;">🔴 Bajo</span>
-          <span style="font-size:12px;color:var(--gray-600);">0.0 – 2.9</span>
+          <span style="font-size:12px;font-weight:700;color:#991B1B;"><i class="bi bi-circle-fill"></i> Bajo</span>
+          <span style="font-size:12px;color:var(--gray-600);">0.0 - 3.4</span>
         </div>
       </div>
     </div>
@@ -300,3 +303,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
+

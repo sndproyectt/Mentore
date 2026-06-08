@@ -5,7 +5,7 @@
 
 <div class="page-header">
   <div>
-    <h1>🏫 {% if action == "Editar" %}Editar Grupo{% else %}Crear Grupo{% endif %}</h1>
+    <h1><i class="bi bi-building"></i> {% if action == "Editar" %}Editar Grupo{% else %}Crear Grupo{% endif %}</h1>
     <p>Organiza tus estudiantes en grupos o salones</p>
   </div>
   <a href="{% url 'students:classrooms' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Volver</a>
@@ -17,15 +17,20 @@
       <form method="post">
         {% csrf_token %}
         <div class="form-group">
-          <label class="form-label">Nombre del grupo *</label>
+          <label class="form-label">Grado *</label>
           <input type="text" name="name" class="form-control" value="{{ classroom.name }}"
-            placeholder="Ej: 5° A, Grado 3, Sala Azul..." required>
+            placeholder="Ej: 5° A, Grado 3..." required>
         </div>
         <div class="form-grid">
           <div class="form-group">
-            <label class="form-label">Nivel / Grado</label>
-            <input type="text" name="grade_level" class="form-control" value="{{ classroom.grade_level }}"
-              placeholder="Ej: Primaria, 5°, Secundaria...">
+            <label class="form-label">Ciclo</label>
+            <select name="grade_level" class="form-control">
+              <option value="">Selecciona un ciclo</option>
+              <option value="Ciclo I" {% if classroom.grade_level == "Ciclo I" %}selected{% endif %}>Ciclo I</option>
+              <option value="Ciclo II" {% if classroom.grade_level == "Ciclo II" %}selected{% endif %}>Ciclo II</option>
+              <option value="Ciclo III" {% if classroom.grade_level == "Ciclo III" %}selected{% endif %}>Ciclo III</option>
+              <option value="Ciclo IV" {% if classroom.grade_level == "Ciclo IV" %}selected{% endif %}>Ciclo IV</option>
+            </select>
           </div>
           <div class="form-group">
             <label class="form-label">Materia</label>

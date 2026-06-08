@@ -16,7 +16,7 @@
     <!-- Info del salón -->
     <div class="card" style="margin-bottom:20px;">
       <div style="padding:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-        <div style="width:56px;height:56px;border-radius:14px;background:var(--hero-gradient);display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;flex-shrink:0;">🏫</div>
+        <div style="width:56px;height:56px;border-radius:14px;background:var(--hero-gradient);display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;flex-shrink:0;"><i class="bi bi-building"></i></div>
         <div style="flex:1;">
           <div style="font-size:20px;font-weight:800;color:var(--gray-900);">{{ classroom.name }}</div>
           <div style="font-size:13px;color:var(--gray-500);margin-top:2px;">
@@ -34,7 +34,7 @@
     <!-- Lista de docentes actuales -->
     <div class="card">
       <div class="card-header">
-        <span class="card-title">👩‍🏫 Docentes con acceso ({{ current_teachers|length }})</span>
+        <span class="card-title"><i class="bi bi-person-workspace"></i> Docentes con acceso ({{ current_teachers|length }})</span>
       </div>
       {% if current_teachers %}
       <div>
@@ -92,7 +92,7 @@
   <div>
     <!-- Cambiar docente principal -->
     <div class="card" style="margin-bottom:16px;">
-      <div class="card-header"><span class="card-title">⭐ Cambiar docente principal</span></div>
+      <div class="card-header"><span class="card-title"><i class="bi bi-star-fill"></i> Cambiar docente principal</span></div>
       <div style="padding:16px;">
         <form method="post">
           {% csrf_token %}
@@ -109,7 +109,7 @@
             </select>
           </div>
           <button type="submit" class="btn btn-primary" style="width:100%;">
-            <i class="bi bi-star-fill"></i> Asignar como principal
+            ? Asignar como principal
           </button>
         </form>
       </div>
@@ -117,7 +117,7 @@
 
     <!-- Agregar docente al M2M -->
     <div class="card">
-      <div class="card-header"><span class="card-title">➕ Dar acceso a docente</span></div>
+      <div class="card-header"><span class="card-title"><i class="bi bi-plus-lg"></i> Dar acceso a docente</span></div>
       <div style="padding:16px;">
         {% if available_teachers %}
         <form method="post">

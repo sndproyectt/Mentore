@@ -5,8 +5,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}Mentore{% endblock %} — Mentore</title>
+  <link rel="icon" type="image/png" href="{% static 'img/ai/menta.png' %}?v=menta-main-1">
+  <link rel="shortcut icon" type="image/png" href="{% static 'img/ai/menta.png' %}?v=menta-main-1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <link rel="stylesheet" href="{% static 'css/mentore.css' %}">
+  <link rel="stylesheet" href="{% static 'css/global_assistant.css' %}">
 
   {# ── TEMA GLOBAL: sobreescribe variables CSS según el tema del profe ── #}
   {% if user.is_authenticated %}
@@ -103,7 +107,7 @@
 
   {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="{% if request.GET.embed == 'global_assistant' %}global-ai-embed-mode{% endif %}">
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 <aside class="sidebar" id="mainSidebar">
@@ -122,7 +126,7 @@
     <div>
       <div class="sidebar-user-name">{{ user.get_full_name|default:user.username }}</div>
       <div class="sidebar-user-role">
-        {% if user.teacher_profile.role == 'coordinator' %}⭐ Coordinador{% else %}📚 Profesor{% endif %}
+        {% if user.teacher_profile.role == 'coordinator' %}<i class="bi bi-star-fill"></i> Coordinador{% else %}<i class="bi bi-book"></i> Profesor{% endif %}
       </div>
     </div>
   </div>
@@ -218,13 +222,6 @@
       </a>
     </li>
     <li>
-      <a href="{% url 'students:inbox' %}" class="sidebar-link {% if request.resolver_match.url_name == 'inbox' %}active{% endif %}" style="position:relative;">
-        <i class="bi bi-envelope-arrow-down nav-icon"></i> Bandeja de entrada
-        {% with unread=request.user.received_direct_messages.filter %}
-        {% endwith %}
-      </a>
-    </li>
-    <li>
       <a href="{% url 'students:announcement_list' %}" class="sidebar-link {% if request.resolver_match.namespace == 'students' and 'announcement' in request.resolver_match.url_name|default:'' %}active{% endif %}">
         <i class="bi bi-megaphone nav-icon"></i> Comunicados
       </a>
@@ -252,16 +249,10 @@
 
   <!-- IA chip -->
   <a href="{% url 'ai_assistant:chat' %}" class="sidebar-ai-chip">
-    🤖 <span>Asistente IA</span>
-    <span class="ai-badge" style="margin-left:auto;background:rgba(255,255,255,.25);color:#fff;font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700;">IA</span>
+    <img src="{% static 'img/ai/menta_icon.png' %}" alt="" class="sidebar-ai-chip-icon" aria-hidden="true" width="20" height="20" style="width:20px;height:20px;max-width:20px;max-height:20px;object-fit:contain;">
+    <span>Menta IA</span>
   </a>
 
-  <!-- Logout -->
-  <div class="sidebar-footer">
-    <a href="{% url 'accounts:logout' %}" class="sidebar-logout">
-      <i class="bi bi-box-arrow-right nav-icon"></i> Cerrar sesión
-    </a>
-  </div>
 </aside>
 
 <div class="main-content">
@@ -280,23 +271,28 @@
     </div>
     <div class="topbar-right">
       {% if user.is_authenticated and user.teacher_profile.role == 'coordinator' %}
-      <span style="font-size:11px;font-weight:700;padding:3px 10px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border-radius:20px;">⭐ Coordinador</span>
+      <span style="font-size:11px;font-weight:700;padding:3px 10px;background:linear-gradient(135deg,var(--primary),var(--secondary));color:#fff;border-radius:20px;"><i class="bi bi-star-fill"></i> Coordinador</span>
       {% endif %}
       <span style="font-size:13px;color:var(--gray-500);font-weight:600;">{{ user.get_full_name|default:user.username }}</span>
       <a href="{% url 'accounts:profile' %}" class="topbar-btn" title="Mi perfil"><i class="bi bi-person-circle"></i></a>
+      <a href="{% url 'accounts:logout' %}" class="topbar-btn topbar-logout-btn" title="Cerrar sesión" aria-label="Cerrar sesión"><i class="bi bi-box-arrow-right"></i></a>
     </div>
   </header>
 
   <div class="content-area">
     {% for msg in messages %}
     <div class="alert alert-{{ msg.tags|default:'info' }}" style="margin-bottom:12px;">
-      {% if msg.tags == 'success' %}✅{% elif msg.tags == 'error' %}❌{% elif msg.tags == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+      {% if msg.tags == 'success' %}<i class="bi bi-check-circle-fill"></i>{% elif msg.tags == 'error' %}<i class="bi bi-x-circle-fill"></i>{% elif msg.tags == 'warning' %}<i class="bi bi-exclamation-triangle-fill"></i>{% else %}<i class="bi bi-info-circle-fill"></i>{% endif %}
       {{ msg }}
     </div>
     {% endfor %}
     {% block content %}{% endblock %}
   </div>
 </div>
+
+{% if user.is_authenticated and request.GET.embed != 'global_assistant' %}
+  {% include 'ai_assistant/global_assistant_widget.html' %}
+{% endif %}
 
 {% block extra_js %}{% endblock %}
 <script>
@@ -332,7 +328,7 @@
   });
 
   // Cerrar al hacer click en un link del sidebar (en mobile)
-  sidebar.querySelectorAll('.sidebar-link, .sidebar-logout, .sidebar-ai-chip').forEach(function(link) {
+  sidebar.querySelectorAll('.sidebar-link, .sidebar-ai-chip').forEach(function(link) {
     link.addEventListener('click', function() {
       if (window.innerWidth <= 768) closeSidebar();
     });
