@@ -8,10 +8,12 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from django.shortcuts import redirect, render
 
 from .forms import RegisterForm, LoginForm, ProfileForm
 from .models import TeacherProfile, SocialAccount
+from students.models import Classroom, Student
 
 User = get_user_model()
 
@@ -133,7 +135,21 @@ def profile_view(request):
             messages.success(request, 'Perfil actualizado correctamente.')
             return redirect('accounts:profile')
     social = request.user.social_accounts.all()
-    return render(request, 'accounts/profile.html', {'form': form, 'profile': profile, 'social_accounts': social})
+    classrooms = Classroom.objects.filter(
+        Q(teacher=request.user) | Q(teachers=request.user)
+    ).distinct()
+    shared_cr_ids = request.user.shared_classrooms.values_list('id', flat=True)
+    students_count = Student.objects.filter(
+        Q(teacher=request.user) | Q(classroom_id__in=shared_cr_ids),
+        active=True,
+    ).distinct().count()
+    return render(request, 'accounts/profile.html', {
+        'form': form,
+        'profile': profile,
+        'social_accounts': social,
+        'students_count': students_count,
+        'classrooms_count': classrooms.count(),
+    })
 
 
 # ── GOOGLE OAuth2 ─────────────────────────────────────────────
