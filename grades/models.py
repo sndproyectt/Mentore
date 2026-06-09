@@ -49,6 +49,7 @@ class Grade(models.Model):
         ('exam',          'Examen'),
         ('quiz',          'Quiz'),
         ('homework',      'Tarea'),
+        ('workshop',      'Taller'),
         ('project',       'Proyecto'),
         ('participation', 'Participación'),
         ('activity',      'Actividad'),

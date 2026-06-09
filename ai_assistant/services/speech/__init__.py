@@ -16,6 +16,11 @@ def html_to_speech_text(content):
     text = content or ''
     text = re.sub(r'<[^>]+>', ' ', text)
     text = re.sub(r'!\[[^\]]*\]\([^)]+\)', ' imagen generada ', text)
-    text = re.sub(r'[`*_#>|-]+', ' ', text)
+    text = re.sub(r'==([^=]+)==', r'\1', text)
+    text = re.sub(r'(?<=\d)\.(?=\d)', 'DECIMALDOT', text)
+    text = re.sub(r'[`*_#>|]+', ' ', text)
+    text = re.sub(r'\s*[-•]\s+', '. ', text)
+    text = re.sub(r'\s*([:;,.!?])\s*', r'\1 ', text)
+    text = text.replace('DECIMALDOT', '.')
     text = re.sub(r'\s+', ' ', text)
     return text.strip()

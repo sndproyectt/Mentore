@@ -94,13 +94,16 @@ def _filter_students(qs, grade=None, classroom=None):
     return qs
 
 
-def _filter_grades(qs, subject=None, grade=None, classroom=None):
+def _filter_grades(qs, subject=None, grade=None, classroom=None, activity=None):
     subject = _clean(subject)
     if subject:
         qs = qs.filter(
             Q(subject__name__icontains=subject)
             | Q(subject_text__icontains=subject)
         )
+    activity = _clean(activity)
+    if activity:
+        qs = qs.filter(activity_name__icontains=activity)
     if grade or classroom:
         students = _filter_students(accessible_students_from_grades(qs), grade, classroom)
         qs = qs.filter(student__in=students)
@@ -120,7 +123,7 @@ def find_students(user, name=None, grade=None, classroom=None, limit=10):
     return list(qs.order_by('last_name', 'first_name')[:_limit(limit, 10)])
 
 
-def serialize_student(student, include_average=False):
+def serialize_student(student, include_average=False, include_contact=False):
     data = {
         'id': student.pk,
         'name': student.get_full_name(),
@@ -128,6 +131,12 @@ def serialize_student(student, include_average=False):
         'grade_level': student.classroom.grade_level if student.classroom else None,
         'active': student.active,
     }
+    if include_contact:
+        data.update({
+            'email': student.email or None,
+            'parent_name': student.parent_name or None,
+            'parent_email': student.parent_email or None,
+        })
     if include_average:
         data['average'] = _as_float(
             student.grades.aggregate(avg=Avg('score'))['avg']
@@ -159,7 +168,7 @@ def student_detail(user, student_name):
     attendance_count = student.attendances.count()
     return {
         'found': True,
-        'student': serialize_student(student, include_average=True),
+        'student': serialize_student(student, include_average=True, include_contact=True),
         'grade_count': grade_count,
         'attendance_count': attendance_count,
     }
@@ -189,17 +198,24 @@ def serialize_grade(grade):
     }
 
 
-def student_grades(user, student_name, subject=None, limit=DEFAULT_LIMIT):
-    student, error = _student_for_action(user, student_name)
-    if error:
-        return error
-    qs = accessible_grades(user).filter(student=student)
-    qs = _filter_grades(qs, subject=subject)
+def student_grades(user, student_name, subject=None, limit=DEFAULT_LIMIT, activity=None):
+    student = None
+    if _clean(student_name):
+        student, error = _student_for_action(user, student_name)
+        if error:
+            return error
+    elif not _clean(activity):
+        return {'found': False, 'missing_parameter': 'student', 'matches': []}
+    qs = accessible_grades(user)
+    if student:
+        qs = qs.filter(student=student)
+    qs = _filter_grades(qs, subject=subject, activity=activity)
     grades = list(qs.order_by('-date')[:_limit(limit)])
     return {
         'found': True,
-        'student': serialize_student(student),
+        'student': serialize_student(student) if student else None,
         'subject': _clean(subject) or None,
+        'activity': _clean(activity) or None,
         'count': qs.count(),
         'grades': [serialize_grade(grade) for grade in grades],
     }

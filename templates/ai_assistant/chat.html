@@ -1,6 +1,6 @@
 {% extends 'base/layout.html' %}
-{% block title %}Asistente IA{% endblock %}
-{% block page_title %}Asistente IA para Primaria{% endblock %}
+{% block title %}Menta IA{% endblock %}
+{% block page_title %}Menta IA{% endblock %}
 {% block content %}
 
 <div class="ai-category-tabs">
@@ -217,6 +217,7 @@ function scrollToBottom() {
 function formatMarkdown(text) {
   if (!text) return '';
   return text
+    .replace(/==(.+?)==/g, '<span class="ai-data-highlight">$1</span>')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
     .replace(/`(.*?)`/g, '<code style="background:var(--primary-50,#f0f0f0);padding:.1rem .3rem;border-radius:4px;font-size:.85em;">$1</code>')
@@ -629,6 +630,43 @@ async function downloadResponse(messageEl, format) {
 let currentUtterance = null;
 let currentSpeechButton = null;
 let currentSpeechMessage = null;
+let cachedTtsVoice = null;
+
+function loadSpeechVoices() {
+  if (!window.speechSynthesis) return Promise.resolve([]);
+  const voices = speechSynthesis.getVoices();
+  if (voices.length) return Promise.resolve(voices);
+  return new Promise(resolve => {
+    const done = () => resolve(speechSynthesis.getVoices());
+    speechSynthesis.addEventListener('voiceschanged', done, { once: true });
+    setTimeout(done, 900);
+  });
+}
+
+function scoreSpanishVoice(voice) {
+  const name = `${voice.name || ''} ${voice.lang || ''}`.toLowerCase();
+  let score = 0;
+  if (name.includes('es-co')) score += 120;
+  if (name.includes('es-mx') || name.includes('es-us') || name.includes('es-419')) score += 105;
+  if (name.includes('es-es')) score += 85;
+  if ((voice.lang || '').toLowerCase().startsWith('es')) score += 70;
+  if (name.includes('microsoft')) score += 30;
+  if (name.includes('google')) score += 25;
+  if (name.includes('natural') || name.includes('online')) score += 25;
+  if (name.includes('neural')) score += 35;
+  if (name.includes('helena') || name.includes('elvira') || name.includes('sabina') || name.includes('paulina') || name.includes('valentina') || name.includes('laura') || name.includes('maria')) score += 18;
+  if (name.includes('desktop') || name.includes('legacy')) score -= 20;
+  return score;
+}
+
+async function getPreferredTtsVoice() {
+  if (cachedTtsVoice) return cachedTtsVoice;
+  const voices = await loadSpeechVoices();
+  cachedTtsVoice = voices
+    .filter(voice => (voice.lang || '').toLowerCase().startsWith('es'))
+    .sort((a, b) => scoreSpanishVoice(b) - scoreSpanishVoice(a))[0] || null;
+  return cachedTtsVoice;
+}
 
 function setTtsControls(messageEl, visible, paused = false) {
   const controls = messageEl?.querySelector('.ai-tts-controls');
@@ -669,6 +707,10 @@ async function speakResponse(messageEl, button) {
   if (!text.trim()) return;
   currentUtterance = new SpeechSynthesisUtterance(text);
   currentUtterance.lang = data.lang || 'es-CO';
+  currentUtterance.voice = await getPreferredTtsVoice();
+  currentUtterance.rate = 0.92;
+  currentUtterance.pitch = 1.03;
+  currentUtterance.volume = 1;
   currentUtterance.onend = stopCurrentSpeech;
   currentUtterance.onerror = stopCurrentSpeech;
   currentSpeechButton = button;
@@ -1374,6 +1416,7 @@ document.getElementById('imageModeChip').addEventListener('click', () => {
 /* Botón Generar imagen en menú + */
 .ai-message.ai-response-message{display:grid;grid-template-columns:minmax(0,min(88%,760px));row-gap:4px;align-items:start;justify-content:start;}
 .ai-response-message .ai-message-content{grid-column:1;grid-row:1;max-width:100%;width:100%;}
+.ai-data-highlight{display:inline-flex;align-items:center;max-width:100%;padding:.08rem .42rem;margin:0 .08rem;border-radius:999px;background:linear-gradient(135deg,#fff7d6 0%,#e1f7ff 100%);border:1px solid rgba(33,150,201,.3);box-shadow:0 2px 8px rgba(13,45,66,.1);color:#111;font-weight:900;line-height:1.35;vertical-align:baseline;overflow-wrap:anywhere;}
 .ai-message-actions{grid-column:1;grid-row:2;justify-self:end;display:flex;align-items:center;gap:4px;padding:4px;margin-top:-2px;background:rgba(255,255,255,.94);border:1px solid var(--gray-200);border-radius:8px;box-shadow:0 8px 24px rgba(13,45,66,.12);opacity:0;pointer-events:none;transform:translateY(-4px);transition:opacity .18s ease,transform .18s ease;z-index:30;backdrop-filter:blur(10px);overflow:visible;}
 .ai-response-message:hover .ai-message-actions,.ai-response-message:focus-within .ai-message-actions{opacity:1;pointer-events:auto;transform:translateY(0);}
 .ai-action-btn{width:30px;height:30px;border:none;border-radius:7px;background:transparent;color:var(--gray-500);display:inline-flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;transition:background .16s ease,color .16s ease,transform .16s ease;}

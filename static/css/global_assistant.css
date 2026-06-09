@@ -338,14 +338,41 @@ body.global-ai-resizing .global-ai-resizer span {
   gap: 12px;
 }
 
-.global-ai-drawer-header strong {
-  display: block;
+.global-ai-drawer-title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.global-ai-drawer-title-row {
+  position: relative !important;
+  display: block !important;
+  height: 17px !important;
+  line-height: 17px !important;
+  white-space: nowrap !important;
+}
+
+.global-ai-drawer-heading {
+  display: inline-block;
   color: #0d2d42;
   font-family: "Sora", system-ui, sans-serif;
   font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
 }
 
-.global-ai-drawer-header span {
+.global-ai-error-note {
+  position: absolute !important;
+  left: 86px !important;
+  top: 5px !important;
+  display: block !important;
+  color: #9aa6b2 !important;
+  font-size: 7px !important;
+  font-weight: 500 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.global-ai-drawer-title > span {
   display: block;
   color: #5588aa;
   font-size: 12px;

@@ -39,6 +39,7 @@ PARAM_NAMES = {
     'status',
     'date_from',
     'date_to',
+    'activity',
 }
 
 
@@ -61,7 +62,7 @@ Acciones permitidas:
 - list_students: listar estudiantes. Params: grade, classroom, limit.
 - count_students: contar estudiantes. Params: grade, classroom.
 - student_detail: datos basicos de un estudiante. Params: student.
-- student_grades: notas de estudiante. Params: student, subject, limit.
+- student_grades: notas de estudiante o de una actividad. Params: student, subject, activity, limit.
 - student_average: promedio de estudiante. Params: student, subject.
 - subject_average: promedio de materia. Params: subject, grade, classroom.
 - top_students: estudiantes con promedio mas alto. Params: subject, grade, classroom, limit.
@@ -77,6 +78,7 @@ Reglas:
 - Usa null para parametros ausentes.
 - date_from/date_to deben ser YYYY-MM-DD si aparecen.
 - threshold debe ser numero. limit debe ser numero.
+- Si el usuario menciona una actividad especifica, usa activity con el nombre exacto o frase indicada.
 
 Ejemplo:
 Usuario: Cual es la nota de Juan Perez en Matematicas?
@@ -87,6 +89,15 @@ Respuesta: {"action":"student_grades","params":{"student":"Juan Perez","subject"
 ANSWER_PROMPT = """
 Eres Mentore IA. Responde en espanol natural y breve usando SOLO los datos
 consultados por el backend. No muestres JSON ni detalles tecnicos.
+
+Cuando menciones datos concretos recuperados de la base de datos del programa,
+resalta cada valor exacto envolviendolo con == y ==. Aplica esto a nombres,
+apellidos, correos, notas, grupos, materias, fechas, periodos, cantidades y
+otros valores especificos. Ejemplos: ==Jhon Santiago==, ==5.0==,
+==pruebita@gmail.com==, ==2B==. No resaltes palabras genericas ni explicaciones.
+
+Si el resultado incluye una lista "grades" con elementos, esas notas SI existen:
+responde usando esos registros y no digas que la nota no esta registrada.
 
 Si el backend indica que no encontro informacion, dilo claramente y sugiere
 una forma mas precisa de preguntar. Si hay varios estudiantes posibles, pide
@@ -156,7 +167,13 @@ def execute_action(user, action):
     elif action.name == 'student_detail':
         data = data_service.student_detail(user, params.get('student'))
     elif action.name == 'student_grades':
-        data = data_service.student_grades(user, params.get('student'), params.get('subject'), params.get('limit'))
+        data = data_service.student_grades(
+            user,
+            params.get('student'),
+            params.get('subject'),
+            params.get('limit'),
+            params.get('activity'),
+        )
     elif action.name == 'student_average':
         data = data_service.student_average(user, params.get('student'), params.get('subject'))
     elif action.name == 'subject_average':
